@@ -44,7 +44,7 @@ export async function getMenu(): Promise<Categoria[]> {
 export async function getInfo(): Promise<InfoRestaurante> {
   try {
     const res = await fetch(`${CORE_URL}/api/info`, { next: { revalidate: 60 } })
-    return res.ok ? res.json() : {}
+    return res.ok ? res.json() : { nombre: 'Restaurante', eslogan: '', direccion: '', telefono: '', whatsapp: '', color: '#FF6B35', horarios: [] }
   } catch {
     return { nombre: 'Restaurante', eslogan: '', direccion: '', telefono: '', whatsapp: '', color: '#FF6B35', horarios: [] }
   }
