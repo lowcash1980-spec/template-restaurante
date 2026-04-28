@@ -12,6 +12,7 @@ services:
     networks: [restaurante, easypanel]
     labels:
       - "traefik.enable=true"
+      - "traefik.docker.network=easypanel"
       - "traefik.http.routers.${NOMBRE}-core.rule=Host(`admin.${DOMINIO}`)"
       - "traefik.http.routers.${NOMBRE}-core.entrypoints=websecure"
       - "traefik.http.routers.${NOMBRE}-core.tls.certresolver=letsencrypt"
@@ -28,6 +29,7 @@ services:
     networks: [restaurante, easypanel]
     labels:
       - "traefik.enable=true"
+      - "traefik.docker.network=easypanel"
       - "traefik.http.routers.${NOMBRE}-crm.rule=Host(`crm.${DOMINIO}`)"
       - "traefik.http.routers.${NOMBRE}-crm.entrypoints=websecure"
       - "traefik.http.routers.${NOMBRE}-crm.tls.certresolver=letsencrypt"
@@ -44,6 +46,7 @@ services:
     networks: [restaurante, easypanel]
     labels:
       - "traefik.enable=true"
+      - "traefik.docker.network=easypanel"
       - "traefik.http.routers.${NOMBRE}-delivery.rule=Host(`pedidos.${DOMINIO}`)"
       - "traefik.http.routers.${NOMBRE}-delivery.entrypoints=websecure"
       - "traefik.http.routers.${NOMBRE}-delivery.tls.certresolver=letsencrypt"
@@ -58,6 +61,7 @@ services:
     networks: [restaurante, easypanel]
     labels:
       - "traefik.enable=true"
+      - "traefik.docker.network=easypanel"
       - "traefik.http.routers.${NOMBRE}-kmarero.rule=Host(`carta.${DOMINIO}`)"
       - "traefik.http.routers.${NOMBRE}-kmarero.entrypoints=websecure"
       - "traefik.http.routers.${NOMBRE}-kmarero.tls.certresolver=letsencrypt"
@@ -76,6 +80,7 @@ services:
     networks: [restaurante, easypanel]
     labels:
       - "traefik.enable=true"
+      - "traefik.docker.network=easypanel"
       - "traefik.http.routers.${NOMBRE}-sara.rule=Host(`sara.${DOMINIO}`)"
       - "traefik.http.routers.${NOMBRE}-sara.entrypoints=websecure"
       - "traefik.http.routers.${NOMBRE}-sara.tls.certresolver=letsencrypt"
@@ -90,6 +95,7 @@ services:
     networks: [restaurante, easypanel]
     labels:
       - "traefik.enable=true"
+      - "traefik.docker.network=easypanel"
       - "traefik.http.routers.${NOMBRE}-web.rule=Host(`${DOMINIO}`) || Host(`www.${DOMINIO}`)"
       - "traefik.http.routers.${NOMBRE}-web.entrypoints=websecure"
       - "traefik.http.routers.${NOMBRE}-web.tls.certresolver=letsencrypt"
