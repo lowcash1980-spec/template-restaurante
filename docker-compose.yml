@@ -9,7 +9,13 @@ services:
       - ./data/core.db:/app/core.db
       - ./data/uploads:/app/uploads
     restart: unless-stopped
-    networks: [restaurante]
+    networks: [restaurante, easypanel]
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.${NOMBRE}-core.rule=Host(`admin.${DOMINIO}`)"
+      - "traefik.http.routers.${NOMBRE}-core.entrypoints=websecure"
+      - "traefik.http.routers.${NOMBRE}-core.tls.certresolver=letsencrypt"
+      - "traefik.http.services.${NOMBRE}-core.loadbalancer.server.port=8000"
 
   # ── CRM (clientes, campañas WhatsApp) ─────────────────────
   crm:
@@ -19,7 +25,13 @@ services:
     volumes:
       - ./data/crm.db:/app/crm.db
     restart: unless-stopped
-    networks: [restaurante]
+    networks: [restaurante, easypanel]
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.${NOMBRE}-crm.rule=Host(`crm.${DOMINIO}`)"
+      - "traefik.http.routers.${NOMBRE}-crm.entrypoints=websecure"
+      - "traefik.http.routers.${NOMBRE}-crm.tls.certresolver=letsencrypt"
+      - "traefik.http.services.${NOMBRE}-crm.loadbalancer.server.port=8003"
 
   # ── Delivery (pedidos online) ──────────────────────────────
   delivery:
@@ -29,7 +41,13 @@ services:
     volumes:
       - ./data/pedidos.db:/app/pedidos.db
     restart: unless-stopped
-    networks: [restaurante]
+    networks: [restaurante, easypanel]
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.${NOMBRE}-delivery.rule=Host(`pedidos.${DOMINIO}`)"
+      - "traefik.http.routers.${NOMBRE}-delivery.entrypoints=websecure"
+      - "traefik.http.routers.${NOMBRE}-delivery.tls.certresolver=letsencrypt"
+      - "traefik.http.services.${NOMBRE}-delivery.loadbalancer.server.port=8001"
 
   # ── Kmarero (carta digital QR) ─────────────────────────────
   kmarero:
@@ -37,7 +55,13 @@ services:
     expose: ["80"]
     env_file: ./kmarero/.env
     restart: unless-stopped
-    networks: [restaurante]
+    networks: [restaurante, easypanel]
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.${NOMBRE}-kmarero.rule=Host(`carta.${DOMINIO}`)"
+      - "traefik.http.routers.${NOMBRE}-kmarero.entrypoints=websecure"
+      - "traefik.http.routers.${NOMBRE}-kmarero.tls.certresolver=letsencrypt"
+      - "traefik.http.services.${NOMBRE}-kmarero.loadbalancer.server.port=80"
 
   # ── SARA (chatbot WhatsApp IA) ─────────────────────────────
   sara:
@@ -45,9 +69,17 @@ services:
     expose: ["8002"]
     env_file: ./sara/.env
     volumes:
-      - ./data/sara.db:/app/agent/sara.db
+      - ./data/sara.db:/app/sara.db
+      - ./sara/config:/app/config
+      - ./sara/knowledge:/app/knowledge
     restart: unless-stopped
-    networks: [restaurante]
+    networks: [restaurante, easypanel]
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.${NOMBRE}-sara.rule=Host(`sara.${DOMINIO}`)"
+      - "traefik.http.routers.${NOMBRE}-sara.entrypoints=websecure"
+      - "traefik.http.routers.${NOMBRE}-sara.tls.certresolver=letsencrypt"
+      - "traefik.http.services.${NOMBRE}-sara.loadbalancer.server.port=8002"
 
   # ── Web (página web del restaurante) ──────────────────────
   web:
@@ -55,27 +87,16 @@ services:
     expose: ["3000"]
     env_file: ./web/.env
     restart: unless-stopped
-    networks: [restaurante]
-
-  # ── Nginx (enruta dominios a servicios) ───────────────────
-  nginx:
-    image: nginx:alpine
-    # envsubst sustituye ${DOMINIO} con el valor del .env al arrancar
-    command: >
-      /bin/sh -c "envsubst '$$DOMINIO' < /etc/nginx/conf.d/nginx.conf.template
-      > /etc/nginx/conf.d/default.conf && exec nginx -g 'daemon off;'"
-    environment:
-      - DOMINIO=${DOMINIO}
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx/nginx.conf.template:/etc/nginx/conf.d/nginx.conf.template:ro
-      - ./nginx/certs:/etc/nginx/certs:ro
-    depends_on: [core, crm, delivery, kmarero, sara, web]
-    restart: unless-stopped
-    networks: [restaurante]
+    networks: [restaurante, easypanel]
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.${NOMBRE}-web.rule=Host(`${DOMINIO}`) || Host(`www.${DOMINIO}`)"
+      - "traefik.http.routers.${NOMBRE}-web.entrypoints=websecure"
+      - "traefik.http.routers.${NOMBRE}-web.tls.certresolver=letsencrypt"
+      - "traefik.http.services.${NOMBRE}-web.loadbalancer.server.port=3000"
 
 networks:
   restaurante:
     driver: bridge
+  easypanel:
+    external: true
