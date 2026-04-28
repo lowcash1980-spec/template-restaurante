@@ -1,7 +1,7 @@
 from dotenv import load_dotenv
 load_dotenv()
 
-from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, Header
+from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, Header, Body
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -259,7 +259,7 @@ async def actualizar_info(data: dict):
 
 
 @app.put("/api/horarios", dependencies=[Depends(auth)])
-async def actualizar_horarios(horarios: list):
+async def actualizar_horarios(horarios: list = Body(...)):
     with db() as conn:
         for h in horarios:
             conn.execute(
