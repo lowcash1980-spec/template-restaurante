@@ -11,9 +11,7 @@
     "next": "^15.1.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "@splinetool/react-spline": "^4.0.0",
-    "@splinetool/runtime": "^1.9.0",
-    "gsap": "^3.12.5",
+"gsap": "^3.12.5",
     "@gsap/react": "^2.1.1",
     "lenis": "^1.1.14"
   },

@@ -1,12 +1,6 @@
 'use client'
 import { useEffect, useRef } from 'react'
-import dynamic from 'next/dynamic'
 import { gsap } from 'gsap'
-
-const Spline = dynamic(() => import('@splinetool/react-spline'), { ssr: false })
-
-// ── AJUSTAR: reemplaza esta URL con la escena Spline del cliente ──
-const SPLINE_URL = 'https://prod.spline.design/placeholder-scene/scene.splinecode'
 
 interface Props {
   nombre: string
@@ -30,10 +24,10 @@ export default function Hero({ nombre, eslogan, abierto }: Props) {
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      {/* Spline 3D background */}
-      <div className="absolute inset-0 z-0 opacity-60">
-        <Spline scene={SPLINE_URL} />
-      </div>
+      {/* Animated gradient background */}
+      <div className="absolute inset-0 z-0" style={{
+        background: 'radial-gradient(ellipse at 20% 50%, color-mix(in srgb, var(--accent) 25%, transparent) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, color-mix(in srgb, var(--accent) 15%, transparent) 0%, transparent 50%), var(--bg)',
+      }} />
 
       {/* Gradient overlay */}
       <div className="absolute inset-0 z-10" style={{ background: 'radial-gradient(ellipse at center, transparent 30%, rgba(8,8,8,0.85) 100%)' }} />
