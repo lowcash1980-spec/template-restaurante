@@ -38,7 +38,7 @@ services:
   # ── Delivery (pedidos online) ──────────────────────────────
   delivery:
     build: ./delivery
-    expose: ["8001"]
+    expose: ["8000"]
     env_file: ./delivery/.env
     volumes:
       - ./data/pedidos.db:/app/pedidos.db
@@ -50,7 +50,7 @@ services:
       - "traefik.http.routers.${NOMBRE}-delivery.rule=Host(`pedidos.${DOMINIO}`)"
       - "traefik.http.routers.${NOMBRE}-delivery.entrypoints=https"
       - "traefik.http.routers.${NOMBRE}-delivery.tls.certresolver=letsencrypt"
-      - "traefik.http.services.${NOMBRE}-delivery.loadbalancer.server.port=8001"
+      - "traefik.http.services.${NOMBRE}-delivery.loadbalancer.server.port=8000"
 
   # ── Kmarero (carta digital QR) ─────────────────────────────
   kmarero:
