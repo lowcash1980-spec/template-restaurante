@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel de Gestión</title>
+<style>
+:root {
+  --bg: #0d0d0d; --card: #1a1a1a; --border: #2a2a2a;
+  --text: #f0f0f0; --muted: #888; --accent: #FF6B35;
+  --green: #22c55e; --red: #ef4444; --yellow: #eab308;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+/* LOGIN */
+#login { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }
+.login-box { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 40px; width: 100%; max-width: 360px; text-align: center; }
+.login-box h1 { font-size: 22px; margin-bottom: 8px; }
+.login-box p { color: var(--muted); font-size: 14px; margin-bottom: 28px; }
+.login-box input { width: 100%; padding: 12px 16px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 16px; margin-bottom: 12px; outline: none; }
+.login-box input:focus { border-color: var(--accent); }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 11px 20px; border-radius: 10px; border: none; font-size: 15px; font-weight: 600; cursor: pointer; transition: opacity .15s; }
+.btn:hover { opacity: .85; }
+.btn-primary { background: var(--accent); color: #fff; width: 100%; }
+.btn-danger { background: var(--red); color: #fff; }
+.btn-ghost { background: var(--border); color: var(--text); }
+.btn-sm { padding: 6px 12px; font-size: 13px; border-radius: 8px; }
+
+/* APP */
+#app { display: none; flex-direction: column; min-height: 100vh; }
+header { background: var(--card); border-bottom: 1px solid var(--border); padding: 0 20px; display: flex; align-items: center; justify-content: space-between; height: 56px; position: sticky; top: 0; z-index: 100; }
+.header-name { font-weight: 700; font-size: 16px; display: flex; align-items: center; gap: 10px; }
+.header-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); }
+
+nav { display: flex; gap: 4px; padding: 12px 20px; background: var(--card); border-bottom: 1px solid var(--border); overflow-x: auto; }
+.nav-btn { padding: 8px 16px; border-radius: 8px; border: none; background: transparent; color: var(--muted); font-size: 14px; font-weight: 500; cursor: pointer; white-space: nowrap; transition: all .15s; }
+.nav-btn.active { background: var(--accent); color: #fff; }
+
+.panel { display: none; padding: 20px; max-width: 800px; margin: 0 auto; width: 100%; }
+.panel.active { display: block; }
+
+/* CARDS */
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+.card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.card-title { font-weight: 700; font-size: 15px; }
+
+/* TOGGLE SWITCH */
+.toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.toggle-row:last-child { border-bottom: none; }
+.toggle-info { flex: 1; min-width: 0; margin-right: 16px; }
+.toggle-name { font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.toggle-price { color: var(--accent); font-size: 13px; font-weight: 700; margin-top: 2px; cursor: pointer; }
+.toggle-price:hover { text-decoration: underline; }
+.switch { position: relative; width: 48px; height: 26px; flex-shrink: 0; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider { position: absolute; inset: 0; background: var(--border); border-radius: 26px; cursor: pointer; transition: .3s; }
+.slider:before { content: ''; position: absolute; width: 20px; height: 20px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: .3s; }
+input:checked + .slider { background: var(--green); }
+input:checked + .slider:before { transform: translateX(22px); }
+
+/* FORM */
+.field { margin-bottom: 16px; }
+.field label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; font-weight: 500; }
+.field input, .field textarea, .field select { width: 100%; padding: 10px 14px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 15px; outline: none; font-family: inherit; }
+.field input:focus, .field textarea:focus, .field select:focus { border-color: var(--accent); }
+.field textarea { min-height: 80px; resize: vertical; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+/* PLATO CARD */
+.plato-item { display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 8px; }
+.plato-foto { width: 52px; height: 52px; border-radius: 8px; object-fit: cover; background: var(--border); flex-shrink: 0; }
+.plato-data { flex: 1; min-width: 0; }
+.plato-nombre { font-weight: 600; font-size: 14px; }
+.plato-desc { color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.plato-precio { color: var(--accent); font-weight: 700; font-size: 14px; }
+.plato-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+/* HORARIOS */
+.horario-row { display: grid; grid-template-columns: 100px 1fr 1fr 1fr; gap: 12px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.horario-row:last-child { border-bottom: none; }
+.horario-dia { font-weight: 600; font-size: 14px; text-transform: capitalize; }
+.horario-row input[type=time] { padding: 8px 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 14px; }
+
+/* MODAL */
+.overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 200; align-items: center; justify-content: center; padding: 20px; }
+.overlay.open { display: flex; }
+.modal { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 24px; width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto; }
+.modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+.modal-title { font-size: 17px; font-weight: 700; }
+.close-btn { background: none; border: none; color: var(--muted); font-size: 22px; cursor: pointer; line-height: 1; }
+.modal-footer { display: flex; gap: 10px; margin-top: 20px; }
+
+/* TOAST */
+#toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px 20px; font-size: 14px; font-weight: 500; display: none; z-index: 999; white-space: nowrap; box-shadow: 0 4px 24px rgba(0,0,0,.4); }
+#toast.show { display: block; }
+
+.section-label { font-size: 11px; text-transform: uppercase; letter-spacing: .12em; color: var(--muted); font-weight: 600; margin-bottom: 12px; }
+.empty { text-align: center; color: var(--muted); padding: 32px; font-size: 14px; }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+.badge-green { background: rgba(34,197,94,.15); color: var(--green); }
+.badge-red { background: rgba(239,68,68,.15); color: var(--red); }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login">
+  <div class="login-box">
+    <div style="font-size:36px;margin-bottom:12px">🍽️</div>
+    <h1>Panel de Gestión</h1>
+    <p>Accede con tu contraseña de administrador</p>
+    <input type="password" id="pass-input" placeholder="Contraseña" autocomplete="current-password">
+    <button class="btn btn-primary" onclick="doLogin()">Entrar</button>
+    <p id="login-err" style="color:var(--red);font-size:13px;margin-top:12px;display:none">Contraseña incorrecta</p>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <header>
+    <div class="header-name">
+      <div class="header-dot"></div>
+      <span id="h-nombre">Restaurante</span>
+    </div>
+    <button class="btn btn-ghost btn-sm" onclick="logout()">Salir</button>
+  </header>
+
+  <nav>
+    <button class="nav-btn active" onclick="showPanel('disponibilidad',this)">⚡ Disponibilidad</button>
+    <button class="nav-btn" onclick="showPanel('menu',this)">🍽️ Menú</button>
+    <button class="nav-btn" onclick="showPanel('info',this)">🏠 Info</button>
+    <button class="nav-btn" onclick="showPanel('horarios',this)">🕐 Horarios</button>
+  </nav>
+
+  <!-- DISPONIBILIDAD -->
+  <div id="panel-disponibilidad" class="panel active">
+    <div style="margin-bottom:16px">
+      <p style="color:var(--muted);font-size:14px">Activa o desactiva platos al instante. El cambio se aplica en todas las aplicaciones.</p>
+    </div>
+    <div id="disp-list"></div>
+  </div>
+
+  <!-- MENÚ -->
+  <div id="panel-menu" class="panel">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div class="section-label">Categorías y platos</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost btn-sm" onclick="openCatModal()">+ Categoría</button>
+        <button class="btn btn-primary btn-sm" onclick="openPlatoModal()">+ Plato</button>
+      </div>
+    </div>
+    <div id="menu-list"></div>
+  </div>
+
+  <!-- INFO -->
+  <div id="panel-info" class="panel">
+    <div class="card">
+      <div class="card-header"><div class="card-title">Datos del negocio</div></div>
+      <div class="field"><label>Nombre del restaurante</label><input id="i-nombre" type="text"></div>
+      <div class="field"><label>Eslogan</label><input id="i-eslogan" type="text"></div>
+      <div class="field-row">
+        <div class="field"><label>Teléfono</label><input id="i-telefono" type="tel"></div>
+        <div class="field"><label>WhatsApp (con prefijo)</label><input id="i-whatsapp" type="tel" placeholder="34612345678"></div>
+      </div>
+      <div class="field"><label>Dirección</label><input id="i-direccion" type="text"></div>
+      <div class="field"><label>Color corporativo</label><input id="i-color" type="color" style="height:42px;padding:4px 8px;cursor:pointer"></div>
+      <button class="btn btn-primary btn-sm" onclick="saveInfo()">Guardar cambios</button>
+    </div>
+  </div>
+
+  <!-- HORARIOS -->
+  <div id="panel-horarios" class="panel">
+    <div class="card">
+      <div class="card-header"><div class="card-title">Horario semanal</div></div>
+      <div id="horarios-list"></div>
+      <br>
+      <button class="btn btn-primary btn-sm" onclick="saveHorarios()">Guardar horarios</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PLATO -->
+<div class="overlay" id="modal-plato">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-plato-title">Nuevo plato</div>
+      <button class="close-btn" onclick="closeModal('modal-plato')">×</button>
+    </div>
+    <input type="hidden" id="mp-id">
+    <div class="field">
+      <label>Categoría</label>
+      <select id="mp-cat"></select>
+    </div>
+    <div class="field"><label>Nombre del plato</label><input id="mp-nombre" type="text" placeholder="Ej: Ensalada mediterránea"></div>
+    <div class="field"><label>Descripción</label><textarea id="mp-desc" placeholder="Ingredientes, alérgenos, etc."></textarea></div>
+    <div class="field-row">
+      <div class="field"><label>Precio (€)</label><input id="mp-precio" type="number" step="0.10" min="0"></div>
+      <div class="field"><label>¿Especial del día?</label><select id="mp-especial"><option value="0">No</option><option value="1">Sí</option></select></div>
+    </div>
+    <div class="field">
+      <label>Foto (URL o subir imagen)</label>
+      <input id="mp-foto" type="text" placeholder="https://... o sube una imagen abajo">
+      <input type="file" id="mp-file" accept="image/*" style="margin-top:8px" onchange="uploadFoto()">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-plato')">Cancelar</button>
+      <button class="btn btn-primary" style="flex:2" onclick="savePlato()">Guardar plato</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CATEGORÍA -->
+<div class="overlay" id="modal-cat">
+  <div class="modal" style="max-width:360px">
+    <div class="modal-header">
+      <div class="modal-title">Nueva categoría</div>
+      <button class="close-btn" onclick="closeModal('modal-cat')">×</button>
+    </div>
+    <div class="field"><label>Nombre</label><input id="mc-nombre" type="text" placeholder="Ej: Entrantes"></div>
+    <div class="field"><label>Icono (emoji)</label><input id="mc-icono" type="text" placeholder="🥗" maxlength="4" style="width:80px"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-cat')">Cancelar</button>
+      <button class="btn btn-primary" style="flex:2" onclick="saveCat()">Crear categoría</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+let PASS = '';
+let menu = [];
+let info = {};
+let horarios = [];
+const API = '';
+
+async function apiFetch(path, opts = {}) {
+  const res = await fetch(API + path, {
+    headers: { 'Content-Type': 'application/json', 'X-Admin-Pass': PASS },
+    ...opts
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+function toast(msg, ok = true) {
+  const el = document.getElementById('toast');
+  el.textContent = (ok ? '✅ ' : '❌ ') + msg;
+  el.className = 'show';
+  setTimeout(() => el.className = '', 2800);
+}
+
+async function doLogin() {
+  PASS = document.getElementById('pass-input').value;
+  try {
+    await apiFetch('/api/menu');
+    document.getElementById('login').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    await loadAll();
+  } catch {
+    document.getElementById('login-err').style.display = 'block';
+    PASS = '';
+  }
+}
+
+document.getElementById('pass-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doLogin();
+});
+
+function logout() {
+  PASS = '';
+  document.getElementById('login').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('pass-input').value = '';
+}
+
+async function loadAll() {
+  [menu, { horarios: horarios, ...info }] = await Promise.all([
+    apiFetch('/api/menu'),
+    apiFetch('/api/info')
+  ]);
+  document.getElementById('h-nombre').textContent = info.nombre || 'Restaurante';
+  document.documentElement.style.setProperty('--accent', info.color || '#FF6B35');
+  renderDisponibilidad();
+  renderMenu();
+  renderInfo();
+  renderHorarios();
+}
+
+// ── DISPONIBILIDAD ────────────────────────────────────────────
+function renderDisponibilidad() {
+  const el = document.getElementById('disp-list');
+  if (!menu.length) { el.innerHTML = '<div class="empty">No hay platos todavía. Añade categorías y platos en el panel Menú.</div>'; return; }
+  el.innerHTML = menu.map(cat => `
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">${cat.icono} ${cat.nombre}</div>
+        <span class="badge badge-green">${cat.platos.filter(p=>p.disponible).length}/${cat.platos.length} disponibles</span>
+      </div>
+      ${cat.platos.length
+        ? cat.platos.map(p => `
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <div class="toggle-name">${p.nombre}</div>
+              <div class="toggle-price" onclick="editPrecioInline(${p.id},this)">${p.precio.toFixed(2)} €</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" ${p.disponible ? 'checked' : ''} onchange="toggleDisp(${p.id},this.checked)">
+              <span class="slider"></span>
+            </label>
+          </div>`).join('')
+        : '<div class="empty" style="padding:16px">Sin platos</div>'
+      }
+    </div>`).join('');
+}
+
+async function toggleDisp(id, disponible) {
+  try {
+    await apiFetch(`/api/platos/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ disponible })
+    });
+    menu.forEach(cat => cat.platos.forEach(p => { if (p.id === id) p.disponible = disponible; }));
+    renderDisponibilidad();
+    toast(disponible ? 'Plato disponible' : 'Plato no disponible');
+  } catch { toast('Error al cambiar disponibilidad', false); }
+}
+
+async function editPrecioInline(id, el) {
+  const plato = menu.flatMap(c => c.platos).find(p => p.id === id);
+  if (!plato) return;
+  const input = document.createElement('input');
+  input.type = 'number'; input.step = '0.10'; input.value = plato.precio;
+  input.style.cssText = 'width:80px;padding:4px 8px;background:var(--bg);border:1px solid var(--accent);border-radius:6px;color:var(--text);font-size:13px;font-weight:700';
+  el.replaceWith(input);
+  input.focus(); input.select();
+  const save = async () => {
+    const precio = parseFloat(input.value);
+    if (!isNaN(precio) && precio !== plato.precio) {
+      try {
+        await apiFetch(`/api/platos/${id}`, { method: 'PUT', body: JSON.stringify({ precio }) });
+        plato.precio = precio;
+        toast('Precio actualizado');
+      } catch { toast('Error al guardar precio', false); }
+    }
+    renderDisponibilidad();
+  };
+  input.addEventListener('blur', save);
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') renderDisponibilidad(); });
+}
+
+// ── MENÚ ──────────────────────────────────────────────────────
+function renderMenu() {
+  const el = document.getElementById('menu-list');
+  if (!menu.length) { el.innerHTML = '<div class="empty">Empieza creando una categoría</div>'; return; }
+  el.innerHTML = menu.map(cat => `
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">${cat.icono} ${cat.nombre}</div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-ghost btn-sm" onclick="openPlatoModal(null,${cat.id})">+ Plato</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteCat(${cat.id},'${cat.nombre}')">Borrar</button>
+        </div>
+      </div>
+      ${cat.platos.map(p => `
+        <div class="plato-item">
+          ${p.foto_url ? `<img class="plato-foto" src="${p.foto_url}" onerror="this.style.display='none'">` : '<div class="plato-foto" style="display:flex;align-items:center;justify-content:center;font-size:22px">🍽️</div>'}
+          <div class="plato-data">
+            <div class="plato-nombre">${p.nombre} ${p.es_especial ? '⭐' : ''}</div>
+            <div class="plato-desc">${p.descripcion || '—'}</div>
+            <div class="plato-precio">${p.precio.toFixed(2)} €</div>
+          </div>
+          <div class="plato-actions">
+            <button class="btn btn-ghost btn-sm" onclick="openPlatoModal(${p.id})">✏️</button>
+            <button class="btn btn-danger btn-sm" onclick="deletePlato(${p.id},'${p.nombre}')">🗑️</button>
+          </div>
+        </div>`).join('')}
+    </div>`).join('');
+}
+
+// ── INFO ──────────────────────────────────────────────────────
+function renderInfo() {
+  document.getElementById('i-nombre').value = info.nombre || '';
+  document.getElementById('i-eslogan').value = info.eslogan || '';
+  document.getElementById('i-telefono').value = info.telefono || '';
+  document.getElementById('i-whatsapp').value = info.whatsapp || '';
+  document.getElementById('i-direccion').value = info.direccion || '';
+  document.getElementById('i-color').value = info.color || '#FF6B35';
+}
+
+async function saveInfo() {
+  try {
+    await apiFetch('/api/info', {
+      method: 'PUT',
+      body: JSON.stringify({
+        nombre: document.getElementById('i-nombre').value,
+        eslogan: document.getElementById('i-eslogan').value,
+        telefono: document.getElementById('i-telefono').value,
+        whatsapp: document.getElementById('i-whatsapp').value,
+        direccion: document.getElementById('i-direccion').value,
+        color: document.getElementById('i-color').value,
+      })
+    });
+    info.nombre = document.getElementById('i-nombre').value;
+    info.color = document.getElementById('i-color').value;
+    document.getElementById('h-nombre').textContent = info.nombre;
+    document.documentElement.style.setProperty('--accent', info.color);
+    toast('Información guardada');
+  } catch { toast('Error al guardar', false); }
+}
+
+// ── HORARIOS ──────────────────────────────────────────────────
+function renderHorarios() {
+  const dias = { lunes:'Lunes', martes:'Martes', miercoles:'Miércoles', jueves:'Jueves', viernes:'Viernes', sabado:'Sábado', domingo:'Domingo' };
+  document.getElementById('horarios-list').innerHTML = horarios.map(h => `
+    <div class="horario-row">
+      <div class="horario-dia">${dias[h.dia] || h.dia}</div>
+      <label class="switch" style="margin:0">
+        <input type="checkbox" id="h-${h.dia}-open" ${h.abierto ? 'checked' : ''} onchange="toggleHorario('${h.dia}',this.checked)">
+        <span class="slider"></span>
+      </label>
+      <input type="time" id="h-${h.dia}-ap" value="${h.apertura}" ${!h.abierto?'disabled':''}>
+      <input type="time" id="h-${h.dia}-ci" value="${h.cierre}" ${!h.abierto?'disabled':''}>
+    </div>`).join('');
+}
+
+function toggleHorario(dia, abierto) {
+  ['ap','ci'].forEach(s => {
+    const el = document.getElementById(`h-${dia}-${s}`);
+    if (el) el.disabled = !abierto;
+  });
+}
+
+async function saveHorarios() {
+  const data = horarios.map(h => ({
+    dia: h.dia,
+    abierto: document.getElementById(`h-${h.dia}-open`)?.checked ? 1 : 0,
+    apertura: document.getElementById(`h-${h.dia}-ap`)?.value || h.apertura,
+    cierre: document.getElementById(`h-${h.dia}-ci`)?.value || h.cierre,
+  }));
+  try {
+    await apiFetch('/api/horarios', { method: 'PUT', body: JSON.stringify(data) });
+    toast('Horarios guardados');
+  } catch { toast('Error al guardar horarios', false); }
+}
+
+// ── MODALES ───────────────────────────────────────────────────
+function openPlatoModal(id = null, catId = null) {
+  document.getElementById('modal-plato-title').textContent = id ? 'Editar plato' : 'Nuevo plato';
+  document.getElementById('mp-id').value = id || '';
+  const catSel = document.getElementById('mp-cat');
+  catSel.innerHTML = menu.map(c => `<option value="${c.id}" ${c.id === catId ? 'selected' : ''}>${c.icono} ${c.nombre}</option>`).join('');
+
+  if (id) {
+    const p = menu.flatMap(c => c.platos).find(p => p.id === id);
+    if (p) {
+      document.getElementById('mp-nombre').value = p.nombre;
+      document.getElementById('mp-desc').value = p.descripcion || '';
+      document.getElementById('mp-precio').value = p.precio;
+      document.getElementById('mp-especial').value = p.es_especial ? '1' : '0';
+      document.getElementById('mp-foto').value = p.foto_url || '';
+      catSel.value = p.categoria_id;
+    }
+  } else {
+    document.getElementById('mp-nombre').value = '';
+    document.getElementById('mp-desc').value = '';
+    document.getElementById('mp-precio').value = '';
+    document.getElementById('mp-especial').value = '0';
+    document.getElementById('mp-foto').value = '';
+  }
+  document.getElementById('modal-plato').classList.add('open');
+}
+
+function openCatModal() {
+  document.getElementById('mc-nombre').value = '';
+  document.getElementById('mc-icono').value = '🍽️';
+  document.getElementById('modal-cat').classList.add('open');
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+async function savePlato() {
+  const id = document.getElementById('mp-id').value;
+  const body = {
+    categoria_id: parseInt(document.getElementById('mp-cat').value),
+    nombre: document.getElementById('mp-nombre').value,
+    descripcion: document.getElementById('mp-desc').value,
+    precio: parseFloat(document.getElementById('mp-precio').value),
+    foto_url: document.getElementById('mp-foto').value,
+    es_especial: document.getElementById('mp-especial').value === '1',
+    disponible: true,
+  };
+  if (!body.nombre || isNaN(body.precio)) { toast('Rellena nombre y precio', false); return; }
+  try {
+    if (id) {
+      await apiFetch(`/api/platos/${id}`, { method: 'PUT', body: JSON.stringify(body) });
+    } else {
+      await apiFetch('/api/platos', { method: 'POST', body: JSON.stringify(body) });
+    }
+    closeModal('modal-plato');
+    await loadAll();
+    toast(id ? 'Plato actualizado' : 'Plato añadido');
+  } catch { toast('Error al guardar plato', false); }
+}
+
+async function saveCat() {
+  const nombre = document.getElementById('mc-nombre').value;
+  const icono = document.getElementById('mc-icono').value || '🍽️';
+  if (!nombre) { toast('Escribe un nombre', false); return; }
+  try {
+    await apiFetch('/api/categorias', { method: 'POST', body: JSON.stringify({ nombre, icono }) });
+    closeModal('modal-cat');
+    await loadAll();
+    toast('Categoría creada');
+  } catch { toast('Error al crear categoría', false); }
+}
+
+async function deletePlato(id, nombre) {
+  if (!confirm(`¿Borrar "${nombre}"?`)) return;
+  try {
+    await apiFetch(`/api/platos/${id}`, { method: 'DELETE' });
+    await loadAll();
+    toast('Plato eliminado');
+  } catch { toast('Error al borrar', false); }
+}
+
+async function deleteCat(id, nombre) {
+  if (!confirm(`¿Borrar la categoría "${nombre}" y todos sus platos?`)) return;
+  try {
+    await apiFetch(`/api/categorias/${id}`, { method: 'DELETE' });
+    await loadAll();
+    toast('Categoría eliminada');
+  } catch { toast('Error al borrar', false); }
+}
+
+async function uploadFoto() {
+  const file = document.getElementById('mp-file').files[0];
+  if (!file) return;
+  const fd = new FormData();
+  fd.append('file', file);
+  try {
+    const res = await fetch('/api/upload', {
+      method: 'POST',
+      headers: { 'X-Admin-Pass': PASS },
+      body: fd
+    });
+    const { url } = await res.json();
+    document.getElementById('mp-foto').value = url;
+    toast('Foto subida');
+  } catch { toast('Error al subir foto', false); }
+}
+
+function showPanel(name, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`panel-${name}`).classList.add('active');
+  btn.classList.add('active');
+}
+
+// Cerrar modal al clicar fuera
+document.querySelectorAll('.overlay').forEach(o => {
+  o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
+});
+</script>
+</body>
+</html>

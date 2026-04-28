@@ -1,0 +1,20 @@
+{
+  "name": "Kmarero — App Camarero",
+  "short_name": "Kmarero",
+  "description": "Tu camarero digital — pedidos, cocina y barra desde el móvil",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1a0c04",
+  "theme_color": "#1a0c04",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["food", "productivity", "business"],
+  "lang": "es"
+}

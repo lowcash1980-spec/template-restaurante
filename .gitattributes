@@ -1,0 +1,7 @@
+# Normaliza los saltos de línea: LF en el repositorio (necesario para scripts bash en Linux/VPS)
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.ico binary

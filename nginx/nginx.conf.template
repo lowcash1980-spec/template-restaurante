@@ -1,0 +1,45 @@
+# Generado automáticamente por envsubst al arrancar el contenedor nginx.
+# Edita nginx.conf.template, NO este archivo.
+# DOMINIO se inyecta desde el .env del cliente.
+
+# Web principal
+server {
+    listen 80;
+    server_name ${DOMINIO} www.${DOMINIO};
+    location / { proxy_pass http://web:3000; proxy_set_header Host $host; }
+}
+
+# Panel Core (admin menú)
+server {
+    listen 80;
+    server_name admin.${DOMINIO};
+    location / { proxy_pass http://core:8000; proxy_set_header Host $host; }
+}
+
+# Panel CRM
+server {
+    listen 80;
+    server_name crm.${DOMINIO};
+    location / { proxy_pass http://crm:8003; proxy_set_header Host $host; }
+}
+
+# Delivery (pedidos online)
+server {
+    listen 80;
+    server_name pedidos.${DOMINIO};
+    location / { proxy_pass http://delivery:8001; proxy_set_header Host $host; }
+}
+
+# Kmarero (carta QR)
+server {
+    listen 80;
+    server_name carta.${DOMINIO};
+    location / { proxy_pass http://kmarero:80; proxy_set_header Host $host; }
+}
+
+# SARA (webhook WhatsApp)
+server {
+    listen 80;
+    server_name sara.${DOMINIO};
+    location / { proxy_pass http://sara:8002; proxy_set_header Host $host; }
+}

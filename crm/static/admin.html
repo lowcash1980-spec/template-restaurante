@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRM — Clientes y Campañas</title>
+<style>
+:root {
+  --bg:#0d0d0d;--card:#1a1a1a;--border:#2a2a2a;--text:#f0f0f0;--muted:#888;
+  --accent:#FF6B35;--green:#22c55e;--red:#ef4444;--yellow:#eab308;--blue:#3b82f6;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+#login{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px;}
+.login-box{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:40px;width:100%;max-width:360px;text-align:center;}
+.login-box h1{font-size:22px;margin-bottom:8px;}
+.login-box p{color:var(--muted);font-size:14px;margin-bottom:28px;}
+input,textarea,select{width:100%;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:15px;outline:none;font-family:inherit;}
+input:focus,textarea:focus,select:focus{border-color:var(--accent);}
+textarea{min-height:100px;resize:vertical;}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 18px;border-radius:10px;border:none;font-size:14px;font-weight:600;cursor:pointer;transition:opacity .15s;}
+.btn:hover{opacity:.85;}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-ghost{background:var(--border);color:var(--text);}
+.btn-danger{background:var(--red);color:#fff;}
+.btn-green{background:var(--green);color:#fff;}
+.btn-full{width:100%;}
+.btn-sm{padding:6px 12px;font-size:13px;border-radius:8px;}
+
+#app{display:none;flex-direction:column;min-height:100vh;}
+header{background:var(--card);border-bottom:1px solid var(--border);padding:0 20px;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:100;}
+.header-title{font-weight:700;font-size:16px;display:flex;align-items:center;gap:8px;}
+nav{display:flex;gap:4px;padding:12px 20px;background:var(--card);border-bottom:1px solid var(--border);overflow-x:auto;}
+.nav-btn{padding:8px 16px;border-radius:8px;border:none;background:transparent;color:var(--muted);font-size:14px;font-weight:500;cursor:pointer;white-space:nowrap;transition:all .15s;}
+.nav-btn.active{background:var(--accent);color:#fff;}
+.panel{display:none;padding:20px;max-width:960px;margin:0 auto;width:100%;}
+.panel.active{display:block;}
+
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:24px;}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;}
+.stat-num{font-size:32px;font-weight:800;line-height:1;}
+.stat-label{color:var(--muted);font-size:12px;margin-top:4px;}
+
+/* TABLE */
+.tbl-wrap{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+table{width:100%;border-collapse:collapse;}
+th{padding:12px 16px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);border-bottom:1px solid var(--border);}
+td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border);}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:rgba(255,255,255,.02);}
+
+/* TAGS */
+.tag{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;background:rgba(255,107,53,.15);color:var(--accent);margin:1px;}
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;}
+.badge-green{background:rgba(34,197,94,.15);color:var(--green);}
+.badge-yellow{background:rgba(234,179,8,.15);color:var(--yellow);}
+.badge-red{background:rgba(239,68,68,.15);color:var(--red);}
+
+/* SEARCH */
+.search-bar{display:flex;gap:10px;margin-bottom:16px;}
+.search-bar input{flex:1;}
+
+/* MODAL */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;align-items:center;justify-content:center;padding:20px;}
+.overlay.open{display:flex;}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.modal-title{font-size:17px;font-weight:700;}
+.close-btn{background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;}
+.field{margin-bottom:14px;}
+.field label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px;font-weight:500;}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.modal-footer{display:flex;gap:10px;margin-top:20px;}
+
+/* CAMPAÑAS */
+.camp-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:12px;}
+.camp-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px;}
+.camp-nombre{font-weight:700;font-size:15px;}
+.camp-msg{color:var(--muted);font-size:13px;white-space:pre-line;margin-bottom:12px;padding:10px;background:var(--bg);border-radius:8px;border:1px solid var(--border);}
+.camp-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+.camp-meta{font-size:12px;color:var(--muted);}
+
+/* VARS HELP */
+.vars{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+.var-chip{padding:3px 8px;background:rgba(59,130,246,.15);color:var(--blue);border-radius:6px;font-size:11px;font-family:monospace;cursor:pointer;}
+.var-chip:hover{background:rgba(59,130,246,.3);}
+
+/* HISTORIAL */
+.hist-item{padding:10px 0;border-bottom:1px solid var(--border);}
+.hist-item:last-child{border-bottom:none;}
+.hist-tipo{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;}
+.hist-resumen{font-size:13px;color:var(--muted);margin-top:2px;}
+.hist-fecha{font-size:11px;color:var(--muted);}
+
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 20px;font-size:14px;font-weight:500;display:none;z-index:999;white-space:nowrap;box-shadow:0 4px 24px rgba(0,0,0,.4);}
+#toast.show{display:block;}
+.empty{text-align:center;color:var(--muted);padding:40px;font-size:14px;}
+.pagination{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:16px;}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login">
+  <div class="login-box">
+    <div style="font-size:36px;margin-bottom:12px">📋</div>
+    <h1>CRM — Clientes</h1>
+    <p>Panel de gestión de clientes y campañas WhatsApp</p>
+    <input type="password" id="pass-input" placeholder="Contraseña" style="margin-bottom:12px">
+    <button class="btn btn-primary btn-full" onclick="doLogin()">Entrar</button>
+    <p id="login-err" style="color:var(--red);font-size:13px;margin-top:10px;display:none">Contraseña incorrecta</p>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <header>
+    <div class="header-title">📋 CRM Restaurante</div>
+    <button class="btn btn-ghost btn-sm" onclick="logout()">Salir</button>
+  </header>
+  <nav>
+    <button class="nav-btn active" onclick="showPanel('dashboard',this)">📊 Dashboard</button>
+    <button class="nav-btn" onclick="showPanel('clientes',this)">👥 Clientes</button>
+    <button class="nav-btn" onclick="showPanel('campanas',this)">📣 Campañas WA</button>
+    <button class="nav-btn" onclick="showPanel('config',this)">⚙️ Config</button>
+  </nav>
+
+  <!-- DASHBOARD -->
+  <div id="panel-dashboard" class="panel active">
+    <div class="stats-grid" id="stats-grid"></div>
+    <h3 style="font-size:14px;font-weight:700;margin-bottom:12px;color:var(--muted)">TOP CLIENTES</h3>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Cliente</th><th>Teléfono</th><th>Pedidos</th><th>Total gastado</th></tr></thead>
+        <tbody id="top-clientes"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- CLIENTES -->
+  <div id="panel-clientes" class="panel">
+    <div class="search-bar">
+      <input id="buscar" type="text" placeholder="Buscar por nombre o teléfono..." oninput="debounceSearch()">
+      <button class="btn btn-ghost" onclick="loadClientes()">Buscar</button>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px" id="filtros-seg">
+      <button class="btn btn-ghost btn-sm seg-btn active" onclick="filtrarSeg('',this)">Todos</button>
+      <button class="btn btn-ghost btn-sm seg-btn" onclick="filtrarSeg('frecuentes',this)">⭐ Frecuentes</button>
+      <button class="btn btn-ghost btn-sm seg-btn" onclick="filtrarSeg('nuevos',this)">🆕 Nuevos</button>
+      <button class="btn btn-ghost btn-sm seg-btn" onclick="filtrarSeg('inactivos_30',this)">😴 Inactivos 30d</button>
+      <button class="btn btn-ghost btn-sm seg-btn" onclick="filtrarSeg('inactivos_60',this)">💤 Inactivos 60d</button>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Cliente</th><th>Teléfono</th><th>Pedidos</th><th>Gastado</th><th>Último contacto</th><th></th></tr></thead>
+        <tbody id="clientes-tbody"></tbody>
+      </table>
+    </div>
+    <div class="pagination">
+      <button class="btn btn-ghost btn-sm" id="btn-prev" onclick="changePage(-1)">← Anterior</button>
+      <span id="page-info" style="color:var(--muted);font-size:13px"></span>
+      <button class="btn btn-ghost btn-sm" id="btn-next" onclick="changePage(1)">Siguiente →</button>
+    </div>
+  </div>
+
+  <!-- CAMPAÑAS -->
+  <div id="panel-campanas" class="panel">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <div>
+        <h2 style="font-size:16px;font-weight:700">Campañas WhatsApp</h2>
+        <p style="font-size:12px;color:var(--muted);margin-top:2px">Los mensajes se envían a través de n8n</p>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="openNuevaCampana()">+ Nueva campaña</button>
+    </div>
+    <div id="campanas-list"></div>
+  </div>
+
+  <!-- CONFIG -->
+  <div id="panel-config" class="panel">
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;max-width:500px">
+      <h3 style="font-weight:700;margin-bottom:16px">Configuración n8n</h3>
+      <div class="field">
+        <label>URL del webhook de n8n</label>
+        <input id="cfg-webhook" type="url" placeholder="https://tu-n8n.com/webhook/...">
+        <p style="font-size:11px;color:var(--muted);margin-top:6px">n8n recibe cada mensaje y lo envía por WhatsApp. El payload incluye <code style="color:var(--accent)">telefono</code> y <code style="color:var(--accent)">mensaje</code>.</p>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="saveConfig()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CAMPAÑA -->
+<div class="overlay" id="modal-camp">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Nueva campaña WhatsApp</div>
+      <button class="close-btn" onclick="closeModal('modal-camp')">×</button>
+    </div>
+    <div class="field">
+      <label>Nombre de la campaña</label>
+      <input id="nc-nombre" type="text" placeholder="Ej: Promo verano 2026">
+    </div>
+    <div class="field">
+      <label>Segmento destinatario</label>
+      <select id="nc-seg">
+        <option value="todos">Todos los clientes</option>
+        <option value="frecuentes">Clientes frecuentes (3+ pedidos)</option>
+        <option value="nuevos">Nuevos (últimos 30 días)</option>
+        <option value="inactivos_30">Inactivos +30 días</option>
+        <option value="inactivos_60">Inactivos +60 días</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Mensaje</label>
+      <textarea id="nc-msg" placeholder="Hola {{nombre}}, tenemos algo especial para ti esta semana..."></textarea>
+      <div class="vars">
+        <span style="font-size:11px;color:var(--muted);align-self:center">Variables:</span>
+        <span class="var-chip" onclick="insertVar('{{nombre}}')">{{nombre}}</span>
+        <span class="var-chip" onclick="insertVar('{{nombre_completo}}')">{{nombre_completo}}</span>
+        <span class="var-chip" onclick="insertVar('{{ultima_visita}}')">{{ultima_visita}}</span>
+        <span class="var-chip" onclick="insertVar('{{total_pedidos}}')">{{total_pedidos}}</span>
+      </div>
+    </div>
+    <div id="nc-preview" style="display:none;margin-top:8px;padding:10px;background:var(--bg);border-radius:8px;border:1px solid var(--border);">
+      <p style="font-size:11px;color:var(--muted);margin-bottom:4px">VISTA PREVIA · <span id="nc-total"></span> destinatarios</p>
+      <p id="nc-preview-msg" style="font-size:13px;white-space:pre-line"></p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="previewCampana()" style="flex:1">👁️ Vista previa</button>
+      <button class="btn btn-primary" onclick="guardarCampana()" style="flex:2">Guardar borrador</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CLIENTE -->
+<div class="overlay" id="modal-cliente">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="mc-title">Cliente</div>
+      <button class="close-btn" onclick="closeModal('modal-cliente')">×</button>
+    </div>
+    <div id="mc-body"></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+let PASS = '';
+let currentPage = 0;
+let currentSearch = '';
+let currentTag = '';
+let totalClientes = 0;
+const PER_PAGE = 20;
+let searchTimeout = null;
+let campanaId = null;
+
+async function apiFetch(path, opts = {}) {
+  const res = await fetch(path, {
+    headers: { 'Content-Type': 'application/json', 'X-Admin-Pass': PASS },
+    ...opts
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+function toast(msg, ok = true) {
+  const el = document.getElementById('toast');
+  el.textContent = (ok ? '✅ ' : '❌ ') + msg;
+  el.className = 'show';
+  setTimeout(() => el.className = '', 2800);
+}
+
+async function doLogin() {
+  PASS = document.getElementById('pass-input').value;
+  try {
+    await apiFetch('/api/stats');
+    document.getElementById('login').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    await loadDashboard();
+  } catch {
+    document.getElementById('login-err').style.display = 'block';
+    PASS = '';
+  }
+}
+document.getElementById('pass-input').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+function logout() {
+  PASS = '';
+  document.getElementById('login').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────────
+async function loadDashboard() {
+  const s = await apiFetch('/api/stats');
+  document.getElementById('stats-grid').innerHTML = `
+    <div class="stat-card"><div class="stat-num">${s.total_clientes}</div><div class="stat-label">Total clientes</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--green)">${s.activos_30d}</div><div class="stat-label">Activos (30 días)</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--yellow)">${s.inactivos_30d}</div><div class="stat-label">Inactivos (30 días)</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--accent)">${s.campanas_enviadas}</div><div class="stat-label">Campañas enviadas</div></div>`;
+  document.getElementById('top-clientes').innerHTML = s.top_clientes.map(c => `
+    <tr>
+      <td><strong>${c.nombre || '—'}</strong></td>
+      <td style="color:var(--muted)">${c.telefono}</td>
+      <td>${c.total_pedidos}</td>
+      <td style="color:var(--accent);font-weight:700">${(c.total_gastado||0).toFixed(2)} €</td>
+    </tr>`).join('') || '<tr><td colspan="4" class="empty">Sin datos aún</td></tr>';
+}
+
+// ── CLIENTES ──────────────────────────────────────────────────
+async function loadClientes() {
+  const skip = currentPage * PER_PAGE;
+  const params = new URLSearchParams({ limit: PER_PAGE, skip });
+  if (currentSearch) params.set('buscar', currentSearch);
+  if (currentTag) params.set('tag', currentTag);
+  const { total, clientes } = await apiFetch(`/api/clientes?${params}`);
+  totalClientes = total;
+
+  document.getElementById('clientes-tbody').innerHTML = clientes.map(c => {
+    const tags = JSON.parse(c.tags || '[]');
+    const ultima = c.ultima_interaccion ? c.ultima_interaccion.slice(0,10) : '—';
+    return `
+    <tr style="cursor:pointer" onclick="abrirCliente(${c.id})">
+      <td><strong>${c.nombre || '—'}</strong>${tags.map(t => `<span class="tag">${t}</span>`).join('')}</td>
+      <td style="color:var(--muted)">${c.telefono}</td>
+      <td>${c.total_pedidos}</td>
+      <td style="color:var(--accent);font-weight:700">${(c.total_gastado||0).toFixed(2)} €</td>
+      <td style="color:var(--muted)">${ultima}</td>
+      <td><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();enviarWA('${c.telefono}')">💬</button></td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="6" class="empty">Sin clientes</td></tr>';
+
+  const totalPages = Math.ceil(totalClientes / PER_PAGE);
+  document.getElementById('page-info').textContent = `Pág. ${currentPage+1} de ${totalPages} · ${totalClientes} clientes`;
+  document.getElementById('btn-prev').disabled = currentPage === 0;
+  document.getElementById('btn-next').disabled = currentPage >= totalPages - 1;
+}
+
+function debounceSearch() {
+  clearTimeout(searchTimeout);
+  currentSearch = document.getElementById('buscar').value;
+  currentPage = 0;
+  searchTimeout = setTimeout(loadClientes, 350);
+}
+
+function changePage(dir) {
+  currentPage += dir;
+  loadClientes();
+}
+
+function filtrarSeg(tag, btn) {
+  currentTag = tag;
+  currentSearch = '';
+  currentPage = 0;
+  document.getElementById('buscar').value = '';
+  document.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  loadClientes();
+}
+
+async function abrirCliente(id) {
+  const c = await apiFetch(`/api/clientes/${id}`);
+  const tags = JSON.parse(c.tags || '[]');
+  const tipoIcon = { pedido:'🛵', chat_sara:'🤖', visita_kmarero:'📱', reserva:'📅' };
+  document.getElementById('mc-title').textContent = c.nombre || c.telefono;
+  document.getElementById('mc-body').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+      <div><p style="font-size:11px;color:var(--muted)">TELÉFONO</p><p style="font-weight:600">${c.telefono}</p></div>
+      <div><p style="font-size:11px;color:var(--muted)">EMAIL</p><p style="font-weight:600">${c.email||'—'}</p></div>
+      <div><p style="font-size:11px;color:var(--muted)">PEDIDOS</p><p style="font-weight:700;color:var(--accent)">${c.total_pedidos}</p></div>
+      <div><p style="font-size:11px;color:var(--muted)">TOTAL GASTADO</p><p style="font-weight:700;color:var(--accent)">${(c.total_gastado||0).toFixed(2)} €</p></div>
+    </div>
+    <div style="margin-bottom:12px"><p style="font-size:11px;color:var(--muted);margin-bottom:4px">DIRECCIÓN</p><p>${c.direccion||'—'}</p></div>
+    <div style="margin-bottom:16px"><p style="font-size:11px;color:var(--muted);margin-bottom:4px">TAGS</p>
+      <div style="display:flex;flex-wrap:wrap;gap:4px">${tags.map(t=>`<span class="tag">${t}</span>`).join('') || '—'}</div>
+    </div>
+    <div><p style="font-size:11px;color:var(--muted);font-weight:700;margin-bottom:10px">HISTORIAL</p>
+      ${c.interacciones.map(i=>`
+        <div class="hist-item">
+          <div style="display:flex;justify-content:space-between">
+            <span class="hist-tipo" style="color:var(--accent)">${tipoIcon[i.tipo]||'•'} ${i.tipo}</span>
+            <span class="hist-fecha">${i.created_at.slice(0,16).replace('T',' ')}</span>
+          </div>
+          ${i.resumen?`<div class="hist-resumen">${i.resumen}</div>`:''}
+        </div>`).join('') || '<p style="color:var(--muted);font-size:13px">Sin historial</p>'}
+    </div>
+    <div class="modal-footer" style="margin-top:16px">
+      <a href="https://wa.me/${c.telefono}" target="_blank" class="btn btn-green btn-sm">💬 WhatsApp</a>
+      ${c.telefono?`<a href="tel:${c.telefono}" class="btn btn-ghost btn-sm">📞 Llamar</a>`:''}
+    </div>`;
+  document.getElementById('modal-cliente').classList.add('open');
+}
+
+function enviarWA(telefono) {
+  window.open(`https://wa.me/${telefono}`, '_blank');
+}
+
+// ── CAMPAÑAS ──────────────────────────────────────────────────
+async function loadCampanas() {
+  const campanas = await apiFetch('/api/campanas');
+  const segLabel = { todos:'Todos',frecuentes:'Frecuentes',nuevos:'Nuevos',inactivos_30:'Inactivos 30d',inactivos_60:'Inactivos 60d' };
+  document.getElementById('campanas-list').innerHTML = campanas.length ? campanas.map(c => `
+    <div class="camp-card">
+      <div class="camp-header">
+        <div>
+          <div class="camp-nombre">${c.nombre}</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px">Segmento: ${segLabel[c.segmento]||c.segmento}</div>
+        </div>
+        <span class="badge ${c.estado==='enviada'?'badge-green':'badge-yellow'}">${c.estado}</span>
+      </div>
+      <div class="camp-msg">${c.mensaje}</div>
+      <div class="camp-footer">
+        <div class="camp-meta">
+          ${c.estado==='enviada'?`✅ Enviada a ${c.enviados} contactos`:'Borrador — no enviada aún'}
+          · ${c.created_at.slice(0,10)}
+        </div>
+        <div style="display:flex;gap:6px">
+          ${c.estado!=='enviada'?`<button class="btn btn-green btn-sm" onclick="enviarCampana(${c.id},'${c.nombre}')">📤 Enviar</button>`:''}
+          <button class="btn btn-danger btn-sm" onclick="deleteCampana(${c.id})">🗑️</button>
+        </div>
+      </div>
+    </div>`).join('') : '<div class="empty">Sin campañas todavía. Crea la primera.</div>';
+}
+
+function openNuevaCampana() {
+  campanaId = null;
+  document.getElementById('nc-nombre').value = '';
+  document.getElementById('nc-msg').value = '';
+  document.getElementById('nc-seg').value = 'todos';
+  document.getElementById('nc-preview').style.display = 'none';
+  document.getElementById('modal-camp').classList.add('open');
+}
+
+function insertVar(v) {
+  const ta = document.getElementById('nc-msg');
+  const pos = ta.selectionStart;
+  const val = ta.value;
+  ta.value = val.slice(0, pos) + v + val.slice(pos);
+  ta.focus();
+  ta.selectionStart = ta.selectionEnd = pos + v.length;
+}
+
+async function previewCampana() {
+  const nombre = document.getElementById('nc-nombre').value;
+  const mensaje = document.getElementById('nc-msg').value;
+  const segmento = document.getElementById('nc-seg').value;
+  if (!nombre || !mensaje) { toast('Rellena nombre y mensaje', false); return; }
+  try {
+    const tmp = await apiFetch('/api/campanas', { method:'POST', body: JSON.stringify({nombre,mensaje,segmento}) });
+    campanaId = tmp.id;
+    const prev = await apiFetch(`/api/campanas/${campanaId}/preview`);
+    document.getElementById('nc-total').textContent = prev.total_destinatarios;
+    document.getElementById('nc-preview-msg').textContent = prev.mensaje_ejemplo;
+    document.getElementById('nc-preview').style.display = 'block';
+    toast('Vista previa generada');
+  } catch { toast('Error generando vista previa', false); }
+}
+
+async function guardarCampana() {
+  if (campanaId) { closeModal('modal-camp'); await loadCampanas(); toast('Campaña guardada'); return; }
+  const nombre = document.getElementById('nc-nombre').value;
+  const mensaje = document.getElementById('nc-msg').value;
+  const segmento = document.getElementById('nc-seg').value;
+  if (!nombre || !mensaje) { toast('Rellena nombre y mensaje', false); return; }
+  try {
+    await apiFetch('/api/campanas', { method:'POST', body: JSON.stringify({nombre,mensaje,segmento}) });
+    closeModal('modal-camp');
+    await loadCampanas();
+    toast('Campaña guardada');
+  } catch { toast('Error al guardar', false); }
+}
+
+async function enviarCampana(id, nombre) {
+  if (!confirm(`¿Enviar la campaña "${nombre}" por WhatsApp ahora?\n\nEsta acción no se puede deshacer.`)) return;
+  try {
+    toast('Enviando...', true);
+    const r = await apiFetch(`/api/campanas/${id}/enviar`, { method:'POST' });
+    await loadCampanas();
+    toast(`Enviada a ${r.enviados} contactos`);
+  } catch (e) { toast('Error: ' + e.message, false); }
+}
+
+async function deleteCampana(id) {
+  if (!confirm('¿Borrar esta campaña?')) return;
+  try {
+    await apiFetch(`/api/campanas/${id}`, { method:'DELETE' });
+    await loadCampanas();
+    toast('Campaña eliminada');
+  } catch { toast('Error al borrar', false); }
+}
+
+// ── CONFIG ────────────────────────────────────────────────────
+async function loadConfig() {
+  const cfg = await apiFetch('/api/config');
+  document.getElementById('cfg-webhook').value = cfg.n8n_webhook || '';
+}
+
+async function saveConfig() {
+  try {
+    await apiFetch('/api/config', { method:'PUT', body: JSON.stringify({ n8n_webhook: document.getElementById('cfg-webhook').value }) });
+    toast('Configuración guardada');
+  } catch { toast('Error al guardar', false); }
+}
+
+// ── NAV ───────────────────────────────────────────────────────
+function showPanel(name, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`panel-${name}`).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'clientes') loadClientes();
+  if (name === 'campanas') loadCampanas();
+  if (name === 'config') loadConfig();
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.overlay').forEach(o => {
+  o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
+});
+</script>
+</body>
+</html>

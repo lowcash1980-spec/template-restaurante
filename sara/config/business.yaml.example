@@ -1,0 +1,29 @@
+negocio:
+  nombre: "[NOMBRE_RESTAURANTE]"
+  tipo: "[TIPO_DE_COCINA]"
+  direccion: "[CALLE Y NÚMERO, CÓDIGO POSTAL, CIUDAD]"
+  telefono: "[TELÉFONO]"
+  fundado: YYYY
+
+horarios:
+  lunes: "[ej: 13:30 - 16:00 o Cerrado]"
+  martes: "[ej: Cerrado]"
+  miercoles: "[ej: 13:30 - 16:00]"
+  jueves: "[ej: 13:30 - 16:00 y 20:30 - 23:00]"
+  viernes: "[ej: 13:30 - 16:00 y 20:30 - 24:00]"
+  sabado: "[ej: 13:30 - 16:30 y 20:30 - 24:00]"
+  domingo: "[ej: 13:30 - 16:30 y 20:30 - 23:00]"
+
+agente:
+  nombre: "[NOMBRE_AGENTE]"        # ej: Sara, Lucía, Marco...
+  tono: "[amigable y casual]"      # ej: amigable y casual | profesional | formal
+  funciones:
+    - "Responder preguntas frecuentes"
+    - "Gestionar reservas de mesa"
+    - "Soporte post-venta"
+
+admin:
+  pin: "[PIN_ADMIN]"                         # ej: 1234 — para comandos WhatsApp como !1234 especiales
+  notificacion_whatsapp: "[NÚMERO_ADMIN]"    # ej: 678000000 — número donde llegan notificaciones de reservas
+
+proveedor_whatsapp: "[twilio | whapi | meta]"

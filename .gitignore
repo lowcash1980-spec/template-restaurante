@@ -1,0 +1,34 @@
+# ── Configuración per-cliente (nunca al repo) ──────────────────
+.env
+core/.env
+crm/.env
+delivery/.env
+sara/.env
+web/.env
+kmarero/.env
+
+# ── SARA: config y knowledge son per-cliente ───────────────────
+# Los .example sí se suben; los reales NO
+sara/config/business.yaml
+sara/config/prompts.yaml
+sara/knowledge/carta.md
+sara/knowledge/mesas.md
+sara/knowledge/especiales_hoy.md
+sara/knowledge/especiales.json
+
+# ── Bases de datos y uploads ───────────────────────────────────
+data/
+*.db
+
+# ── Certificados SSL ───────────────────────────────────────────
+nginx/certs/
+
+# ── Python ────────────────────────────────────────────────────
+__pycache__/
+*.pyc
+.venv/
+
+# ── Node / Next.js ─────────────────────────────────────────────
+web/node_modules/
+web/.next/
+web/.env.local

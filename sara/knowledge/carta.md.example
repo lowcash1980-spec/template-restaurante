@@ -1,0 +1,42 @@
+# [NOMBRE_RESTAURANTE] — Carta Completa
+
+## [SECCIÓN 1: ej. ENTRANTES Y PARA COMPARTIR]
+
+| Plato | Precio | Alérgenos |
+|-------|--------|-----------|
+| [Plato 1] | X,XX € | [ej: Gluten, huevo] |
+| [Plato 2] | X,XX € | [ej: Moluscos] |
+| [Plato 3] | X,XX € | — |
+
+## [SECCIÓN 2: ej. PESCADOS]
+
+| Plato | Precio | Alérgenos |
+|-------|--------|-----------|
+| [Plato 1] | X,XX € | Pescado |
+| [Plato 2] | X,XX € | Pescado, gluten |
+
+## [SECCIÓN 3: ej. CARNES]
+
+| Plato | Precio | Alérgenos |
+|-------|--------|-----------|
+| [Plato 1] | X,XX € | — |
+| [Plato 2] | X,XX € | Gluten |
+
+## POSTRES
+
+| Plato | Precio | Alérgenos |
+|-------|--------|-----------|
+| [Plato 1] | X,XX € | Lácteos, gluten, huevo |
+| [Plato 2] | X,XX € | Lácteos |
+
+## MENÚ INFANTIL (si aplica)
+- Precio: X,XX € – X,XX €
+- Disponible: [días y horario]
+
+## VINOS Y BEBIDAS
+[NOMBRE_RESTAURANTE] dispone de carta de vinos con selección de tintos, blancos, rosados[, generosos, cavas].
+El maridaje lo recomienda el camarero en mesa según lo que pidan. Es parte de la experiencia.
+
+---
+
+> *Nota: Los alérgenos indicados son orientativos. Si tienes una alergia grave, consúltalo siempre con el equipo del restaurante antes de pedir.*

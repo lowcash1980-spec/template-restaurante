@@ -1,0 +1,50 @@
+# [NOMBRE_RESTAURANTE] — Distribución de Mesas
+
+## Capacidad total del restaurante
+- **Con reserva:** hasta [X] personas
+- **Sin reserva:** hasta [X] personas adicionales
+
+---
+
+## [ZONA 1: ej. SALÓN INTERIOR]
+[Descripción breve de la zona]
+
+| Tipo de mesa | Cantidad | Comensales por mesa |
+|---|---|---|
+| Mesas de 2 | X | 2 personas |
+| Mesas de 4 | X | 4 personas |
+| Mesas de 6 | X | 6 personas |
+
+**Capacidad total:** X personas
+**Reserva:** Sí / No
+
+---
+
+## [ZONA 2: ej. TERRAZA]
+[Descripción breve de la zona]
+
+| Tipo de mesa | Cantidad | Comensales por mesa |
+|---|---|---|
+| Mesas de 4 | X | 4 personas |
+
+**Capacidad total:** X personas
+**Reserva:** Sí (sujeta a clima)
+
+---
+
+## [ZONA 3: ej. BARRA / MESAS ALTAS]
+Zona sin reserva, por orden de llegada.
+
+| Tipo de mesa | Cantidad | Comensales por mesa |
+|---|---|---|
+| Mesas altas de 2 | X | 2 personas |
+
+**Capacidad total:** X personas
+**Reserva:** No — orden de llegada
+
+---
+
+## Notas para reservas
+- Para grupos de más de [X] personas, preguntar preferencia de zona.
+- [Zona exterior] puede estar condicionada por el tiempo.
+- Para eventos privados, un responsable contactará personalmente al cliente.

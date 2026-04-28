@@ -1,0 +1,1417 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>[NOMBRE_NEGOCIO] — Haz tu pedido</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="/static/manifest.json">
+  <meta name="theme-color" content="#111111">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="[NOMBRE_NEGOCIO]">
+  <link rel="apple-touch-icon" href="/static/icon-192.png">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --brand: #FF6B35;   /* COLOR CORPORATIVO — reemplazar */
+      --black: #111111;
+      --white: #ffffff;
+      --gray: #f0f0f0;
+      --gray-mid: #cccccc;
+      --danger: #e53e3e;
+      --green: #22c55e;
+      --radius: 14px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--black);
+      color: var(--black);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Wrapper ── */
+    .app-wrap {
+      background: var(--brand);
+      max-width: 900px;
+      margin: 0 auto;
+      min-height: 100vh;
+      position: relative;
+    }
+
+    /* ── Checker ── */
+    .checker {
+      height: 18px;
+      background: repeating-conic-gradient(var(--black) 0% 25%, var(--brand) 0% 50%) 0 0 / 18px 18px;
+    }
+
+    /* ── Header ── */
+    .app-header {
+      background: var(--brand);
+      padding: 18px 16px 12px;
+      text-align: center;
+    }
+    .logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 68px;
+      line-height: 1;
+      letter-spacing: 2px;
+      color: var(--black);
+    }
+    .logo-sub {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: var(--black);
+      margin-top: 2px;
+    }
+
+    /* ── Timer banner ── */
+    .timer-banner {
+      display: none;
+      background: var(--black);
+      color: var(--white);
+      text-align: center;
+      padding: 10px 16px;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: .5px;
+    }
+    .timer-banner.visible { display: block; }
+    .timer-banner.urgente { background: var(--danger); animation: pulse .6s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.75} }
+    #timer-count { font-size: 18px; font-weight: 900; }
+
+    /* ── Step dots ── */
+    .step-nav {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      padding: 10px 16px 0;
+    }
+    .step-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(0,0,0,.2); }
+    .step-dot.active { background: var(--black); }
+    .step-dot.done { background: rgba(0,0,0,.4); }
+
+    /* ── Steps ── */
+    .step { display: none; padding: 0 0 100px; }
+    .step.active { display: block; }
+    .step-title { font-size: 26px; font-weight: 900; letter-spacing: -.5px; padding: 20px 16px 4px; }
+    .step-subtitle { font-size: 14px; color: rgba(0,0,0,.55); padding: 0 16px 16px; }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--white);
+      border-radius: var(--radius);
+      margin: 0 12px 10px;
+      padding: 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,.08);
+    }
+
+    /* ── Step 1: Tipo ── */
+    .tipo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 16px; margin-top: 8px; }
+    .tipo-btn {
+      background: var(--white);
+      border: 3px solid transparent;
+      border-radius: var(--radius);
+      padding: 28px 12px;
+      text-align: center;
+      cursor: pointer;
+      transition: all .15s;
+      box-shadow: 0 2px 12px rgba(0,0,0,.1);
+    }
+    .tipo-btn:active { transform: scale(.97); }
+    .tipo-btn.selected { border-color: var(--black); background: var(--black); color: var(--white); }
+    .tipo-btn .tipo-icon { font-size: 42px; margin-bottom: 10px; }
+    .tipo-btn .tipo-label { font-size: 17px; font-weight: 800; }
+
+    /* ── Step 2: Datos ── */
+    .form-group { margin-bottom: 14px; }
+    .form-label { display: block; font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; color: rgba(0,0,0,.6); }
+    .form-input {
+      width: 100%; padding: 14px;
+      border: 2px solid transparent;
+      border-radius: 10px;
+      font-size: 16px;
+      font-family: 'Inter', sans-serif;
+      background: var(--gray);
+      outline: none;
+      transition: border-color .15s;
+    }
+    .form-input:focus { border-color: var(--black); }
+
+    /* ── Botones ── */
+    .btn-primary {
+      width: 100%; padding: 16px;
+      background: var(--black);
+      color: var(--white);
+      border: none;
+      border-radius: var(--radius);
+      font-size: 16px; font-weight: 800;
+      cursor: pointer;
+      letter-spacing: .5px;
+      transition: opacity .15s;
+    }
+    .btn-primary:active { opacity: .8; }
+    .btn-primary:disabled { opacity: .4; cursor: not-allowed; }
+    .btn-secondary {
+      width: 100%; padding: 14px;
+      background: transparent;
+      color: var(--black);
+      border: 2px solid var(--black);
+      border-radius: var(--radius);
+      font-size: 15px; font-weight: 700;
+      cursor: pointer;
+      transition: all .15s;
+      margin-top: 8px;
+    }
+    .btn-secondary:active { background: var(--black); color: var(--white); }
+    .btn-back {
+      background: transparent;
+      border: 2px solid rgba(0,0,0,.25);
+      color: var(--black);
+      border-radius: var(--radius);
+      padding: 10px 20px;
+      font-size: 14px; font-weight: 700;
+      cursor: pointer;
+    }
+    .btn-row { padding: 0 12px; margin-top: 8px; }
+
+    /* ── Step 3: Selector de fechas ── */
+    .fechas-scroll {
+      display: flex; gap: 8px; overflow-x: auto; padding: 0 12px 12px;
+      scrollbar-width: none;
+    }
+    .fechas-scroll::-webkit-scrollbar { display: none; }
+    .fecha-btn {
+      flex-shrink: 0; min-width: 58px;
+      background: var(--white); border: 2px solid transparent;
+      border-radius: 12px; padding: 10px 8px;
+      text-align: center; cursor: pointer;
+      box-shadow: 0 1px 6px rgba(0,0,0,.08);
+      transition: all .15s;
+    }
+    .fecha-btn:active { transform: scale(.96); }
+    .fecha-btn.selected { background: var(--black); color: var(--white); border-color: var(--black); }
+    .fecha-btn-dia { font-size: 11px; font-weight: 700; text-transform: uppercase; opacity: .6; }
+    .fecha-btn-num { font-size: 22px; font-weight: 900; line-height: 1.1; }
+    .fecha-btn-mes { font-size: 11px; font-weight: 600; opacity: .6; }
+    .fecha-btn.selected .fecha-btn-dia,
+    .fecha-btn.selected .fecha-btn-mes,
+    .fecha-btn.selected .fecha-btn-num { opacity: 1; }
+
+    /* ── Step 3: Slots ── */
+    .fecha-label { font-size: 14px; font-weight: 600; color: rgba(0,0,0,.55); padding: 0 16px 10px; }
+    .slots-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 0 12px; }
+    .slot-btn {
+      padding: 14px 8px; border-radius: 10px;
+      border: 2px solid transparent;
+      background: var(--white);
+      font-size: 15px; font-weight: 700;
+      cursor: pointer; text-align: center;
+      transition: all .15s;
+      box-shadow: 0 1px 6px rgba(0,0,0,.08);
+    }
+    .slot-btn:active { transform: scale(.96); }
+    .slot-btn.selected { background: var(--black); color: var(--white); border-color: var(--black); }
+    .slot-btn.lleno { background: var(--gray); color: var(--gray-mid); cursor: not-allowed; text-decoration: line-through; }
+    .slot-disponibles { font-size: 10px; font-weight: 500; opacity: .6; margin-top: 2px; }
+
+    /* ── Step 4: Tabs ── */
+    .tabs-bar {
+      display: flex; overflow-x: auto; gap: 0;
+      padding: 12px 12px 0;
+      scrollbar-width: none;
+      position: sticky; top: 0;
+      background: var(--brand); z-index: 10;
+    }
+    .tabs-bar::-webkit-scrollbar { display: none; }
+    .tab-btn {
+      flex-shrink: 0;
+      padding: 10px 16px;
+      border-radius: 10px 10px 0 0;
+      border: none;
+      background: rgba(0,0,0,.12);
+      font-size: 13px; font-weight: 700;
+      cursor: pointer; color: rgba(0,0,0,.6);
+      transition: all .15s; margin-right: 4px;
+    }
+    .tab-btn.active { background: var(--white); color: var(--black); }
+    .tab-panel { display: none; padding: 0 0 8px; }
+    .tab-panel.active { display: block; }
+
+    /* ── Menu items ── */
+    .menu-item {
+      display: flex; align-items: flex-start;
+      justify-content: space-between;
+      background: var(--white); border-radius: var(--radius);
+      padding: 14px; margin: 8px 12px;
+      box-shadow: 0 1px 6px rgba(0,0,0,.07); gap: 10px;
+    }
+    .menu-item-info { flex: 1; min-width: 0; }
+    .menu-item-name { font-size: 15px; font-weight: 800; margin-bottom: 3px; }
+    .menu-item-desc { font-size: 12px; color: rgba(0,0,0,.5); line-height: 1.4; }
+    .menu-item-price { font-size: 15px; font-weight: 900; white-space: nowrap; margin-right: 8px; padding-top: 2px; }
+    .btn-add {
+      width: 36px; height: 36px; min-width: 36px;
+      border-radius: 50%; background: var(--black); color: var(--white);
+      border: none; font-size: 22px; line-height: 1; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: transform .1s; flex-shrink: 0;
+    }
+    .btn-add:active { transform: scale(.88); }
+    .menu-item.agotado { opacity: .45; pointer-events: none; }
+    .agotado-badge { font-size: 11px; color: #999; padding: 3px 8px; background: #eee; border-radius: 12px; white-space: nowrap; }
+
+    /* Detroit */
+    .detroit-options { display: flex; gap: 8px; margin-top: 8px; }
+    .detroit-opt {
+      flex: 1; padding: 10px 6px;
+      border: 2px solid var(--black);
+      border-radius: 10px; background: transparent;
+      font-size: 13px; font-weight: 700; cursor: pointer; text-align: center;
+      transition: all .12s;
+    }
+    .detroit-opt:active { background: var(--black); color: var(--white); }
+    .seccion-label { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: rgba(0,0,0,.4); padding: 14px 14px 4px; }
+
+    /* ── Cart bar ── */
+    .cart-bar {
+      position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+      width: 100%; max-width: 900px;
+      padding: 12px 16px;
+      background: var(--brand); border-top: 2px solid rgba(0,0,0,.1);
+      display: none; z-index: 20;
+    }
+    .cart-bar.visible { display: block; }
+    .cart-bar-btn {
+      display: flex; align-items: center; justify-content: space-between;
+      background: var(--black); color: var(--white);
+      border: none; border-radius: var(--radius);
+      padding: 16px 20px; width: 100%;
+      font-size: 15px; font-weight: 800; cursor: pointer;
+    }
+    .cart-badge {
+      background: var(--brand); color: var(--black);
+      border-radius: 20px; padding: 2px 10px;
+      font-size: 13px; font-weight: 900;
+    }
+
+    /* ── Step 5: Resumen editable ── */
+    .resumen-row {
+      display: flex; align-items: center;
+      padding: 10px 0; border-bottom: 1px solid #f0f0f0; gap: 8px;
+    }
+    .resumen-row:last-child { border-bottom: none; }
+    .resumen-row-info { flex: 1; min-width: 0; }
+    .resumen-row-name { font-size: 14px; font-weight: 700; }
+    .resumen-row-desc { font-size: 11px; color: #888; margin-top: 2px; }
+    .qty-control { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .qty-btn {
+      width: 28px; height: 28px; border-radius: 50%;
+      border: 2px solid var(--black); background: transparent;
+      font-size: 16px; font-weight: 900; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all .1s;
+    }
+    .qty-btn:active { background: var(--black); color: var(--white); }
+    .qty-num { font-size: 15px; font-weight: 800; min-width: 20px; text-align: center; }
+    .resumen-row-price { font-size: 14px; font-weight: 700; white-space: nowrap; min-width: 56px; text-align: right; }
+    .btn-del { background: none; border: none; color: #ddd; font-size: 18px; cursor: pointer; padding: 0 2px; }
+    .btn-del:active { color: var(--danger); }
+
+    .total-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; }
+    .total-row.grand { font-size: 20px; font-weight: 900; border-top: 2px solid var(--black); margin-top: 4px; padding-top: 12px; }
+    .info-row { display: flex; align-items: center; gap: 8px; font-size: 14px; padding: 5px 0; }
+    .nota-caja { font-size: 11px; color: rgba(0,0,0,.4); text-align: center; padding: 4px 16px 0; }
+
+    /* ── Modal: Confirmación final ── */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.6);
+      z-index: 100; display: none; align-items: flex-end;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-sheet {
+      background: var(--white); width: 100%;
+      max-height: 92vh; border-radius: 20px 20px 0 0;
+      overflow-y: auto; padding-bottom: 24px;
+    }
+    .modal-handle { width: 40px; height: 4px; background: #ddd; border-radius: 4px; margin: 12px auto 0; }
+    .modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 16px 8px; border-bottom: 1px solid #eee;
+    }
+    .modal-title { font-size: 20px; font-weight: 900; }
+    .modal-close { background: none; border: none; font-size: 24px; cursor: pointer; color: #888; }
+
+    /* Confirmación final content */
+    .confirm-summary { padding: 16px; }
+    .confirm-item { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid #f5f5f5; font-size: 14px; }
+    .confirm-item:last-child { border-bottom: none; }
+    .confirm-item-name { font-weight: 600; }
+    .confirm-meta { background: #f7f7f7; border-radius: 10px; padding: 12px 14px; margin-top: 12px; }
+    .confirm-meta p { font-size: 13px; padding: 3px 0; }
+    .modal-footer { padding: 12px 16px; border-top: 1px solid #eee; }
+    .btn-row-two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    /* ── Modal: Pizza al gusto ── */
+    .chips-section { padding: 14px 14px 4px; }
+    .chips-section-title { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: rgba(0,0,0,.45); margin-bottom: 10px; }
+    .chips-wrap { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip {
+      padding: 8px 14px; border-radius: 20px;
+      border: 2px solid #ddd; background: #f9f9f9;
+      font-size: 13px; font-weight: 600; cursor: pointer;
+      transition: all .12s; user-select: none;
+    }
+    .chip:active { transform: scale(.95); }
+    .chip.selected { background: var(--black); color: var(--white); border-color: var(--black); }
+    .chip.base-chip.selected { background: var(--brand); color: var(--black); border-color: var(--black); }
+    .modal-footer-sticky { position: sticky; bottom: 0; background: var(--white); border-top: 1px solid #eee; padding: 14px 16px; }
+
+    /* ── Modal: Tiempo agotado ── */
+    #modal-timeout .modal-sheet { text-align: center; padding: 32px 24px 40px; border-radius: 20px 20px 0 0; }
+    .timeout-icon { font-size: 56px; margin-bottom: 12px; }
+    .timeout-title { font-size: 22px; font-weight: 900; margin-bottom: 8px; }
+    .timeout-text { font-size: 14px; color: #666; margin-bottom: 24px; line-height: 1.5; }
+
+    /* ── Step 6: Confirmación ── */
+    .confirm-screen { text-align: center; padding: 40px 24px; }
+    .confirm-icon { font-size: 72px; margin-bottom: 20px; }
+    .confirm-title { font-size: 32px; font-weight: 900; margin-bottom: 8px; }
+    .confirm-num {
+      display: inline-block; background: var(--black); color: var(--white);
+      padding: 6px 20px; border-radius: 20px;
+      font-size: 16px; font-weight: 700; margin: 12px 0 24px;
+    }
+    .confirm-info { background: var(--white); border-radius: var(--radius); padding: 18px; text-align: left; margin-bottom: 16px; box-shadow: 0 2px 12px rgba(0,0,0,.08); }
+    .confirm-info p { padding: 5px 0; font-size: 15px; }
+
+    /* ── Misc ── */
+    .error-msg {
+      background: #fff0f0; color: var(--danger);
+      border-radius: 10px; padding: 12px 14px;
+      font-size: 14px; font-weight: 600;
+      margin: 0 12px 10px; display: none;
+    }
+    .loading { text-align: center; padding: 32px; color: rgba(0,0,0,.45); font-size: 15px; }
+    .spinner {
+      display: inline-block; width: 24px; height: 24px;
+      border: 3px solid rgba(0,0,0,.15); border-top-color: var(--black);
+      border-radius: 50%; animation: spin .7s linear infinite; margin-bottom: 8px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .divider { height: 1px; background: rgba(0,0,0,.08); margin: 8px 12px; }
+
+    /* ══════════════════════════════
+       DESKTOP ≥640px
+    ══════════════════════════════ */
+    @media (min-width: 640px) {
+      .logo { font-size: 96px; }
+      .logo-sub { font-size: 13px; letter-spacing: 6px; }
+      .app-header { padding: 28px 24px 18px; }
+      .tipo-grid { gap: 20px; padding: 24px; }
+      .tipo-btn { padding: 40px 20px; }
+      .tipo-btn .tipo-icon { font-size: 56px; margin-bottom: 14px; }
+      .tipo-btn .tipo-label { font-size: 20px; }
+      .card { margin: 0 20px 12px; padding: 20px; }
+      .btn-row { padding: 0 20px; }
+      .step-title { padding: 24px 20px 6px; font-size: 32px; }
+      .slots-grid { grid-template-columns: repeat(4, 1fr); padding: 0 20px; }
+      .fecha-label { padding: 0 20px 12px; font-size: 16px; }
+      .fechas-scroll { padding: 0 20px 14px; gap: 10px; }
+      .tabs-bar { padding: 16px 20px 0; gap: 6px; }
+      .tab-btn { padding: 12px 22px; font-size: 14px; }
+
+      /* Dos columnas en menú */
+      .menu-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+      }
+      .menu-grid .menu-item { margin: 8px; }
+      .seccion-label { padding: 16px 20px 6px; }
+
+      /* Modal centrado */
+      .modal-overlay { align-items: center; }
+      .modal-sheet { border-radius: 20px; max-width: 580px; width: 100%; max-height: 85vh; margin: 0 auto; }
+      .chips-wrap { gap: 10px; }
+      .chip { font-size: 14px; padding: 9px 16px; }
+
+      .confirm-screen { padding: 60px 40px; }
+      .confirm-title { font-size: 42px; }
+    }
+  </style>
+</head>
+<body>
+<div class="app-wrap">
+
+<div class="checker"></div>
+
+<!-- Header -->
+<div class="app-header">
+  <div class="logo">[NOMBRE_NEGOCIO]</div>
+  <div class="logo-sub">[TIPO_NEGOCIO] &bull; [CIUDAD]</div>
+</div>
+
+<!-- Timer banner -->
+<div class="timer-banner" id="timer-banner">
+  ⏱️ Tu hora está reservada — <span id="timer-count">1:30</span>
+</div>
+
+<!-- Step dots -->
+<div class="step-nav" id="stepNav"></div>
+
+<!-- ════ STEP 1: TIPO ════ -->
+<div class="step active" id="step-1">
+  <div class="step-title">¿Cómo lo quieres?</div>
+  <div class="tipo-grid">
+    <div class="tipo-btn" id="btn-domicilio" onclick="selectTipo('domicilio')">
+      <div class="tipo-icon">🛵</div>
+      <div class="tipo-label">A domicilio</div>
+    </div>
+    <div class="tipo-btn" id="btn-recogida" onclick="selectTipo('recogida')">
+      <div class="tipo-icon">🛍️</div>
+      <div class="tipo-label">Para recoger</div>
+    </div>
+  </div>
+  <div class="btn-row" style="margin-top:16px">
+    <button class="btn-primary" id="btn-c1" onclick="goToStep(2)" disabled>Continuar →</button>
+  </div>
+</div>
+
+<!-- ════ STEP 2: DATOS ════ -->
+<div class="step" id="step-2">
+  <button class="btn-back" style="margin:12px 16px 0" onclick="goToStep(1)">← Volver</button>
+  <div class="step-title">Tus datos</div>
+  <div class="card">
+    <div class="form-group">
+      <label class="form-label">Nombre completo</label>
+      <input class="form-input" id="inp-nombre" type="text" placeholder="Tu nombre" autocomplete="name">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Teléfono</label>
+      <input class="form-input" id="inp-telefono" type="tel" placeholder="666 000 000" autocomplete="tel">
+    </div>
+    <div id="campo-direccion" class="form-group" style="display:none">
+      <label class="form-label">Dirección de entrega</label>
+      <input class="form-input" id="inp-direccion" type="text" placeholder="Calle, número, piso..." autocomplete="street-address">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notas (opcional)</label>
+      <input class="form-input" id="inp-notas" type="text" placeholder="Sin cebolla, alergia a...">
+    </div>
+    <div class="form-group" style="margin-bottom:0">
+      <label class="form-label">Forma de pago</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <button type="button" id="pago-efectivo" class="tipo-btn selected"
+          onclick="selectPago('efectivo')" style="padding:14px 8px;box-shadow:none">
+          <div class="tipo-icon" style="font-size:28px">💵</div>
+          <div class="tipo-label" style="font-size:14px">Efectivo</div>
+        </button>
+        <button type="button" id="pago-tarjeta" class="tipo-btn"
+          onclick="selectPago('tarjeta')" style="padding:14px 8px;box-shadow:none">
+          <div class="tipo-icon" style="font-size:28px">💳</div>
+          <div class="tipo-label" style="font-size:14px">Tarjeta</div>
+        </button>
+      </div>
+    </div>
+  </div>
+  <div class="btn-row">
+    <button class="btn-primary" onclick="validarDatos()">Elegir horario →</button>
+  </div>
+  <div class="error-msg" id="err-datos">Por favor rellena todos los campos obligatorios.</div>
+</div>
+
+<!-- ════ STEP 3: FECHA Y HORA ════ -->
+<div class="step" id="step-3">
+  <button class="btn-back" style="margin:12px 16px 0" onclick="goToStep(2)">← Volver</button>
+  <div class="step-title">¿Cuándo y a qué hora?</div>
+  <div class="fechas-scroll" id="fechas-container"></div>
+  <div class="fecha-label" id="fecha-label"></div>
+  <div id="slots-container" class="slots-grid"></div>
+  <div class="btn-row" style="margin-top:16px">
+    <button class="btn-primary" id="btn-c3" onclick="iniciarCarta()" disabled>Ver la carta →</button>
+  </div>
+  <div class="error-msg" id="err-slots">No hay huecos disponibles. Prueba mañana o llámanos al <span class="tel-negocio"></span>.</div>
+</div>
+
+<!-- ════ STEP 4: CARTA ════ -->
+<div class="step" id="step-4">
+  <div class="tabs-bar" id="tabs-bar"></div>
+  <div id="tabs-panels"></div>
+
+  <!-- Tab opcional: producto personalizable (ej: pizza al gusto). Solo visible si PERSONALIZABLE.precio_base > 0 -->
+  <div class="tab-panel" id="tab-gusto" style="display:none">
+    <div class="menu-item" style="flex-direction:column;cursor:pointer;margin:8px 12px" onclick="abrirPizzaGusto()">
+      <div style="display:flex;justify-content:space-between;align-items:center;width:100%">
+        <div>
+          <div class="menu-item-name">🍕 A tu gusto</div>
+          <div class="menu-item-desc" id="gusto-desc">Elige tu base e ingredientes.</div>
+        </div>
+        <button class="btn-add" onclick="event.stopPropagation();abrirPizzaGusto()">+</button>
+      </div>
+      <div style="margin-top:12px;font-size:12px;color:#888;line-height:1.7" id="gusto-detalle"></div>
+    </div>
+  </div>
+
+  <!-- Cart bar -->
+  <div class="cart-bar" id="cart-bar">
+    <button class="cart-bar-btn" onclick="goToStep(5)">
+      <span>🛒 Ver pedido</span>
+      <span class="cart-badge" id="cart-badge">0 items</span>
+    </button>
+  </div>
+</div>
+
+<!-- ════ STEP 5: RESUMEN EDITABLE ════ -->
+<div class="step" id="step-5">
+  <button class="btn-back" style="margin:12px 16px 0" onclick="goToStep(4)">← Seguir pidiendo</button>
+  <div class="step-title">Tu pedido</div>
+
+  <div class="card" id="resumen-items"></div>
+  <div class="nota-caja" id="nota-caja"></div>
+
+  <div class="card" style="margin-top:6px" id="resumen-cliente"></div>
+
+  <div class="error-msg" id="err-pedido"></div>
+  <div class="btn-row" style="margin-top:8px">
+    <button class="btn-primary" id="btn-confirmar" onclick="abrirConfirmacion()">Confirmar pedido →</button>
+  </div>
+</div>
+
+<!-- ════ STEP 6: ÉXITO ════ -->
+<div class="step" id="step-6">
+  <div class="confirm-screen">
+    <div class="confirm-icon">✅</div>
+    <div class="confirm-title">¡Pedido enviado!</div>
+    <div class="confirm-num" id="confirm-num">Nº —</div>
+    <div class="confirm-info" id="confirm-info"></div>
+    <p style="color:rgba(0,0,0,.5);font-size:13px;margin-bottom:24px">
+      Si necesitas algo llámanos:<br>
+      <strong style="color:var(--black);font-size:17px" class="tel-negocio"></strong>
+    </p>
+    <button class="btn-primary" onclick="reiniciar()">Hacer otro pedido</button>
+  </div>
+</div>
+
+<div class="checker"></div>
+</div><!-- /app-wrap -->
+
+<!-- ════ MODAL: Confirmación final ════ -->
+<div class="modal-overlay" id="modal-confirm">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <div class="modal-title">¿Confirmamos el pedido?</div>
+      <button class="modal-close" onclick="cerrarModal('modal-confirm')">✕</button>
+    </div>
+    <div class="confirm-summary" id="confirm-summary-content"></div>
+    <div class="modal-footer">
+      <div class="btn-row-two">
+        <button class="btn-secondary" style="margin-top:0;width:100%" onclick="cerrarModal('modal-confirm')">✏️ Editar</button>
+        <button class="btn-primary" id="btn-enviar" onclick="enviarPedido()">🚀 Enviar pedido</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ MODAL: Pizza al gusto ════ -->
+<div class="modal-overlay" id="modal-gusto">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">🍕 Pizza a tu gusto</div>
+        <div style="font-size:12px;color:#888;margin-top:2px">Base incluida en el precio</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:20px;font-weight:900" id="gusto-precio">9,00€</span>
+        <button class="modal-close" onclick="cerrarModal('modal-gusto')">✕</button>
+      </div>
+    </div>
+    <div class="chips-section">
+      <div class="chips-section-title">Elige tu base (obligatorio)</div>
+      <div class="chips-wrap" id="chips-bases"></div>
+    </div>
+    <div class="chips-section">
+      <div class="chips-section-title">Ingredientes — +1,50€ cada uno</div>
+      <div class="chips-wrap" id="chips-150"></div>
+    </div>
+    <div class="chips-section">
+      <div class="chips-section-title">Ingrediente premium — +2,00€</div>
+      <div class="chips-wrap" id="chips-200"></div>
+    </div>
+    <div class="chips-section">
+      <div class="chips-section-title">Ingredientes especiales — +3,00€ cada uno</div>
+      <div class="chips-wrap" id="chips-300"></div>
+    </div>
+    <div class="modal-footer-sticky">
+      <button class="btn-primary" id="btn-add-gusto" onclick="addPizzaGusto()">Añadir al pedido — 9,00€</button>
+      <div style="font-size:11px;color:#aaa;text-align:center;margin-top:6px">+0,50€ por caja (Ley 7/2022)</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ MODAL: Tiempo agotado ════ -->
+<div class="modal-overlay" id="modal-timeout">
+  <div class="modal-sheet" style="border-radius:20px 20px 0 0;padding:32px 24px 40px;text-align:center">
+    <div class="timeout-icon">⏰</div>
+    <div class="timeout-title">Tiempo agotado</div>
+    <div class="timeout-text">
+      El tiempo de reserva de tu hora ha expirado.<br>
+      Por favor vuelve a elegir horario para continuar.
+    </div>
+    <button class="btn-primary" onclick="reiniciarPorTimeout()">Volver a elegir hora</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════
+// MENÚ
+// ═══════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════
+// CONFIGURAR MENÚ — Rellenar con los productos del cliente
+// Categorías libres: añade, elimina o renombra las que necesites.
+// es_pizza:true → suma cargo de caja (0.50€) al confirmar pedido.
+// Para productos con precio por ración/entera (ej: pizzas detroit),
+//   usa precio_entera y precio_porcion en lugar de precio.
+// ═══════════════════════════════════════════════════
+
+// Carta cargada dinámicamente desde /api/carta (Restaurante Core)
+// Formato: [{id, nombre, icono, platos:[{id, nombre, descripcion, precio, disponible, foto_url}]}]
+let MENU = [];
+
+// ═══════════════════════════════════════════════════
+// PIZZA/PRODUCTO PERSONALIZABLE — Solo si el negocio
+// ofrece opción "crear tu propio producto".
+// Si no se usa, dejar precio_base:0 y arrays vacíos.
+// ing150 / ing200 / ing300 = precio del ingrediente en céntimos extra
+// ═══════════════════════════════════════════════════
+
+const PERSONALIZABLE = {
+  precio_base: 0.00,               // Precio base del producto personalizable
+  bases: [
+    '[Base / salsa 1]',
+    '[Base / salsa 2]',
+  ],
+  ing150: [                         // Ingredientes con suplemento +1.50€
+    '[Ingrediente A]',
+    '[Ingrediente B]',
+    '[Ingrediente C]',
+  ],
+  ing200: [                         // Ingredientes con suplemento +2.00€
+    '[Ingrediente premium 1]',
+  ],
+  ing300: [                         // Ingredientes con suplemento +3.00€
+    '[Ingrediente premium 2]',
+  ],
+};
+
+// ═══════════════════════════════════════════════════
+// ESTADO
+// ═══════════════════════════════════════════════════
+
+const state = {
+  step: 1,
+  tipo: null,
+  cliente: {},
+  metodo_pago: 'efectivo',
+  fecha: '',
+  hora: '',
+  token: null,
+  cart: [],
+  pedidoId: null,
+  timerInterval: null,
+  timerSegundos: 0,
+  gusto_base: '',
+  gusto_ing: new Set(),
+};
+
+// ═══════════════════════════════════════════════════
+// NAVEGACIÓN
+// ═══════════════════════════════════════════════════
+
+function goToStep(n) {
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+  document.getElementById('step-' + n).classList.add('active');
+  state.step = n;
+  renderStepDots();
+  window.scrollTo(0, 0);
+  if (n === 3) cargarSlots();
+  if (n === 5) renderResumen();
+}
+
+function renderStepDots() {
+  const nav = document.getElementById('stepNav');
+  if (state.step === 1 || state.step === 6) { nav.innerHTML = ''; return; }
+  const total = 4, current = state.step - 1;
+  nav.innerHTML = Array.from({length: total}, (_, i) => {
+    const cls = i+1 < current ? 'done' : i+1 === current ? 'active' : '';
+    return `<div class="step-dot ${cls}"></div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════
+// STEP 1
+// ═══════════════════════════════════════════════════
+
+function selectTipo(tipo) {
+  state.tipo = tipo;
+  document.getElementById('btn-domicilio').classList.toggle('selected', tipo === 'domicilio');
+  document.getElementById('btn-recogida').classList.toggle('selected', tipo === 'recogida');
+  document.getElementById('btn-c1').disabled = false;
+  document.getElementById('campo-direccion').style.display = tipo === 'domicilio' ? 'block' : 'none';
+}
+
+// ═══════════════════════════════════════════════════
+// STEP 2
+// ═══════════════════════════════════════════════════
+
+function validarDatos() {
+  const nombre    = document.getElementById('inp-nombre').value.trim();
+  const telefono  = document.getElementById('inp-telefono').value.trim();
+  const direccion = document.getElementById('inp-direccion').value.trim();
+  const notas     = document.getElementById('inp-notas').value.trim();
+  const err = document.getElementById('err-datos');
+  if (!nombre || !telefono) { err.style.display='block'; return; }
+  if (state.tipo === 'domicilio' && !direccion) { err.style.display='block'; return; }
+  err.style.display = 'none';
+  state.cliente = { nombre, telefono, direccion, notas };
+  goToStep(3);
+}
+
+function selectPago(pago) {
+  state.metodo_pago = pago;
+  document.getElementById('pago-efectivo').classList.toggle('selected', pago === 'efectivo');
+  document.getElementById('pago-tarjeta').classList.toggle('selected', pago === 'tarjeta');
+}
+
+// ═══════════════════════════════════════════════════
+// STEP 3: FECHA Y SLOTS
+// DIAS_CERRADOS: días de la semana en que el negocio cierra.
+// 0=domingo, 1=lunes, …, 6=sábado (getDay() de JS)
+// Ajustar según el horario real del negocio.
+// ═══════════════════════════════════════════════════
+
+const DIAS_CERRADOS = new Set([]);   // Por defecto ningún día cerrado
+
+function toLocalISO(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+function getFechasDisponibles() {
+  const fechas = [];
+  const t = new Date();
+  t.setHours(0, 0, 0, 0);
+  if (new Date().getHours() >= 23) t.setDate(t.getDate() + 1);
+  for (let i = 0; i < 14 && fechas.length < 10; i++) {
+    if (!DIAS_CERRADOS.has(t.getDay())) fechas.push(toLocalISO(t));
+    t.setDate(t.getDate() + 1);
+  }
+  return fechas;
+}
+
+function getFechaInicial() {
+  const t = new Date();
+  if (t.getHours() >= 23) t.setDate(t.getDate() + 1);
+  while (DIAS_CERRADOS.has(t.getDay())) t.setDate(t.getDate() + 1);
+  return toLocalISO(t);
+}
+
+function formatFecha(iso) {
+  const d = new Date(iso + 'T12:00:00');
+  const dias   = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+  const meses  = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  const hoy    = toLocalISO(new Date());
+  const manana = (() => { const t = new Date(); t.setDate(t.getDate() + 1); return toLocalISO(t); })();
+  const prefix = iso === hoy ? 'Hoy, ' : iso === manana ? 'Mañana, ' : '';
+  return `${prefix}${dias[d.getDay()]} ${d.getDate()} de ${meses[d.getMonth()]}`;
+}
+
+function renderFechas() {
+  const fechas = getFechasDisponibles();
+  const dias   = ['dom','lun','mar','mié','jue','vie','sáb'];
+  const meses  = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  document.getElementById('fechas-container').innerHTML = fechas.map(iso => {
+    const d = new Date(iso + 'T12:00:00');
+    return `<button class="fecha-btn ${iso === state.fecha ? 'selected' : ''}"
+      onclick="selectFecha('${iso}',this)">
+      <div class="fecha-btn-dia">${dias[d.getDay()]}</div>
+      <div class="fecha-btn-num">${d.getDate()}</div>
+      <div class="fecha-btn-mes">${meses[d.getMonth()]}</div>
+    </button>`;
+  }).join('');
+}
+
+function selectFecha(iso, el) {
+  state.fecha = iso;
+  state.hora = '';
+  document.getElementById('btn-c3').disabled = true;
+  document.querySelectorAll('.fecha-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  cargarSlotsParaFecha(iso);
+}
+
+async function cargarSlotsParaFecha(fecha) {
+  document.getElementById('fecha-label').textContent = formatFecha(fecha);
+  const cont = document.getElementById('slots-container');
+  cont.innerHTML = '<div class="loading"><div class="spinner"></div><br>Cargando horarios...</div>';
+  document.getElementById('btn-c3').disabled = true;
+
+  try {
+    const res = await fetch(`/api/slots?tipo=${state.tipo}&fecha=${fecha}`);
+    const slots = await res.json();
+    if (!slots.length) {
+      document.getElementById('err-slots').style.display = 'block';
+      cont.innerHTML = '';
+      return;
+    }
+    document.getElementById('err-slots').style.display = 'none';
+    cont.innerHTML = slots.map(s => `
+      <button class="slot-btn ${s.lleno ? 'lleno' : ''}"
+        ${s.lleno ? 'disabled' : `onclick="selectSlot('${s.hora}',this)"`}>
+        ${s.hora}
+        <div class="slot-disponibles">${s.lleno ? 'Lleno' : s.disponibles + ' libre'+(s.disponibles>1?'s':'')}</div>
+      </button>`).join('');
+  } catch(e) {
+    cont.innerHTML = '<div class="loading">Error cargando horarios. Recarga la página.</div>';
+  }
+}
+
+function cargarSlots() {
+  state.fecha = getFechaInicial();
+  renderFechas();
+  cargarSlotsParaFecha(state.fecha);
+}
+
+function selectSlot(hora, el) {
+  state.hora = hora;
+  document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('btn-c3').disabled = false;
+}
+
+// ═══════════════════════════════════════════════════
+// TEMPORIZADOR
+// ═══════════════════════════════════════════════════
+
+function iniciarTimer(segundos) {
+  pararTimer();
+  state.timerSegundos = segundos;
+  const banner = document.getElementById('timer-banner');
+  banner.classList.add('visible');
+  actualizarTimerUI();
+  state.timerInterval = setInterval(() => {
+    state.timerSegundos--;
+    actualizarTimerUI();
+    if (state.timerSegundos <= 0) {
+      pararTimer();
+      banner.classList.remove('visible');
+      document.getElementById('modal-timeout').classList.add('open');
+    }
+  }, 1000);
+}
+
+function pararTimer() {
+  if (state.timerInterval) { clearInterval(state.timerInterval); state.timerInterval = null; }
+  document.getElementById('timer-banner').classList.remove('visible', 'urgente');
+}
+
+function actualizarTimerUI() {
+  const m = Math.floor(state.timerSegundos / 60);
+  const s = state.timerSegundos % 60;
+  document.getElementById('timer-count').textContent = `${m}:${String(s).padStart(2,'0')}`;
+  const banner = document.getElementById('timer-banner');
+  if (state.timerSegundos <= 20) banner.classList.add('urgente');
+  else banner.classList.remove('urgente');
+}
+
+function reiniciarPorTimeout() {
+  cerrarModal('modal-timeout');
+  // Liberar token si existe
+  if (state.token) {
+    fetch(`/api/reservar-slot/${state.token}`, { method: 'DELETE' }).catch(()=>{});
+    state.token = null;
+  }
+  state.cart = [];
+  state.hora = '';
+  updateCartBar();
+  goToStep(3);
+}
+
+// ═══════════════════════════════════════════════════
+// INICIAR CARTA (reservar slot + timer)
+// ═══════════════════════════════════════════════════
+
+async function iniciarCarta() {
+  const btn = document.getElementById('btn-c3');
+  btn.disabled = true;
+  btn.textContent = 'Reservando hora...';
+
+  try {
+    const res = await fetch('/api/reservar-slot', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tipo: state.tipo, fecha: state.fecha, hora: state.hora }),
+    });
+    const data = await res.json();
+
+    if (!data.ok) {
+      btn.disabled = false;
+      btn.textContent = 'Ver la carta →';
+      mostrarErr('err-slots', data.error || 'No se pudo reservar esa hora.');
+      cargarSlots();
+      return;
+    }
+
+    state.token = data.token;
+    iniciarTimer(data.segundos);
+    goToStep(4);
+  } catch(e) {
+    btn.disabled = false;
+    btn.textContent = 'Ver la carta →';
+    mostrarErr('err-slots', 'Error de conexión. Inténtalo de nuevo.');
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// STEP 4: CARTA
+// ═══════════════════════════════════════════════════
+
+function switchTab(tab, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+async function cargarMenu() {
+  try {
+    const r = await fetch('/api/carta');
+    MENU = await r.json();
+  } catch(e) {
+    console.error('No se pudo cargar la carta:', e);
+    MENU = [];
+  }
+}
+
+function renderCarta() {
+  const tabsBar    = document.getElementById('tabs-bar');
+  const tabsPanels = document.getElementById('tabs-panels');
+
+  if (!MENU.length) {
+    tabsBar.innerHTML = '';
+    tabsPanels.innerHTML = '<p style="padding:32px;text-align:center;color:#aaa">La carta no está disponible en este momento.</p>';
+    return;
+  }
+
+  let btns   = '';
+  let panels = '';
+  MENU.forEach((cat, i) => {
+    const cid    = 'cat' + cat.id;
+    const active = i === 0;
+    btns   += `<button class="tab-btn${active?' active':''}" onclick="switchTab('${cid}',this)">${cat.icono || ''} ${cat.nombre}</button>`;
+    panels += `<div class="tab-panel${active?' active':''}" id="tab-${cid}"><div class="menu-grid" id="grid-${cid}"></div></div>`;
+  });
+
+  if (PERSONALIZABLE.precio_base > 0) {
+    btns += `<button class="tab-btn" onclick="switchTab('gusto',this)">🍕 A tu gusto</button>`;
+    const base = fmt(PERSONALIZABLE.precio_base);
+    document.getElementById('gusto-desc').textContent = `Elige tu base e ingredientes. Desde ${base}`;
+    document.getElementById('gusto-detalle').innerHTML =
+      `<strong style="color:var(--black)">Bases:</strong> ${PERSONALIZABLE.bases.join(' · ')}<br>` +
+      (PERSONALIZABLE.ing150.length ? `<strong style="color:var(--black)">+1,50€:</strong> ${PERSONALIZABLE.ing150.join(', ')}<br>` : '') +
+      (PERSONALIZABLE.ing200.length ? `<strong style="color:var(--black)">+2,00€:</strong> ${PERSONALIZABLE.ing200.join(', ')}<br>` : '') +
+      (PERSONALIZABLE.ing300.length ? `<strong style="color:var(--black)">+3,00€:</strong> ${PERSONALIZABLE.ing300.join(', ')}<br>` : '');
+    document.getElementById('tab-gusto').style.display = '';
+  }
+
+  tabsBar.innerHTML   = btns;
+  tabsPanels.innerHTML = panels;
+
+  MENU.forEach(cat => {
+    document.getElementById('grid-cat' + cat.id).innerHTML =
+      cat.platos.map(menuItemHTML).join('');
+  });
+
+  renderGustoChips();
+}
+
+function menuItemHTML(item) {
+  const agotado = !item.disponible;
+  return `
+    <div class="menu-item${agotado?' agotado':''}">
+      <div class="menu-item-info">
+        <div class="menu-item-name">${item.nombre}</div>
+        ${item.descripcion ? `<div class="menu-item-desc">${item.descripcion}</div>` : ''}
+      </div>
+      <div class="menu-item-price">${fmt(item.precio)}</div>
+      ${agotado
+        ? '<span class="agotado-badge">Agotado</span>'
+        : `<button class="btn-add" onclick="addItem(${item.id})">+</button>`}
+    </div>`;
+}
+
+function addItem(id) {
+  const item = MENU.flatMap(c => c.platos).find(i => i.id === id);
+  if (!item || !item.disponible) return;
+  const sid = String(item.id);
+  const ex  = state.cart.find(c => c.id === sid);
+  if (ex) ex.cantidad++;
+  else state.cart.push({ ...item, id: sid, cantidad: 1 });
+  updateCartBar();
+}
+
+// ═══════════════════════════════════════════════════
+// PIZZA AL GUSTO
+// ═══════════════════════════════════════════════════
+
+function renderGustoChips() {
+  document.getElementById('chips-bases').innerHTML =
+    PERSONALIZABLE.bases.map(b => `<div class="chip base-chip" onclick="selectBase(this,'${b}')">${b}</div>`).join('');
+  document.getElementById('chips-150').innerHTML =
+    PERSONALIZABLE.ing150.map(i => `<div class="chip" onclick="toggleIng(this,'${i}',1.5)">${i}</div>`).join('');
+  document.getElementById('chips-200').innerHTML =
+    PERSONALIZABLE.ing200.map(i => `<div class="chip" onclick="toggleIng(this,'${i}',2)">${i}</div>`).join('');
+  document.getElementById('chips-300').innerHTML =
+    PERSONALIZABLE.ing300.map(i => `<div class="chip" onclick="toggleIng(this,'${i}',3)">${i}</div>`).join('');
+}
+
+function abrirPizzaGusto() {
+  state.gusto_base = '';
+  state.gusto_ing = new Set();
+  document.querySelectorAll('#modal-gusto .chip').forEach(c => c.classList.remove('selected'));
+  actualizarPrecioGusto();
+  document.getElementById('modal-gusto').classList.add('open');
+}
+
+function selectBase(el, base) {
+  document.querySelectorAll('.base-chip').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  state.gusto_base = base;
+  actualizarPrecioGusto();
+}
+
+function toggleIng(el, nombre, precio) {
+  const key = `${nombre}|${precio}`;
+  if (state.gusto_ing.has(key)) { state.gusto_ing.delete(key); el.classList.remove('selected'); }
+  else { state.gusto_ing.add(key); el.classList.add('selected'); }
+  actualizarPrecioGusto();
+}
+
+function actualizarPrecioGusto() {
+  let total = PERSONALIZABLE.precio_base;
+  state.gusto_ing.forEach(k => { total += parseFloat(k.split('|')[1]); });
+  const s = fmt(total);
+  document.getElementById('gusto-precio').textContent = s;
+  document.getElementById('btn-add-gusto').textContent = `Añadir al pedido — ${s}`;
+}
+
+function addPizzaGusto() {
+  if (!state.gusto_base) { alert('Elige una base para tu pizza.'); return; }
+  let total = PERSONALIZABLE.precio_base;
+  const ings = [];
+  state.gusto_ing.forEach(k => {
+    const [n, p] = k.split('|');
+    total += parseFloat(p);
+    ings.push(n);
+  });
+  const desc = `Base: ${state.gusto_base}${ings.length ? ' · ' + ings.join(', ') : ''}`;
+  state.cart.push({ id:'gusto-'+Date.now(), nombre:'Pizza a tu gusto', descripcion:desc, precio:total, cantidad:1, es_pizza:true });
+  cerrarModal('modal-gusto');
+  updateCartBar();
+}
+
+// ═══════════════════════════════════════════════════
+// CART
+// ═══════════════════════════════════════════════════
+
+function calcCart() {
+  const subtotal = state.cart.reduce((s, i) => s + i.precio * i.cantidad, 0);
+  const num_pizzas = state.cart.filter(i => i.es_pizza).reduce((s, i) => s + i.cantidad, 0);
+  const cargo_cajas = num_pizzas * 0.50;
+  return { subtotal, cargo_cajas, total: subtotal + cargo_cajas, num_pizzas };
+}
+
+function updateCartBar() {
+  const bar = document.getElementById('cart-bar');
+  const n = state.cart.reduce((s, i) => s + i.cantidad, 0);
+  if (n === 0) { bar.classList.remove('visible'); return; }
+  bar.classList.add('visible');
+  const { total } = calcCart();
+  document.getElementById('cart-badge').textContent = `${n} item${n>1?'s':''} · ${fmt(total)}`;
+}
+
+// ═══════════════════════════════════════════════════
+// STEP 5: RESUMEN EDITABLE
+// ═══════════════════════════════════════════════════
+
+function cambiarCantidad(id, delta) {
+  const item = state.cart.find(i => i.id === id);
+  if (!item) return;
+  item.cantidad += delta;
+  if (item.cantidad <= 0) state.cart = state.cart.filter(i => i.id !== id);
+  updateCartBar();
+  renderResumen();
+}
+
+function eliminarItem(id) {
+  state.cart = state.cart.filter(i => i.id !== id);
+  updateCartBar();
+  renderResumen();
+}
+
+function renderResumen() {
+  if (state.cart.length === 0) {
+    document.getElementById('resumen-items').innerHTML =
+      '<p style="text-align:center;color:#aaa;padding:20px">No has añadido ningún producto.</p>';
+    document.getElementById('btn-confirmar').disabled = true;
+    return;
+  }
+  document.getElementById('btn-confirmar').disabled = false;
+  const { subtotal, cargo_cajas, total, num_pizzas } = calcCart();
+
+  let html = state.cart.map(item => `
+    <div class="resumen-row">
+      <div class="resumen-row-info">
+        <div class="resumen-row-name">${item.nombre}</div>
+        ${item.descripcion ? `<div class="resumen-row-desc">${item.descripcion}</div>` : ''}
+      </div>
+      <div class="qty-control">
+        <button class="qty-btn" onclick="cambiarCantidad('${item.id}',-1)">−</button>
+        <span class="qty-num">${item.cantidad}</span>
+        <button class="qty-btn" onclick="cambiarCantidad('${item.id}',1)">+</button>
+      </div>
+      <div class="resumen-row-price">${fmt(item.precio * item.cantidad)}</div>
+      <button class="btn-del" onclick="eliminarItem('${item.id}')">✕</button>
+    </div>`).join('');
+
+  html += `<div class="total-row" style="margin-top:8px"><span style="color:#888">Subtotal</span><span>${fmt(subtotal)}</span></div>`;
+  if (cargo_cajas > 0) {
+    html += `<div class="total-row" style="font-size:13px;color:#888">
+      <span>Cajas (${num_pizzas} pizza${num_pizzas>1?'s':''})</span>
+      <span>${fmt(cargo_cajas)}</span></div>`;
+  }
+  html += `<div class="total-row grand"><span>TOTAL</span><span>${fmt(total)}</span></div>`;
+  document.getElementById('resumen-items').innerHTML = html;
+  document.getElementById('nota-caja').textContent =
+    num_pizzas > 0 ? '*0,50€ por caja — Ley 7/2022' : '';
+
+  const c = state.cliente;
+  const emoji = state.tipo === 'domicilio' ? '🛵' : '🛍️';
+  document.getElementById('resumen-cliente').innerHTML = `
+    <div class="info-row"><span>${emoji}</span><strong>${state.tipo === 'domicilio' ? 'A domicilio' : 'Para recoger'}</strong></div>
+    <div class="info-row"><span>👤</span><span>${c.nombre}</span></div>
+    <div class="info-row"><span>📞</span><span>${c.telefono}</span></div>
+    ${c.direccion ? `<div class="info-row"><span>📍</span><span>${c.direccion}</span></div>` : ''}
+    <div class="info-row"><span>🕐</span><span>${formatFecha(state.fecha)} a las <strong>${state.hora}</strong></span></div>
+    ${c.notas ? `<div class="info-row"><span>📝</span><span>${c.notas}</span></div>` : ''}
+    <div class="info-row"><span>${state.metodo_pago === 'tarjeta' ? '💳' : '💵'}</span><span>Pago: <strong>${state.metodo_pago === 'tarjeta' ? 'Tarjeta' : 'Efectivo'}</strong></span></div>`;
+
+  document.getElementById('btn-confirmar').textContent = `Confirmar pedido — ${fmt(total)}`;
+}
+
+// ═══════════════════════════════════════════════════
+// MODAL CONFIRMACIÓN FINAL
+// ═══════════════════════════════════════════════════
+
+function abrirConfirmacion() {
+  if (state.cart.length === 0) return;
+  const { subtotal, cargo_cajas, total, num_pizzas } = calcCart();
+  const c = state.cliente;
+
+  let itemsHtml = state.cart.map(item => `
+    <div class="confirm-item">
+      <span class="confirm-item-name">${item.cantidad > 1 ? item.cantidad+'× ' : ''}${item.nombre}</span>
+      <span style="font-weight:700">${fmt(item.precio * item.cantidad)}</span>
+    </div>`).join('');
+
+  if (cargo_cajas > 0) {
+    itemsHtml += `<div class="confirm-item" style="color:#888;font-size:13px">
+      <span>Cajas (${num_pizzas})</span><span>${fmt(cargo_cajas)}</span></div>`;
+  }
+  itemsHtml += `<div class="confirm-item" style="font-size:17px;font-weight:900;border-top:2px solid #111;margin-top:4px;padding-top:10px">
+    <span>TOTAL</span><span>${fmt(total)}</span></div>`;
+
+  const emoji = state.tipo === 'domicilio' ? '🛵' : '🛍️';
+  document.getElementById('confirm-summary-content').innerHTML = `
+    <div style="margin-bottom:12px">${itemsHtml}</div>
+    <div class="confirm-meta">
+      <p>${emoji} <strong>${state.tipo === 'domicilio' ? 'A domicilio' : 'Para recoger'}</strong></p>
+      <p>👤 ${c.nombre} · 📞 ${c.telefono}</p>
+      ${c.direccion ? `<p>📍 ${c.direccion}</p>` : ''}
+      <p>🕐 ${formatFecha(state.fecha)} a las <strong>${state.hora}</strong></p>
+      ${c.notas ? `<p>📝 ${c.notas}</p>` : ''}
+      <p>${state.metodo_pago === 'tarjeta' ? '💳' : '💵'} Pago: <strong>${state.metodo_pago === 'tarjeta' ? 'Tarjeta' : 'Efectivo'}</strong></p>
+    </div>`;
+
+  document.getElementById('modal-confirm').classList.add('open');
+}
+
+// ═══════════════════════════════════════════════════
+// ENVIAR PEDIDO
+// ═══════════════════════════════════════════════════
+
+async function enviarPedido() {
+  const btn = document.getElementById('btn-enviar');
+  btn.disabled = true;
+  btn.textContent = 'Enviando...';
+
+  const { subtotal, cargo_cajas, total } = calcCart();
+  const items = state.cart.map(i => ({
+    nombre: i.nombre, descripcion: i.descripcion || '',
+    precio: i.precio, cantidad: i.cantidad, es_pizza: i.es_pizza,
+  }));
+
+  try {
+    const res = await fetch('/api/pedido', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        tipo: state.tipo,
+        nombre: state.cliente.nombre,
+        telefono: state.cliente.telefono,
+        direccion: state.cliente.direccion || null,
+        fecha: state.fecha, hora: state.hora,
+        items, subtotal, cargo_cajas, total,
+        notas: state.cliente.notas || '',
+        metodo_pago: state.metodo_pago,
+        token: state.token,
+      }),
+    });
+    const data = await res.json();
+
+    if (!data.ok) {
+      cerrarModal('modal-confirm');
+      mostrarErr('err-pedido', data.error || 'Error al enviar el pedido.');
+      btn.disabled = false;
+      btn.textContent = '🚀 Enviar pedido';
+      return;
+    }
+
+    pararTimer();
+    state.pedidoId = data.id;
+    cerrarModal('modal-confirm');
+
+    // Pantalla éxito
+    document.getElementById('confirm-num').textContent = `Pedido #${data.id}`;
+    const { total: tot } = calcCart();
+    document.getElementById('confirm-info').innerHTML = `
+      <p>${state.tipo === 'domicilio' ? '🛵' : '🛍️'} <strong>${state.tipo === 'domicilio' ? 'Te lo llevamos a casa' : 'Puedes venir a recogerlo'}</strong></p>
+      <p>⏰ <strong>${state.hora}</strong> — ${formatFecha(state.fecha)}</p>
+      <p>💶 <strong>${fmt(tot)}</strong></p>
+      <p>${state.metodo_pago === 'tarjeta' ? '💳' : '💵'} Pago: <strong>${state.metodo_pago === 'tarjeta' ? 'Tarjeta' : 'Efectivo'}</strong></p>`;
+    goToStep(6);
+  } catch(e) {
+    cerrarModal('modal-confirm');
+    mostrarErr('err-pedido', 'Error de conexión. Inténtalo de nuevo.');
+    btn.disabled = false;
+    btn.textContent = '🚀 Enviar pedido';
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// REINICIO
+// ═══════════════════════════════════════════════════
+
+function reiniciar() {
+  pararTimer();
+  state.tipo = null; state.cliente = {}; state.hora = '';
+  state.cart = []; state.pedidoId = null; state.token = null;
+  state.metodo_pago = 'efectivo';
+  ['btn-domicilio','btn-recogida'].forEach(id => document.getElementById(id).classList.remove('selected'));
+  document.getElementById('btn-c1').disabled = true;
+  ['inp-nombre','inp-telefono','inp-direccion','inp-notas'].forEach(id => document.getElementById(id).value='');
+  selectPago('efectivo');
+  updateCartBar();
+  goToStep(1);
+}
+
+// ═══════════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════════
+
+function fmt(n) { return n.toFixed(2).replace('.',',') + '€'; }
+
+function mostrarErr(id, msg) {
+  const el = document.getElementById(id);
+  el.textContent = msg; el.style.display = 'block';
+  setTimeout(() => el.style.display='none', 6000);
+}
+
+function cerrarModal(id) { document.getElementById(id).classList.remove('open'); }
+
+document.querySelectorAll('.modal-overlay').forEach(el => {
+  el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
+});
+
+// ═══════════════════════════════════════════════════
+// RESTAURANTE INFO (carga nombre, color, teléfono, días cerrados)
+// ═══════════════════════════════════════════════════
+
+async function cargarRestauranteInfo() {
+  try {
+    const [infoRes, configRes] = await Promise.all([
+      fetch('/api/restaurante-info'),
+      fetch('/api/config'),
+    ]);
+    const info   = await infoRes.json();
+    const config = await configRes.json();
+
+    if (info.nombre) {
+      document.querySelector('.logo').textContent = info.nombre;
+      document.title = `${info.nombre} — Haz tu pedido`;
+      const appleTitle = document.querySelector('meta[name="apple-mobile-web-app-title"]');
+      if (appleTitle) appleTitle.setAttribute('content', info.nombre);
+    }
+    if (info.eslogan) {
+      const sub = document.querySelector('.logo-sub');
+      if (sub) sub.textContent = info.eslogan;
+    }
+    if (info.color) {
+      document.documentElement.style.setProperty('--brand', info.color);
+    }
+    if (info.telefono) {
+      document.querySelectorAll('.tel-negocio').forEach(el => { el.textContent = info.telefono; });
+    }
+    if (config.dias_cerrado && config.dias_cerrado.length) {
+      // Python isoweekday (1=lun…7=dom) → JS getDay (0=dom, 1=lun…6=sáb)
+      config.dias_cerrado.forEach(d => DIAS_CERRADOS.add(d % 7));
+    }
+  } catch(e) {
+    // Silently fail — los placeholders del HTML son el fallback
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════
+
+renderStepDots();
+cargarMenu().then(renderCarta);
+cargarRestauranteInfo();
+
+// Registro PWA service worker
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/static/sw.js')
+      .catch(err => console.warn('SW no registrado:', err));
+  });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+# [NOMBRE_RESTAURANTE] — Platos especiales y fuera de carta
+
+> El equipo actualiza este archivo cuando cambian los platos disponibles.
+> [NOMBRE_AGENTE] leerá siempre la versión más reciente.
+
+---
+
+## PLATOS FUERA DE CARTA (unidades limitadas)
+
+Platos de temporada o de mercado con stock limitado.
+Si un cliente los quiere, [NOMBRE_AGENTE] notifica al restaurante y confirman disponibilidad.
+
+| Plato | Descripción | Precio | Unidades disponibles |
+|-------|-------------|--------|----------------------|
+| _(vacío — añadir cuando haya)_ | — | — | — |
+
+---
+
+## PLATOS DE ELABORACIÓN ESPECIAL (pedido con mínimo 24h de antelación)
+
+Requieren preparación previa. El cliente debe solicitarlos al hacer la reserva
+o con al menos un día de antelación. [NOMBRE_AGENTE] siempre lo menciona al cerrar una reserva.
+
+| Plato | Descripción | Precio | Unidades disponibles |
+|-------|-------------|--------|----------------------|
+| [ej: Arroz con bogavante] | Para 2 personas mínimo | XX €/persona | X raciones |
+| [ej: Cochinillo asado] | Mínimo 4 personas | XX €/persona | X raciones |
+
+---
+
+## INSTRUCCIONES PARA [NOMBRE_AGENTE]
+
+- Si un cliente pregunta por especiales o fuera de carta, comparte esta lista actualizada.
+- Al cerrar una reserva, **siempre** menciona los platos de elaboración especial y el plazo de 24h.
+- Si el cliente quiere reservar alguno, usa la herramienta `solicitar_plato_especial`.
+- No confirmes disponibilidad sin notificación al restaurante — el stock puede cambiar.
+- Si las unidades disponibles son 0, indica que ese plato ya no está disponible.

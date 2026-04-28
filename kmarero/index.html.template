@@ -1,0 +1,1860 @@
+<!DOCTYPE html>
+
+<html lang="es"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${NOMBRE_RESTAURANTE} — Carta Digital</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --cream:#fdf8f2; --warm:#f5ede0; --terra:#b5541e; --terra2:#8a3a10;
+  --gold:#c9913a; --gold-lt:#e4b86a; --text:#2a1f14; --muted:#8a7060;
+  --border:#dfd0bc; --white:#ffffff;
+  --k-bg:#0f0a06; --k-card:#1c1208; --k-bord:#2e1e0a;
+  --b-bg:#060e18; --b-card:#0c1a2e; --b-bord:#12273a;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',sans-serif;background:#1a1008;min-height:100vh;}
+
+/* NAV */
+.nav{position:fixed;top:0;left:0;right:0;z-index:999;background:#0d0804;border-bottom:1px solid #2a1a08;display:flex;align-items:center;padding:9px 14px;gap:7px;overflow-x:auto;}
+.nav-label{font-size:9px;color:#5a3a1a;text-transform:uppercase;letter-spacing:0.2em;white-space:nowrap;margin-right:2px;}
+.nav-btn{font-family:'DM Sans',sans-serif;font-size:11px;font-weight:600;padding:6px 13px;border:1px solid #3a2010;background:transparent;color:#7a5030;cursor:pointer;transition:all 0.2s;white-space:nowrap;border-radius:2px;}
+.nav-btn.active{background:var(--terra);border-color:var(--terra);color:#fff;}
+.nav-btn:hover:not(.active){border-color:var(--gold);color:var(--gold);}
+
+.screen{display:none;padding-top:52px;min-height:100vh;}
+.screen.active{display:block;}
+
+/* CUSTOMER */
+#screen-customer{background:var(--cream);}
+.hero{background:linear-gradient(170deg,#1a0c04 0%,#3a1a08 50%,#5a2e10 100%);padding:28px 20px 22px;text-align:center;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% -10%,rgba(201,145,58,0.25) 0%,transparent 65%);}
+.hero::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);}
+.hero-sub{font-size:9px;letter-spacing:0.3em;text-transform:uppercase;color:var(--gold-lt);margin-bottom:10px;position:relative;}
+.hero-name{font-family:'Cormorant Garamond',serif;font-size:44px;font-weight:700;color:#fff;line-height:1;position:relative;margin-bottom:4px;}
+.hero-name em{font-style:italic;color:var(--gold-lt);}
+.hero-tagline{font-size:11px;color:rgba(255,255,255,0.45);position:relative;margin-bottom:12px;}
+.hero-chef{font-size:10px;color:rgba(255,255,255,0.3);position:relative;font-style:italic;margin-bottom:12px;}
+.table-pill{display:inline-block;position:relative;border:1px solid rgba(201,145,58,0.5);padding:5px 16px;font-size:11px;color:var(--gold-lt);letter-spacing:0.12em;}
+.name-input-wrap{margin-top:12px;position:relative;}
+.name-input{background:rgba(255,255,255,0.07);border:1px solid rgba(201,145,58,0.35);color:#fff;font-family:'DM Sans',sans-serif;font-size:12px;padding:7px 14px;text-align:center;width:180px;border-radius:2px;outline:none;letter-spacing:0.04em;}
+.name-input::placeholder{color:rgba(255,255,255,0.25);}
+.name-input:focus{border-color:rgba(201,145,58,0.7);background:rgba(255,255,255,0.1);}
+.name-label{font-size:9px;color:rgba(255,255,255,0.25);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:5px;}
+
+/* TABS */
+.tabs{display:flex;background:var(--terra2);overflow-x:auto;position:sticky;top:52px;z-index:10;border-bottom:1px solid rgba(0,0,0,0.15);}
+.tab{flex:1;min-width:64px;padding:10px 6px;text-align:center;font-size:10px;font-weight:600;color:rgba(255,255,255,0.4);cursor:pointer;transition:all 0.2s;border-bottom:2px solid transparent;white-space:nowrap;}
+.tab.active{color:#fff;border-bottom-color:var(--gold-lt);}
+
+.menu-section{display:none;padding-bottom:110px;}
+.menu-section.active{display:block;}
+
+.sec-head{display:flex;align-items:center;gap:10px;padding:14px 16px 10px;margin-top:4px;}
+.sec-head-line{flex:1;height:1px;background:#e0cbb4;}
+.sec-head-text{font-family:'Cormorant Garamond',serif;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.2em;color:var(--muted);white-space:nowrap;}
+
+/* MENU ITEM */
+.item{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-bottom:1px solid var(--border);background:var(--white);transition:background 0.15s;}
+.item:hover{background:var(--warm);}
+.item-body{flex:1;min-width:0;}
+.item-name{font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px;line-height:1.35;}
+.item-desc{font-size:10.5px;color:var(--muted);line-height:1.45;}
+.item-badge{display:inline-block;margin-top:3px;font-size:8.5px;letter-spacing:0.1em;padding:1px 6px;border:1px solid var(--gold);color:var(--gold);text-transform:uppercase;}
+.item-right{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;min-width:52px;}
+.price{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;color:var(--terra);white-space:nowrap;}
+.price-sub{font-size:9px;color:var(--muted);text-align:right;line-height:1.3;}
+.add{width:28px;height:28px;border-radius:50%;border:none;background:var(--terra);color:#fff;font-size:20px;font-weight:300;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.15s;line-height:1;flex-shrink:0;}
+.add:hover{background:var(--gold);transform:scale(1.1);}
+.add:active{transform:scale(0.92);}
+/* DUAL OPTION BUTTONS */
+.dual-btns{display:flex;flex-direction:column;gap:5px;align-items:flex-end;}
+.dual-btn{display:flex;align-items:center;gap:6px;background:var(--warm);border:1px solid var(--border);padding:4px 8px 4px 10px;cursor:pointer;transition:all 0.15s;border-radius:2px;}
+.dual-btn:hover{background:var(--terra);border-color:var(--terra);}
+.dual-btn:hover .dual-label{color:#fff;}
+.dual-btn:hover .dual-price{color:#fff;}
+.dual-btn:active{transform:scale(0.96);}
+.dual-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);}
+.dual-price{font-family:'Cormorant Garamond',serif;font-size:14px;font-weight:600;color:var(--terra);}
+.dual-add{width:20px;height:20px;border-radius:50%;background:var(--terra);color:#fff;font-size:14px;font-weight:300;display:flex;align-items:center;justify-content:center;flex-shrink:0;line-height:1;}
+.dual-btn:hover .dual-add{background:#fff;color:var(--terra);}
+
+/* CART */
+.cart{position:fixed;bottom:0;left:0;right:0;z-index:100;background:var(--terra2);padding:13px 20px;display:flex;align-items:center;justify-content:space-between;transform:translateY(100%);transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);box-shadow:0 -6px 30px rgba(0,0,0,0.35);}
+.cart.show{transform:translateY(0);}
+.cart-left{color:#fff;}
+.cart-n{font-size:11px;color:rgba(255,255,255,0.6);margin-bottom:2px;}
+.cart-t{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;}
+.send-btn{background:var(--gold);color:#1a0c04;border:none;font-family:'DM Sans',sans-serif;font-weight:700;font-size:12px;padding:11px 20px;cursor:pointer;letter-spacing:0.06em;border-radius:2px;transition:background 0.2s;}
+.send-btn:hover{background:var(--gold-lt);}
+
+/* ORDER MODAL */
+.overlay{position:fixed;inset:0;z-index:200;background:rgba(30,10,0,0.8);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.3s;}
+.overlay.show{opacity:1;pointer-events:all;}
+.modal{background:var(--white);padding:32px 26px;text-align:center;max-width:290px;width:90%;transform:scale(0.9);transition:transform 0.3s;}
+.overlay.show .modal{transform:scale(1);}
+.modal-ico{font-size:48px;margin-bottom:10px;}
+.modal-ttl{font-family:'Cormorant Garamond',serif;font-size:24px;color:var(--text);margin-bottom:8px;}
+.modal-txt{font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:20px;white-space:pre-line;}
+.modal-btn{background:var(--terra);color:#fff;border:none;padding:10px 28px;font-family:'DM Sans',sans-serif;font-weight:600;font-size:12px;cursor:pointer;border-radius:2px;}
+
+/* CART REVIEW MODAL */
+.review-overlay{position:fixed;inset:0;z-index:250;background:rgba(20,8,0,0.85);display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.3s;}
+.review-overlay.show{opacity:1;pointer-events:all;}
+.review-sheet{background:var(--white);width:100%;max-width:480px;max-height:88vh;display:flex;flex-direction:column;transform:translateY(100%);transition:transform 0.35s cubic-bezier(0.16,1,0.3,1);}
+.review-overlay.show .review-sheet{transform:translateY(0);}
+.review-header{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 12px;border-bottom:2px solid var(--terra);}
+.review-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:var(--text);}
+.review-close{background:none;border:none;font-size:22px;color:var(--muted);cursor:pointer;padding:0 4px;line-height:1;}
+.review-body{overflow-y:auto;flex:1;padding:0 0 8px;}
+.review-item{display:flex;align-items:center;gap:10px;padding:12px 18px;border-bottom:1px solid var(--border);}
+.review-name{flex:1;font-size:13px;font-weight:500;color:var(--text);line-height:1.3;}
+.review-subtotal{font-family:'Cormorant Garamond',serif;font-size:14px;font-weight:600;color:var(--terra);min-width:52px;text-align:right;}
+.qty-ctrl{display:flex;align-items:center;gap:0;border:1px solid var(--border);border-radius:3px;overflow:hidden;flex-shrink:0;}
+.qty-btn{width:28px;height:28px;border:none;background:var(--warm);color:var(--brown);font-size:16px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.15s;line-height:1;}
+.qty-btn:hover{background:var(--terra);color:#fff;}
+.qty-num{width:28px;text-align:center;font-size:13px;font-weight:700;color:var(--brown);background:var(--white);}
+.review-footer{padding:14px 18px;border-top:2px solid var(--border);background:var(--cream);}
+.review-total-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px;}
+.review-total-label{font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;}
+.review-total-price{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:700;color:var(--terra);}
+.confirm-btn{width:100%;padding:14px;background:var(--terra);color:#fff;border:none;font-family:'DM Sans',sans-serif;font-weight:700;font-size:14px;letter-spacing:0.06em;cursor:pointer;border-radius:2px;transition:background 0.2s;}
+.confirm-btn:hover{background:var(--gold);}
+.review-empty{padding:32px;text-align:center;font-size:13px;color:var(--muted);font-style:italic;}
+
+/* KDS */
+#screen-kitchen{background:var(--k-bg);}
+#screen-bar{background:var(--b-bg);}
+.kds-top{display:flex;align-items:center;justify-content:space-between;padding:16px 20px 12px;border-bottom:1px solid rgba(255,255,255,0.07);}
+.kds-title{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:700;}
+#screen-kitchen .kds-title{color:#ff7040;}
+#screen-bar .kds-title{color:#40c0f0;}
+.kds-rest{font-size:9px;letter-spacing:0.2em;text-transform:uppercase;margin-top:2px;opacity:0.3;color:#fff;}
+.kds-clock{font-size:20px;font-weight:600;color:rgba(255,255,255,0.55);font-variant-numeric:tabular-nums;}
+.kds-empty{padding:70px 20px;text-align:center;}
+.kds-empty-ico{font-size:50px;margin-bottom:10px;opacity:0.25;}
+.kds-empty-msg{font-size:13px;color:rgba(255,255,255,0.2);line-height:1.6;}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;padding:14px;}
+.ocard{border-radius:3px;overflow:hidden;animation:pop 0.4s cubic-bezier(0.16,1,0.3,1);}
+#screen-kitchen .ocard{background:var(--k-card);border:1px solid var(--k-bord);}
+#screen-bar .ocard{background:var(--b-card);border:1px solid var(--b-bord);}
+@keyframes pop{from{opacity:0;transform:scale(0.94) translateY(-10px)}to{opacity:1;transform:none}}
+.ocard-head{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;}
+#screen-kitchen .ocard-head{background:#2e0e06;border-bottom:1px solid #3e1a0a;}
+#screen-bar .ocard-head{background:#061428;border-bottom:1px solid #0e2040;}
+.o-table{font-size:14px;font-weight:700;color:#fff;}
+.o-time{font-size:10px;color:rgba(255,255,255,0.35);margin-top:1px;}
+.o-elapsed{font-size:12px;font-weight:700;padding:3px 8px;border-radius:2px;font-variant-numeric:tabular-nums;}
+.ok{background:rgba(50,200,80,0.15);color:#4ade80;}
+.warn{background:rgba(250,180,0,0.15);color:#fbbf24;}
+.late{background:rgba(220,40,40,0.15);color:#f87171;}
+.ocard-items{padding:10px 14px;}
+.oi{display:flex;gap:8px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05);}
+.oi:last-child{border:none;}
+.oi-q{font-size:13px;font-weight:700;color:var(--gold);min-width:20px;}
+.oi-n{font-size:12px;color:rgba(255,255,255,0.85);flex:1;line-height:1.3;}
+.card-actions{display:flex;gap:0;}
+.done-btn{flex:1;padding:10px;border:none;font-family:'DM Sans',sans-serif;font-weight:700;font-size:11px;cursor:pointer;letter-spacing:0.08em;transition:background 0.2s;}
+#screen-kitchen .done-btn{background:#b5421e;color:#fff;}
+#screen-kitchen .done-btn:hover{background:#d4541e;}
+#screen-bar .done-btn{background:#0d4a8a;color:#fff;}
+#screen-bar .done-btn:hover{background:#1060aa;}
+.print-btn{padding:10px 14px;border:none;border-left:1px solid rgba(255,255,255,0.1);font-size:16px;cursor:pointer;transition:background 0.2s;flex-shrink:0;}
+#screen-kitchen .print-btn{background:#8a3010;color:#fff;}
+#screen-kitchen .print-btn:hover{background:#b5421e;}
+#screen-bar .print-btn{background:#063060;color:#fff;}
+#screen-bar .print-btn:hover{background:#0d4a8a;}
+
+/* FLASH */
+.flash{position:fixed;top:58px;left:50%;transform:translateX(-50%) translateY(-14px);background:var(--terra);color:#fff;padding:9px 18px;font-weight:700;font-size:12px;opacity:0;transition:all 0.3s;z-index:500;border-radius:2px;pointer-events:none;white-space:nowrap;}
+.flash.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* TICKET MODAL */
+.ticket-overlay{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.25s;}
+.ticket-overlay.show{opacity:1;pointer-events:all;}
+.ticket-wrap{background:#fff;width:302px;box-shadow:0 20px 60px rgba(0,0,0,0.5);transform:scale(0.9);transition:transform 0.25s;}
+.ticket-overlay.show .ticket-wrap{transform:scale(1);}
+.ticket-actions{display:flex;gap:0;background:#1a1208;}
+.t-btn{flex:1;padding:11px;border:none;font-family:'DM Sans',sans-serif;font-weight:700;font-size:11px;cursor:pointer;letter-spacing:0.06em;transition:background 0.2s;}
+.t-btn-print{background:#c9913a;color:#120800;}
+.t-btn-print:hover{background:#e4b86a;}
+.t-btn-close{background:#333;color:#aaa;}
+.t-btn-close:hover{background:#444;}
+#ticket-content{font-family:'Courier New',Courier,monospace;font-size:12px;line-height:1.5;color:#000;padding:14px 10px;background:#fff;width:282px;}
+.tk-logo{text-align:center;font-size:18px;font-weight:700;letter-spacing:0.05em;margin-bottom:2px;}
+.tk-sub{text-align:center;font-size:10px;color:#555;margin-bottom:2px;}
+.tk-addr{text-align:center;font-size:9px;color:#777;margin-bottom:8px;}
+.tk-div{border-top:1px dashed #aaa;margin:6px 0;}
+.tk-div2{border-top:2px solid #000;margin:6px 0;}
+.tk-station{text-align:center;font-weight:700;font-size:13px;padding:4px 0;letter-spacing:0.1em;border:2px solid #000;margin-bottom:8px;}
+.tk-meta{font-size:11px;margin-bottom:2px;}
+.tk-meta span{float:right;}
+.tk-item-row{display:flex;margin:3px 0;font-size:11px;}
+.tk-qty{width:28px;font-weight:700;flex-shrink:0;}
+.tk-item-name{flex:1;}
+.tk-total-row{display:flex;justify-content:space-between;font-weight:700;font-size:13px;margin-top:6px;}
+.tk-footer{text-align:center;font-size:9px;color:#888;margin-top:8px;}
+
+/* SUMMARY SCREEN */
+#screen-summary{background:var(--cream);}
+.sum-hero{background:linear-gradient(170deg,#1a0c04 0%,#3a1a08 50%,#5a2e10 100%);padding:20px;text-align:center;position:relative;}
+.sum-hero::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);}
+.sum-title{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:700;color:#fff;}
+.sum-mesa{font-size:11px;color:var(--gold-lt);margin-top:4px;letter-spacing:0.1em;}
+.sum-item{display:flex;align-items:center;gap:10px;padding:11px 16px;border-bottom:1px solid var(--border);background:var(--white);}
+.sum-item-name{font-size:13px;color:var(--text);flex:1;line-height:1.3;}
+.sum-item-qty{font-size:11px;font-weight:700;color:var(--terra);min-width:28px;text-align:center;}
+.sum-item-price{font-family:'Cormorant Garamond',serif;font-size:15px;color:var(--terra);min-width:58px;text-align:right;}
+.sum-total-bar{display:flex;justify-content:space-between;align-items:baseline;padding:14px 18px;border-top:2px solid var(--border);background:var(--cream);}
+.sum-total-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.12em;}
+.sum-total-amount{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:700;color:var(--terra);}
+.bill-btn{width:calc(100% - 32px);margin:12px 16px 6px;padding:15px;background:var(--terra);color:#fff;border:none;font-family:'DM Sans',sans-serif;font-weight:700;font-size:14px;letter-spacing:0.08em;cursor:pointer;border-radius:2px;transition:background 0.2s;}
+.bill-btn:hover{background:var(--terra2);}
+.bill-requested-box{margin:12px 16px;padding:14px 16px;background:rgba(181,84,30,0.08);border:1px solid var(--terra);color:var(--terra);text-align:center;font-size:13px;font-weight:600;border-radius:2px;line-height:1.5;}
+.sum-empty{padding:52px 20px;text-align:center;font-size:13px;color:var(--muted);font-style:italic;}
+.sum-section-label{padding:10px 16px 4px;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:0.2em;}
+
+/* ADMIN SCREEN */
+#screen-admin{background:#0a0604;min-height:100vh;padding-bottom:40px;}
+.admin-top{padding:16px 20px 12px;border-bottom:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;justify-content:space-between;}
+.admin-title{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:700;color:#e4b86a;}
+.admin-sub{font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:rgba(255,255,255,0.25);margin-top:2px;}
+.admin-tabs{display:flex;background:#1a0c04;border-bottom:1px solid #2a1a08;}
+.admin-tab{flex:1;padding:10px;text-align:center;font-size:11px;font-weight:600;color:rgba(255,255,255,0.35);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s;}
+.admin-tab.active{color:#e4b86a;border-bottom-color:#e4b86a;}
+.admin-panel{display:none;padding:14px;}
+.admin-panel.active{display:block;}
+.admin-lock{padding:40px 20px;text-align:center;}
+.admin-lock h3{font-family:'Cormorant Garamond',serif;font-size:22px;color:#e4b86a;margin-bottom:8px;}
+.admin-lock p{font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:20px;}
+.admin-pin-input{width:160px;padding:12px;text-align:center;font-size:20px;letter-spacing:0.3em;background:#1c1208;color:#e4b86a;border:1px solid #2e1e0a;border-radius:2px;font-family:'DM Sans',sans-serif;}
+.admin-pin-btn{margin-top:12px;display:block;width:160px;margin-left:auto;margin-right:auto;padding:12px;background:#c9913a;color:#0a0604;border:none;font-weight:700;font-size:13px;cursor:pointer;border-radius:2px;}
+.admin-pin-error{color:#f87171;font-size:12px;margin-top:8px;display:none;}
+.table-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;}
+.table-card{background:#1c1208;border:1px solid #2e1e0a;border-radius:3px;padding:12px;cursor:pointer;transition:border-color 0.2s;}
+.table-card:hover{border-color:#c9913a;}
+.table-card.bill-alert{border-color:#f87171;animation:pulse-red 1.5s infinite;}
+.table-card.occupied{border-color:#3a2810;}
+@keyframes pulse-red{0%,100%{border-color:#f87171}50%{border-color:#ff9999}}
+.tc-num{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;color:#e4b86a;}
+.tc-status{font-size:10px;color:rgba(255,255,255,0.3);margin-top:2px;}
+.tc-total{font-size:11px;font-weight:700;color:#c9913a;margin-top:3px;}
+.tc-bill{font-size:10px;color:#f87171;margin-top:3px;font-weight:700;}
+.bill-alert-banner{background:#7a1a10;color:#fff;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;border-radius:2px;}
+.bab-text{font-size:12px;font-weight:700;}
+.bab-dismiss{background:rgba(255,255,255,0.15);border:none;color:#fff;padding:5px 10px;font-size:11px;cursor:pointer;border-radius:2px;font-weight:700;}
+.admin-mesa-detail{background:#1c1208;border:1px solid #c9913a;border-radius:3px;margin-top:14px;overflow:hidden;}
+.amd-head{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#2e1e0a;}
+.amd-title{font-size:15px;font-weight:700;color:#e4b86a;}
+.amd-total{font-family:'Cormorant Garamond',serif;font-size:17px;color:#e4b86a;}
+.amd-items{padding:10px 14px;}
+.amd-item{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.05);font-size:12px;color:rgba(255,255,255,0.75);}
+.amd-item:last-child{border:none;}
+.amd-actions{display:flex;gap:8px;padding:10px 14px 12px;}
+.amd-btn{flex:1;padding:9px;border:none;font-size:11px;font-weight:700;cursor:pointer;border-radius:2px;}
+.amd-btn-reset{background:#7a1a10;color:#fff;}
+.amd-btn-reset:hover{background:#b5241e;}
+.amd-empty{padding:16px 14px;font-size:12px;color:rgba(255,255,255,0.25);font-style:italic;}
+.qr-intro{font-size:12px;color:rgba(255,255,255,0.35);margin-bottom:14px;}
+.qr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:12px;}
+.qr-card{background:#1c1208;border:1px solid #2e1e0a;border-radius:3px;padding:14px;text-align:center;}
+.qr-card.admin-card{border-color:#c9913a;background:#2a1a04;}
+.qr-card img{width:130px;height:130px;border:3px solid #fff;border-radius:2px;display:block;margin:0 auto;}
+.qr-label{font-size:13px;font-weight:700;color:#e4b86a;margin-top:8px;}
+.qr-print-btn{margin-top:8px;width:100%;padding:7px;background:#c9913a;color:#0a0604;border:none;font-weight:700;font-size:10px;cursor:pointer;border-radius:2px;transition:background 0.2s;letter-spacing:0.06em;}
+.qr-print-btn:hover{background:#e4b86a;}
+.qr-admin-wrap{margin-bottom:16px;}
+.qr-admin-label{font-size:10px;color:#c9913a;text-transform:uppercase;letter-spacing:0.2em;margin-bottom:8px;}
+
+/* AGOTADO */
+.item.agotado-item .add,.dual-btn.agotado-btn{opacity:0.35;cursor:not-allowed;pointer-events:none;}
+.agotado-badge{display:inline-block;margin-top:3px;font-size:8.5px;letter-spacing:0.1em;padding:1px 7px;border:1px solid #c0392b;color:#c0392b;text-transform:uppercase;background:rgba(192,57,43,0.07);}
+.stock-row{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border-bottom:1px solid rgba(255,255,255,0.05);font-size:12px;color:rgba(255,255,255,0.75);}
+.stock-row:last-child{border:none;}
+.stock-name{flex:1;padding-right:10px;line-height:1.3;}
+.stock-toggle{position:relative;width:40px;height:22px;flex-shrink:0;}
+.stock-toggle input{opacity:0;width:0;height:0;}
+.stock-slider{position:absolute;cursor:pointer;inset:0;background:#2e1e0a;border-radius:22px;transition:0.2s;}
+.stock-slider::before{content:'';position:absolute;height:16px;width:16px;left:3px;bottom:3px;background:#5a3a1a;border-radius:50%;transition:0.2s;}
+.stock-toggle input:checked+.stock-slider{background:#3a7a2a;}
+.stock-toggle input:checked+.stock-slider::before{transform:translateX(18px);background:#fff;}
+.stock-search{width:100%;padding:9px 12px;background:#1c1208;color:#fff;border:1px solid #2e1e0a;font-family:'DM Sans',sans-serif;font-size:12px;border-radius:2px;margin-bottom:10px;}
+.stock-search::placeholder{color:rgba(255,255,255,0.25);}
+.stock-list{background:#1c1208;border:1px solid #2e1e0a;border-radius:3px;max-height:60vh;overflow-y:auto;}
+.stock-agotado-count{font-size:10px;color:#f87171;margin-bottom:8px;}
+
+/* NOTAS EN REVIEW */
+.review-notes{width:100%;margin-top:6px;padding:6px 8px;font-size:11px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:2px;color:var(--text);background:var(--cream);resize:none;line-height:1.4;}
+.review-notes::placeholder{color:var(--muted);}
+.oi-notes{font-size:10px;color:rgba(255,255,255,0.45);font-style:italic;margin-top:2px;padding-left:28px;}
+
+/* ADMIN MESA DETAIL MEJORADO */
+.amd-tabs{display:flex;border-bottom:1px solid rgba(255,255,255,0.07);margin-bottom:10px;}
+.amd-tab{flex:1;padding:8px;text-align:center;font-size:11px;font-weight:600;color:rgba(255,255,255,0.3);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s;}
+.amd-tab.active{color:#e4b86a;border-bottom-color:#e4b86a;}
+.amd-panel{display:none;}.amd-panel.active{display:block;}
+.amd-order-item{display:flex;align-items:center;gap:8px;padding:7px 14px;border-bottom:1px solid rgba(255,255,255,0.05);font-size:12px;color:rgba(255,255,255,0.8);}
+.amd-order-item:last-child{border:none;}
+.amd-order-name{flex:1;line-height:1.3;}
+.amd-order-price{font-family:'Cormorant Garamond',serif;font-size:13px;color:#c9913a;min-width:50px;text-align:right;}
+.amd-qty-ctrl{display:flex;align-items:center;gap:0;border:1px solid rgba(255,255,255,0.1);border-radius:2px;overflow:hidden;flex-shrink:0;}
+.amd-qty-btn{width:26px;height:26px;border:none;background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.6);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.15s;}
+.amd-qty-btn:hover{background:#b5421e;color:#fff;}
+.amd-qty-num{width:26px;text-align:center;font-size:12px;font-weight:700;color:#fff;background:rgba(255,255,255,0.04);}
+.amd-add-search{width:100%;padding:8px 12px;background:#0f0804;color:#fff;border:1px solid #2e1e0a;font-family:'DM Sans',sans-serif;font-size:12px;border-radius:2px;margin-bottom:8px;}
+.amd-add-search::placeholder{color:rgba(255,255,255,0.2);}
+.amd-menu-list{max-height:40vh;overflow-y:auto;}
+.amd-menu-item{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:1px solid rgba(255,255,255,0.04);font-size:12px;color:rgba(255,255,255,0.7);}
+.amd-menu-item:last-child{border:none;}
+.amd-menu-name{flex:1;}
+.amd-menu-price{font-family:'Cormorant Garamond',serif;font-size:13px;color:#c9913a;margin:0 10px;}
+.amd-menu-add{width:26px;height:26px;border-radius:50%;border:none;background:#c9913a;color:#0a0604;font-size:18px;font-weight:300;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background 0.15s;}
+.amd-menu-add:hover{background:#e4b86a;}
+.amd-cart-bar{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#2e1e0a;border-top:1px solid #3e2810;margin-top:4px;}
+.amd-cart-info{font-size:12px;color:rgba(255,255,255,0.5);}
+.amd-send-btn{background:#c9913a;color:#0a0604;border:none;padding:8px 16px;font-weight:700;font-size:11px;cursor:pointer;border-radius:2px;transition:background 0.2s;}
+.amd-send-btn:hover{background:#e4b86a;}
+.amd-send-btn:disabled{background:#3a2810;color:rgba(255,255,255,0.2);cursor:default;}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <span class="nav-label">Vista:</span>
+  <button class="nav-btn active" id="nav-customer" onclick="showScreen('customer',this)">📱 Cliente (Mesa 3)</button>
+  <button class="nav-btn" id="nav-summary" onclick="showScreen('summary',this)">📋 Mi pedido</button>
+  <button class="nav-btn" id="nav-kitchen" onclick="showScreen('kitchen',this)">🔥 Cocina</button>
+  <button class="nav-btn" id="nav-bar" onclick="showScreen('bar',this)">🍷 Barra</button>
+  <button class="nav-btn" id="nav-admin" onclick="showScreen('admin',this)" style="display:none">🔑 Admin</button>
+</nav>
+
+<div class="flash" id="flash"></div>
+
+<!-- ══ CLIENTE ══ -->
+<div class="screen active" id="screen-customer">
+  <div class="hero">
+    <div class="hero-sub">${CIUDAD}</div>
+    <div class="hero-name">Al<em>M</em>a</div>
+    <div class="hero-tagline">Cocina casera tradicional con toques de autor</div>
+    <div class="hero-chef">Chef Manuel Pavón · Producto Km 0</div>
+    <div class="table-pill">Mesa 3 · 2 personas</div>
+    <div class="name-input-wrap">
+      <div class="name-label">Tu nombre (opcional)</div>
+      <input class="name-input" id="customer-name" type="text" maxlength="30" placeholder="¿Cómo te llamas?" oninput="saveName(this.value)">
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(&#39;compartir&#39;,this)">Para compartir</div>
+    <div class="tab" onclick="switchTab(&#39;producto&#39;,this)">Producto</div>
+    <div class="tab" onclick="switchTab(&#39;ensaladas&#39;,this)">Ensaladas</div>
+    <div class="tab" onclick="switchTab(&#39;guisos&#39;,this)">Guisos</div>
+    <div class="tab" onclick="switchTab(&#39;mar&#39;,this)">Del mar</div>
+    <div class="tab" onclick="switchTab(&#39;tierra&#39;,this)">Del mar y tierra</div>
+    <div class="tab" onclick="switchTab(&#39;peques&#39;,this)">Peques</div>
+    <div class="tab" onclick="switchTab(&#39;postres&#39;,this)">Postres</div>
+    <div class="tab" onclick="switchTab(&#39;bebidas&#39;,this)">Bebidas</div>
+  </div>
+
+  <!-- PARA COMPARTIR -->
+  <div class="menu-section active" id="tab-compartir">
+    <div class="sec-head"><div class="sec-head-line"></div><div class="sec-head-text">Para compartir o no…</div><div class="sec-head-line"></div></div>
+
+    <div class="item">
+      <div class="item-body">
+        <div class="item-name">Patatas bravas de corte tradicional</div>
+        <div class="item-desc">Con salsa brava y espuma de alioli</div>
+        <div class="item-badge">Plato</div>
+      </div>
+      <div class="item-right"><div class="price">5,00€</div><button class="add" onclick="addItem(&#39;Patatas bravas&#39;,5,&#39;food&#39;,event)">+</button></div>
+    </div>
+
+    <div class="item">
+      <div class="item-body">
+        <div class="item-name">Ensaladilla rusa con toques cítricos y anchoas</div>
+        <div class="item-badge">Tapa</div>
+      </div>
+      <div class="item-right"><div class="price">4,50€</div><button class="add" onclick="addItem(&#39;Ensaladilla rusa&#39;,4.5,&#39;food&#39;,event)">+</button></div>
+    </div>
+
+    <div class="item">
+      <div class="item-body">
+        <div class="item-name">Timbal de ensaladilla de pulpo</div>
+        <div class="item-desc">Con huevo a baja temperatura y aceite de pimentón</div>
+        <div class="item-badge">Tapa</div>
+      </div>
+      <div class="item-right"><div class="price">9,00€</div><button class="add" onclick="addItem(&#39;Timbal ensaladilla pulpo&#39;,9,&#39;food&#39;,event)">+</button></div>
+    </div>
+
+    <div class="item">
+      <div class="item-body">
+        <div class="item-name">Canutillo crujiente de queso de cabra</div>
+        <div class="item-desc">Carpaccio de presa ibérica curada y vinagreta de piparras</div>
+        <div class="item-badge">Plato</div>
+      </div>
+      <div class="item-right"><div class="price">8,00€</div><button class="add" onclick="addItem(&#39;Canutillo queso cabra&#39;,8,&#39;food&#39;,event)">+</button></div>
+    </div>
+
+    <div class="item">
+      <div class="item-body">
+        <div class="item-name">Foie mi cuit</div>
+        <div class="item-desc">Mermelada de tomate cherry, cebolla caramelizada y regañá</div>
+        <div class="item-badge">Plato</div>
+      </div>
+      <div class="item-right"><div class="price">16,00€</div><button class="add" onclick="addItem(&#39;Foie mi cuit&#39;,16,&#39;food&#39;,event)">+</button></div>
+    </div>
+
+    <div class="item">
+      <div class="item-body">
+        <div class="item-name">Pan bao de carrillera de cerdo</div>
+        <div class="item-desc">Con mayonesa de sésamo y rúcula (2 uds.)</div>
+      </div>
+      <div class="item-right"><div class="price">7,00€</div><button class="add" onclick="addItem(&#39;Pan bao carrillera&#39;,7,&#39;food&#39;,event)">+</button></div>
+    </div>
+
+    <div class="item">
+      <div class="item-body">
+        <div class="item-name">Taco de costilla de cerdo deshuesada</div>
+        <div class="item-desc">Con yogurt especiado</div>
+        <div class="item-badge">Tapa</div>
+      </div>
+      <div class="item-right"><div class="price">7,00€</div><button class="add" onclick="addItem(&#39;Taco costilla cerdo&#39;,7,&#39;food&#39;,event)">+</button></div>
+    </div>
+
+    <div class="item">
+      <div class="item-body">
+        <div class="item-name">Croquetón de cecina</div>
+        <div class="item-badge">Unidad</div>
+      </div>
+      <div class="item-right"><div class="price">3,00€</div><button class="add" onclick="addItem(&#39;Croquetón de cecina&#39;,3,&#39;food&#39;,event)">+</button></div>
+    </div>
+
+    <div class="item">
+      <div class="item-body">
+        <div class="item-name">Croquetas de jamón ibérico</div>
+      </div>
+      <div class="item-right">
+        <div class="dual-btns">
+          <button class="dual-btn" onclick="addItem(&#39;Croquetas jamón — Tapa&#39;,4.5,&#39;food&#39;,event)">
+            <span class="dual-label">Tapa</span>
+            <span class="dual-price">4,50€</span>
+            <span class="dual-add">+</span>
+          </button>
+          <button class="dual-btn" onclick="addItem(&#39;Croquetas jamón — Plato&#39;,8.5,&#39;food&#39;,event)">
+            <span class="dual-label">Plato</span>
+            <span class="dual-price">8,50€</span>
+            <span class="dual-add">+</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="item">
+      <div class="item-body">
+        <div class="item-name">Croquetitas picantonas de pulpo</div>
+        <div class="item-desc">Con mayonesa de pimentón</div>
+        <div class="item-badge">Plato</div>
+      </div>
+      <div class="item-right"><div class="price">7,00€</div><button class="add" onclick="addItem(&#39;Croquetitas pulpo&#39;,7,&#39;food&#39;,event)">+</button></div>
+    </div>
+
+    <div class="item">
+      <div class="item-body">
+        <div class="item-name">Crujiente de gambón y albahaca</div>
+        <div class="item-desc">Con mayonesa de kimchee</div>
+        <div class="item-badge">⭐ Estrella · Unidad 1,80€</div>
+      </div>
+      <div class="item-right"><div class="price">1,80€</div><button class="add" onclick="addItem(&#39;Crujiente gambón&#39;,1.8,&#39;food&#39;,event)">+</button></div>
+    </div>
+
+    <div class="item">
+      <div class="item-body">
+        <div class="item-name">Pizzeta de gorgonzola con pera</div>
+        <div class="item-desc">Nueces caramelizadas</div>
+        <div class="item-badge">Plato</div>
+      </div>
+      <div class="item-right"><div class="price">7,00€</div><button class="add" onclick="addItem(&#39;Pizzeta gorgonzola&#39;,7,&#39;food&#39;,event)">+</button></div>
+    </div>
+
+    <div class="item">
+      <div class="item-body">
+        <div class="item-name">Gambas cristal, guacamole y pico de gallo</div>
+        <div class="item-badge">Plato</div>
+      </div>
+      <div class="item-right"><div class="price">9,00€</div><button class="add" onclick="addItem(&#39;Gambas cristal guacamole&#39;,9,&#39;food&#39;,event)">+</button></div>
+    </div>
+
+    <div class="item">
+      <div class="item-body">
+        <div class="item-name">Raviolis de confit de pato</div>
+        <div class="item-desc">Con salsa de naranja y oporto (3 uds.)</div>
+      </div>
+      <div class="item-right"><div class="price">14,50€</div><button class="add" onclick="addItem(&#39;Raviolis confit pato&#39;,14.5,&#39;food&#39;,event)">+</button></div>
+    </div>
+
+    <div class="item">
+      <div class="item-body">
+        <div class="item-name">Canelón de carrillera de ternera</div>
+        <div class="item-desc">Con salsa de tartufo y jugo de carne</div>
+        <div class="item-badge">⭐ Muy pedido</div>
+      </div>
+      <div class="item-right"><div class="price">14,00€</div><button class="add" onclick="addItem(&#39;Canelón carrillera ternera&#39;,14,&#39;food&#39;,event)">+</button></div>
+    </div>
+
+    <div class="item">
+      <div class="item-body">
+        <div class="item-name">Pulpo a la brasa sobre parmentier</div>
+        <div class="item-desc">Aceite de pimentón y ralladura de lima</div>
+        <div class="item-badge">⭐ Estrella de la casa</div>
+      </div>
+      <div class="item-right"><div class="price">17,00€</div><button class="add" onclick="addItem(&#39;Pulpo a la brasa&#39;,17,&#39;food&#39;,event)">+</button></div>
+    </div>
+
+    <div class="item">
+      <div class="item-body">
+        <div class="item-name">Chocos fritos (250g)</div>
+        <div class="item-badge">Plato · Km 0</div>
+      </div>
+      <div class="item-right"><div class="price">15,00€</div><button class="add" onclick="addItem(&#39;Chocos fritos&#39;,15,&#39;food&#39;,event)">+</button></div>
+    </div>
+  </div>
+
+  <!-- PRODUCTO -->
+  <div class="menu-section" id="tab-producto">
+    <div class="sec-head"><div class="sec-head-line"></div><div class="sec-head-text">Producto</div><div class="sec-head-line"></div></div>
+
+    <div class="item">
+      <div class="item-body">
+        <div class="item-name">Tabla de quesos PAJARETE</div>
+        <div class="item-desc">Semi de cabra, curado de cabra y oveja, romero cabra y oveja</div>
+      </div>
+      <div class="item-right">
+        <div class="dual-btns">
+          <button class="dual-btn" onclick="addItem(&#39;Tabla quesos — Ración&#39;,14,&#39;food&#39;,event)">
+            <span class="dual-label">Ración</span>
+            <span class="dual-price">14,00€</span>
+            <span class="dual-add">+</span>
+          </button>
+          <button class="dual-btn" onclick="addItem(&#39;Tabla quesos — Media&#39;,7.5,&#39;food&#39;,event)">
+            <span class="dual-label">Media</span>
+            <span class="dual-price">7,50€</span>
+            <span class="dual-add">+</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="item">
+      <div class="item-body">
+        <div class="item-name">Lomito ibérico de bellota BENITO</div>
+      </div>
+      <div class="item-right">
+        <div class="dual-btns">
+          <button class="dual-btn" onclick="addItem(&#39;Lomito ibérico — Ración&#39;,14,&#39;food&#39;,event)">
+            <span class="dual-label">Ración</span>
+            <span class="dual-price">14,00€</span>
+            <span class="dual-add">+</span>
+          </button>
+          <button class="dual-btn" onclick="addItem(&#39;Lomito ibérico — Media&#39;,8,&#39;food&#39;,event)">
+            <span class="dual-label">Media</span>
+            <span class="dual-price">8,00€</span>
+            <span class="dual-add">+</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="item">
+      <div class="item-body">
+        <div class="item-name">Jamón ibérico cebo campo</div>
+      </div>
+      <div class="item-right">
+        <div class="dual-btns">
+          <button class="dual-btn" onclick="addItem(&#39;Jamón ibérico — Ración&#39;,17,&#39;food&#39;,event)">
+            <span class="dual-label">Ración</span>
+            <span class="dual-price">17,00€</span>
+            <span class="dual-add">+</span>
+          </button>
+          <button class="dual-btn" onclick="addItem(&#39;Jamón ibérico — Media&#39;,9,&#39;food&#39;,event)">
+            <span class="dual-label">Media</span>
+            <span class="dual-price">9,00€</span>
+            <span class="dual-add">+</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="item">
+      <div class="item-body">
+        <div class="item-name">Anchoa del Cantábrico</div>
+        <div class="item-desc">Con mermelada de tomate y pan de chía</div>
+        <div class="item-badge">Unidad</div>
+      </div>
+      <div class="item-right"><div class="price">2,20€</div><button class="add" onclick="addItem(&#39;Anchoa Cantábrico&#39;,2.2,&#39;food&#39;,event)">+</button></div>
+    </div>
+  </div>
+
+  <!-- ENSALADAS -->
+  <div class="menu-section" id="tab-ensaladas">
+    <div class="sec-head"><div class="sec-head-line"></div><div class="sec-head-text">Ensaladas</div><div class="sec-head-line"></div></div>
+
+    <div class="item">
+      <div class="item-body">
+        <div class="item-name">Ensalada de la huerta</div>
+        <div class="item-desc">Con ventresca de atún y huevo cocido</div>
+      </div>
+      <div class="item-right"><div class="price">8,50€</div><button class="add" onclick="addItem(&#39;Ensalada huerta&#39;,8.5,&#39;food&#39;,event)">+</button></div>
+    </div>
+
+    <div class="item">
+      <div class="item-body">
+        <div class="item-name">Ensalada César</div>
+        <div class="item-desc">Con pollo crujiente, bacon y lascas de grana padano</div>
+      </div>
+      <div class="item-right"><div class="price">9,50€</div><button class="add" onclick="addItem(&#39;Ensalada César&#39;,9.5,&#39;food&#39;,event)">+</button></div>
+    </div>
+
+    <div class="item">
+      <div class="item-body">
+        <div class="item-name">Ensalada de tarantelo de atún rojo</div>
+        <div class="item-desc">Alga wakame, tomate cherries y vinagreta de piparras</div>
+      </div>
+      <div class="item-right"><div class="price">14,00€</div><button class="add" onclick="addItem(&#39;Ensalada tarantelo atún&#39;,14,&#39;food&#39;,event)">+</button></div>
+    </div>
+
+    <div class="item">
+      <div class="item-body">
+        <div class="item-name">Ensalada de pera confitada al cardamomo</div>
+        <div class="item-desc">Crema de queso de cabra y vinagreta de anacardos y P.X.</div>
+      </div>
+      <div class="item-right"><div class="price">9,00€</div><button class="add" onclick="addItem(&#39;Ensalada pera cardamomo&#39;,9,&#39;food&#39;,event)">+</button></div>
+    </div>
+
+    <div class="item">
+      <div class="item-body">
+        <div class="item-name">Tomate de temporada trinchado</div>
+        <div class="item-desc">Bonito en aceite, cebolla tierna y tierra de aceitunas negras</div>
+        <div class="item-badge">Km 0</div>
+      </div>
+      <div class="item-right"><div class="price">9,50€</div><button class="add" onclick="addItem(&#39;Tomate temporada&#39;,9.5,&#39;food&#39;,event)">+</button></div>
+    </div>
+  </div>
+
+  <!-- GUISOS -->
+  <div class="menu-section" id="tab-guisos">
+    <div class="sec-head"><div class="sec-head-line"></div><div class="sec-head-text">De guisoteo…</div><div class="sec-head-line"></div></div>
+
+    <div class="item">
+      <div class="item-body">
+        <div class="item-name">Garbanzos con sepia y langostinos</div>
+        <div class="item-badge">Plato · Km 0</div>
+      </div>
+      <div class="item-right"><div class="price">8,50€</div><button class="add" onclick="addItem(&#39;Garbanzos sepia langostinos&#39;,8.5,&#39;food&#39;,event)">+</button></div>
+    </div>
+
+    <div class="item">
+      <div class="item-body">
+        <div class="item-name">Carrillera de cerdo ibérico estofada</div>
+        <div class="item-desc">Con patata rota y alioli</div>
+        <div class="item-badge">⭐ Muy pedida</div>
+      </div>
+      <div class="item-right"><div class="price">13,00€</div><button class="add" onclick="addItem(&#39;Carrillera cerdo ibérico&#39;,13,&#39;food&#39;,event)">+</button></div>
+    </div>
+  </div>
+
+  <!-- DEL MAR -->
+  <div class="menu-section" id="tab-mar">
+    <div class="sec-head"><div class="sec-head-line"></div><div class="sec-head-text">De la mar…</div><div class="sec-head-line"></div></div>
+
+    <div class="item">
+      <div class="item-body">
+        <div class="item-name">Bacalao sobre pisto de verduras y albahaca</div>
+        <div class="item-desc">Con crujiente de patata</div>
+      </div>
+      <div class="item-right"><div class="price">18,00€</div><button class="add" onclick="addItem(&#39;Bacalao pisto verduras&#39;,18,&#39;food&#39;,event)">+</button></div>
+    </div>
+
+    <div class="item">
+      <div class="item-body">
+        <div class="item-name">Lomo de atún en costra de semillas</div>
+        <div class="item-desc">Sobre salteado de verduras y wakame</div>
+      </div>
+      <div class="item-right"><div class="price">14,00€</div><button class="add" onclick="addItem(&#39;Lomo atún costra&#39;,14,&#39;food&#39;,event)">+</button></div>
+    </div>
+
+    <div class="item">
+      <div class="item-body">
+        <div class="item-name">Choco a la plancha</div>
+        <div class="item-desc">Sobre salsa de tinta y majao de cacahuetes</div>
+        <div class="item-badge">⭐ Km 0 · Plato insignia</div>
+      </div>
+      <div class="item-right"><div class="price">18,00€</div><button class="add" onclick="addItem(&#39;Choco a la plancha&#39;,18,&#39;food&#39;,event)">+</button></div>
+    </div>
+  </div>
+
+  <!-- DEL MAR Y TIERRA -->
+  <div class="menu-section" id="tab-tierra">
+    <div class="sec-head"><div class="sec-head-line"></div><div class="sec-head-text">De la mar el mero y de la tierra…</div><div class="sec-head-line"></div></div>
+
+    <div class="item">
+      <div class="item-body">
+        <div class="item-name">Presa de cerdo ibérico</div>
+        <div class="item-desc">Sobre cremoso de boniatos y jugo de jamón ibérico</div>
+      </div>
+      <div class="item-right"><div class="price">19,50€</div><button class="add" onclick="addItem(&#39;Presa cerdo ibérico&#39;,19.5,&#39;food&#39;,event)">+</button></div>
+    </div>
+
+    <div class="item">
+      <div class="item-body">
+        <div class="item-name">Solomillo de cerdo ibérico</div>
+        <div class="item-desc">Sobre puré de patatas y salsa de pimienta, miel y romero</div>
+      </div>
+      <div class="item-right"><div class="price">19,00€</div><button class="add" onclick="addItem(&#39;Solomillo cerdo ibérico&#39;,19,&#39;food&#39;,event)">+</button></div>
+    </div>
+
+    <div class="item">
+      <div class="item-body">
+        <div class="item-name">Pluma de cerdo ibérico</div>
+        <div class="item-desc">Pesto rojo y patatas gajo</div>
+      </div>
+      <div class="item-right"><div class="price">18,50€</div><button class="add" onclick="addItem(&#39;Pluma cerdo ibérico&#39;,18.5,&#39;food&#39;,event)">+</button></div>
+    </div>
+
+    <div class="item">
+      <div class="item-body">
+        <div class="item-name">Hamburguesa de vaca</div>
+        <div class="item-desc">Crema de queso de cabra y cebolla caramelizada en pan brioche (200g)</div>
+      </div>
+      <div class="item-right"><div class="price">10,50€</div><button class="add" onclick="addItem(&#39;Hamburguesa de vaca&#39;,10.5,&#39;food&#39;,event)">+</button></div>
+    </div>
+
+    <div class="item">
+      <div class="item-body">
+        <div class="item-name">Lomo bajo de vaca yérsey (400g aprox.)</div>
+      </div>
+      <div class="item-right"><div class="price">26,00€</div><button class="add" onclick="addItem(&#39;Lomo bajo vaca yérsey&#39;,26,&#39;food&#39;,event)">+</button></div>
+    </div>
+
+    <div class="item">
+      <div class="item-body">
+        <div class="item-name">Solomillo de ternera morucha</div>
+      </div>
+      <div class="item-right"><div class="price">25,00€</div><button class="add" onclick="addItem(&#39;Solomillo ternera morucha&#39;,25,&#39;food&#39;,event)">+</button></div>
+    </div>
+
+    <div class="item">
+      <div class="item-body">
+        <div class="item-name">Pierna de cordero deshuesada a baja temperatura</div>
+        <div class="item-desc">Cous cous con salsa de su jugo</div>
+      </div>
+      <div class="item-right"><div class="price">24,00€</div><button class="add" onclick="addItem(&#39;Pierna cordero baja temperatura&#39;,24,&#39;food&#39;,event)">+</button></div>
+    </div>
+
+    <div class="item">
+      <div class="item-body">
+        <div class="item-name">Chuletitas de cordero lechal</div>
+        <div class="item-desc">Acompañadas de patatas y padrones</div>
+      </div>
+      <div class="item-right"><div class="price">15,00€</div><button class="add" onclick="addItem(&#39;Chuletitas cordero lechal&#39;,15,&#39;food&#39;,event)">+</button></div>
+    </div>
+  </div>
+
+  <!-- PEQUES -->
+  <div class="menu-section" id="tab-peques">
+    <div class="sec-head"><div class="sec-head-line"></div><div class="sec-head-text">Para los peques…</div><div class="sec-head-line"></div></div>
+
+    <div class="item">
+      <div class="item-body"><div class="item-name">Lagrimitas de pollo con patatas fritas</div></div>
+      <div class="item-right"><div class="price">6,00€</div><button class="add" onclick="addItem(&#39;Lagrimitas pollo&#39;,6,&#39;food&#39;,event)">+</button></div>
+    </div>
+    <div class="item">
+      <div class="item-body"><div class="item-name">Hamburguesa de cerdo con queso gouda y patatas fritas</div></div>
+      <div class="item-right"><div class="price">5,50€</div><button class="add" onclick="addItem(&#39;Hamburguesa cerdo peques&#39;,5.5,&#39;food&#39;,event)">+</button></div>
+    </div>
+    <div class="item">
+      <div class="item-body"><div class="item-name">Croquetas de jamón con patatas fritas</div></div>
+      <div class="item-right"><div class="price">5,50€</div><button class="add" onclick="addItem(&#39;Croquetas jamón peques&#39;,5.5,&#39;food&#39;,event)">+</button></div>
+    </div>
+    <div class="item">
+      <div class="item-body"><div class="item-name">Huevos fritos con patatas fritas</div></div>
+      <div class="item-right"><div class="price">5,50€</div><button class="add" onclick="addItem(&#39;Huevos fritos peques&#39;,5.5,&#39;food&#39;,event)">+</button></div>
+    </div>
+  </div>
+
+  <!-- POSTRES -->
+  <div class="menu-section" id="tab-postres">
+    <div class="sec-head"><div class="sec-head-line"></div><div class="sec-head-text">Momento dulce…</div><div class="sec-head-line"></div></div>
+
+    <div class="item">
+      <div class="item-body">
+        <div class="item-name">Tarta de queso horneada</div>
+        <div class="item-desc">Con mermelada de frambuesa</div>
+        <div class="item-badge">⭐ Muy pedida</div>
+      </div>
+      <div class="item-right"><div class="price">4,70€</div><button class="add" onclick="addItem(&#39;Tarta queso horneada&#39;,4.7,&#39;food&#39;,event)">+</button></div>
+    </div>
+
+    <div class="item">
+      <div class="item-body">
+        <div class="item-name">Espuma de mascarpone</div>
+        <div class="item-desc">Gelatina de amaretto, arena de galletas, helado de café y cacao</div>
+      </div>
+      <div class="item-right"><div class="price">5,50€</div><button class="add" onclick="addItem(&#39;Espuma mascarpone&#39;,5.5,&#39;food&#39;,event)">+</button></div>
+    </div>
+
+    <div class="item">
+      <div class="item-body"><div class="item-name">Tarta de Nutella</div></div>
+      <div class="item-right"><div class="price">4,50€</div><button class="add" onclick="addItem(&#39;Tarta Nutella&#39;,4.5,&#39;food&#39;,event)">+</button></div>
+    </div>
+
+    <div class="item">
+      <div class="item-body">
+        <div class="item-name">Cremoso de chocolate negro</div>
+        <div class="item-desc">Arena de cacao, helado de mango y frambuesa liofilizada</div>
+      </div>
+      <div class="item-right"><div class="price">5,00€</div><button class="add" onclick="addItem(&#39;Cremoso chocolate negro&#39;,5,&#39;food&#39;,event)">+</button></div>
+    </div>
+
+    <div class="item">
+      <div class="item-body">
+        <div class="item-name">Torrija caramelizada con helado de queso</div>
+        <div class="item-badge">⭐ Favorita de la casa</div>
+      </div>
+      <div class="item-right"><div class="price">5,00€</div><button class="add" onclick="addItem(&#39;Torrija caramelizada&#39;,5,&#39;food&#39;,event)">+</button></div>
+    </div>
+
+    <div class="item">
+      <div class="item-body">
+        <div class="item-name">Sorbete de limón y CROFT TWIST</div>
+      </div>
+      <div class="item-right"><div class="price">4,70€</div><button class="add" onclick="addItem(&#39;Sorbete limón Croft&#39;,4.7,&#39;food&#39;,event)">+</button></div>
+    </div>
+
+    <div class="item">
+      <div class="item-body">
+        <div class="item-name">Arroz con leche caramelizado</div>
+        <div class="item-desc">Con helado de vainilla</div>
+      </div>
+      <div class="item-right"><div class="price">4,50€</div><button class="add" onclick="addItem(&#39;Arroz con leche&#39;,4.5,&#39;food&#39;,event)">+</button></div>
+    </div>
+
+  </div>
+
+  <!-- BEBIDAS -->
+  <div class="menu-section" id="tab-bebidas">
+
+    <div class="sec-head"><div class="sec-head-line"></div><div class="sec-head-text">Cervezas</div><div class="sec-head-line"></div></div>
+
+    <div class="item">
+      <div class="item-body"><div class="item-name">Caña de cerveza</div><div class="item-desc">Cerveza de barril · Servicio en caña</div></div>
+      <div class="item-right"><div class="price">1,80€</div><button class="add" onclick="addItem(&#39;Caña de cerveza&#39;,1.8,&#39;drink&#39;,event)">+</button></div>
+    </div>
+
+    <div class="item">
+      <div class="item-body"><div class="item-name">Copa de cerveza</div><div class="item-desc">Cerveza de barril · Servicio en copa</div></div>
+      <div class="item-right"><div class="price">2,20€</div><button class="add" onclick="addItem(&#39;Copa de cerveza&#39;,2.2,&#39;drink&#39;,event)">+</button></div>
+    </div>
+
+    <div class="item">
+      <div class="item-body"><div class="item-name">Tercio Cruzcampo</div><div class="item-desc">Botellín 33cl · Cerveza rubia española</div></div>
+      <div class="item-right"><div class="price">2,50€</div><button class="add" onclick="addItem(&#39;Tercio Cruzcampo&#39;,2.5,&#39;drink&#39;,event)">+</button></div>
+    </div>
+
+    <div class="item">
+      <div class="item-body"><div class="item-name">Tercio Estrella Galicia</div><div class="item-desc">Botellín 33cl · Cerveza rubia gallega</div></div>
+      <div class="item-right"><div class="price">2,80€</div><button class="add" onclick="addItem(&#39;Tercio Estrella Galicia&#39;,2.8,&#39;drink&#39;,event)">+</button></div>
+    </div>
+
+    <div class="item">
+      <div class="item-body"><div class="item-name">Heineken 0,0</div><div class="item-desc">Sin alcohol · Botellín 33cl</div></div>
+      <div class="item-right"><div class="price">2,50€</div><button class="add" onclick="addItem(&#39;Heineken 0,0&#39;,2.5,&#39;drink&#39;,event)">+</button></div>
+    </div>
+
+    <div class="sec-head"><div class="sec-head-line"></div><div class="sec-head-text">Vinos</div><div class="sec-head-line"></div></div>
+
+    <div class="item">
+      <div class="item-body"><div class="item-name">Vino tinto — copa</div><div class="item-desc">Selección de la bodega · Vinos andaluces de temporada</div></div>
+      <div class="item-right"><div class="price">3,50€</div><button class="add" onclick="addItem(&#39;Vino tinto copa&#39;,3.5,&#39;drink&#39;,event)">+</button></div>
+    </div>
+
+    <div class="item">
+      <div class="item-body"><div class="item-name">Vino blanco — copa</div><div class="item-desc">Blanco fresco andaluz · Perfecto para mariscos</div></div>
+      <div class="item-right"><div class="price">3,50€</div><button class="add" onclick="addItem(&#39;Vino blanco copa&#39;,3.5,&#39;drink&#39;,event)">+</button></div>
+    </div>
+
+    <div class="item">
+      <div class="item-body"><div class="item-name">Vino rosado — copa</div><div class="item-desc">Rosado ligero y afrutado</div></div>
+      <div class="item-right"><div class="price">3,50€</div><button class="add" onclick="addItem(&#39;Vino rosado copa&#39;,3.5,&#39;drink&#39;,event)">+</button></div>
+    </div>
+
+    <div class="sec-head"><div class="sec-head-line"></div><div class="sec-head-text">Refrescos y agua</div><div class="sec-head-line"></div></div>
+
+    <div class="item">
+      <div class="item-body"><div class="item-name">Agua mineral</div><div class="item-desc">Con o sin gas · 50cl</div></div>
+      <div class="item-right"><div class="price">1,80€</div><button class="add" onclick="addItem(&#39;Agua mineral&#39;,1.8,&#39;drink&#39;,event)">+</button></div>
+    </div>
+
+    <div class="item">
+      <div class="item-body"><div class="item-name">Coca-Cola</div><div class="item-desc">Regular · Zero · Sin cafeína · 33cl</div></div>
+      <div class="item-right"><div class="price">2,50€</div><button class="add" onclick="addItem(&#39;Coca-Cola&#39;,2.5,&#39;drink&#39;,event)">+</button></div>
+    </div>
+
+    <div class="item">
+      <div class="item-body"><div class="item-name">Fanta naranja / limón</div><div class="item-desc">Botellín 33cl</div></div>
+      <div class="item-right"><div class="price">2,50€</div><button class="add" onclick="addItem(&#39;Fanta&#39;,2.5,&#39;drink&#39;,event)">+</button></div>
+    </div>
+
+    <div class="item">
+      <div class="item-body"><div class="item-name">Sprite</div><div class="item-desc">Botellín 33cl</div></div>
+      <div class="item-right"><div class="price">2,50€</div><button class="add" onclick="addItem(&#39;Sprite&#39;,2.5,&#39;drink&#39;,event)">+</button></div>
+    </div>
+
+    <div class="item">
+      <div class="item-body"><div class="item-name">Nestea</div><div class="item-desc">Té frío con limón · Botellín 33cl</div></div>
+      <div class="item-right"><div class="price">2,50€</div><button class="add" onclick="addItem(&#39;Nestea&#39;,2.5,&#39;drink&#39;,event)">+</button></div>
+    </div>
+
+    <div class="item">
+      <div class="item-body"><div class="item-name">Zumo de naranja natural</div><div class="item-desc">Exprimido al momento</div></div>
+      <div class="item-right"><div class="price">3,00€</div><button class="add" onclick="addItem(&#39;Zumo naranja natural&#39;,3,&#39;drink&#39;,event)">+</button></div>
+    </div>
+
+    <div class="sec-head"><div class="sec-head-line"></div><div class="sec-head-text">Cócteles y combinados</div><div class="sec-head-line"></div></div>
+
+    <div class="item">
+      <div class="item-body">
+        <div class="item-name">Fino Spritz</div>
+        <div class="item-desc">Fino elegante, hierbabuena fresca y toque cítrico de limón</div>
+        <div class="item-badge">Firma ${NOMBRE_RESTAURANTE}</div>
+      </div>
+      <div class="item-right"><div class="price">8,00€</div><button class="add" onclick="addItem(&#39;Fino Spritz&#39;,8,&#39;drink&#39;,event)">+</button></div>
+    </div>
+
+    <div class="item">
+      <div class="item-body">
+        <div class="item-name">Gin Tonic botánico</div>
+        <div class="item-desc">Ginebra premium con tónica artesanal y botánicas de temporada</div>
+      </div>
+      <div class="item-right"><div class="price">9,00€</div><button class="add" onclick="addItem(&#39;Gin Tonic botánico&#39;,9,&#39;drink&#39;,event)">+</button></div>
+    </div>
+
+    <div class="item">
+      <div class="item-body"><div class="item-name">Vermut</div><div class="item-desc">Con naranja y aceituna · Estilo clásico andaluz</div></div>
+      <div class="item-right"><div class="price">4,00€</div><button class="add" onclick="addItem(&#39;Vermut&#39;,4,&#39;drink&#39;,event)">+</button></div>
+    </div>
+
+    <div class="item">
+      <div class="item-body"><div class="item-name">Ron con Coca-Cola</div><div class="item-desc">Combinado clásico</div></div>
+      <div class="item-right"><div class="price">6,00€</div><button class="add" onclick="addItem(&#39;Ron con Coca-Cola&#39;,6,&#39;drink&#39;,event)">+</button></div>
+    </div>
+
+    <div class="item">
+      <div class="item-body"><div class="item-name">Vodka con naranja / tónica</div><div class="item-desc">Combinado clásico</div></div>
+      <div class="item-right"><div class="price">6,00€</div><button class="add" onclick="addItem(&#39;Vodka combinado&#39;,6,&#39;drink&#39;,event)">+</button></div>
+    </div>
+
+    <div class="sec-head"><div class="sec-head-line"></div><div class="sec-head-text">Calientes</div><div class="sec-head-line"></div></div>
+
+    <div class="item">
+      <div class="item-body"><div class="item-name">Café solo</div></div>
+      <div class="item-right"><div class="price">1,50€</div><button class="add" onclick="addItem(&#39;Café solo&#39;,1.5,&#39;drink&#39;,event)">+</button></div>
+    </div>
+
+    <div class="item">
+      <div class="item-body"><div class="item-name">Café con leche</div></div>
+      <div class="item-right"><div class="price">1,80€</div><button class="add" onclick="addItem(&#39;Café con leche&#39;,1.8,&#39;drink&#39;,event)">+</button></div>
+    </div>
+
+    <div class="item">
+      <div class="item-body"><div class="item-name">Cortado</div></div>
+      <div class="item-right"><div class="price">1,60€</div><button class="add" onclick="addItem(&#39;Cortado&#39;,1.6,&#39;drink&#39;,event)">+</button></div>
+    </div>
+
+    <div class="item">
+      <div class="item-body"><div class="item-name">Infusión</div><div class="item-desc">Manzanilla, poleo, té negro</div></div>
+      <div class="item-right"><div class="price">1,80€</div><button class="add" onclick="addItem(&#39;Infusión&#39;,1.8,&#39;drink&#39;,event)">+</button></div>
+    </div>
+
+  </div>
+
+  <!-- CART -->
+  <div class="cart" id="cart">
+    <div class="cart-left">
+      <div class="cart-n" id="cCount">0 artículos</div>
+      <div class="cart-t" id="cTotal">0,00€</div>
+    </div>
+    <button class="send-btn" onclick="openReview()">Ver pedido →</button>
+  </div>
+</div>
+
+<!-- ══ RESUMEN PEDIDO ══ -->
+<div class="review-overlay" id="review-overlay" onclick="closeReviewOutside(event)">
+  <div class="review-sheet">
+    <div class="review-header">
+      <div class="review-title">🧾 Tu pedido</div>
+      <button class="review-close" onclick="closeReview()">✕</button>
+    </div>
+    <div class="review-body" id="review-body"></div>
+    <div class="review-footer">
+      <div class="review-total-row">
+        <span class="review-total-label">Total</span>
+        <span class="review-total-price" id="review-total">0,00€</span>
+      </div>
+      <button class="confirm-btn" onclick="confirmOrder()">✓ Confirmar y enviar pedido</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ COCINA ══ -->
+<div class="screen" id="screen-kitchen">
+  <div class="kds-top">
+    <div><div class="kds-title">🔥 Cocina</div><div class="kds-rest">${NOMBRE_RESTAURANTE} · ${CIUDAD}</div></div>
+    <div class="kds-clock" id="clk-k">23:33</div>
+  </div>
+  <div class="kds-empty" id="k-empty">
+    <div class="kds-empty-ico">🍳</div>
+    <div class="kds-empty-msg">Sin pedidos pendientes.<br>Envía un pedido desde la vista Cliente.</div>
+  </div>
+  <div class="grid" id="k-grid"></div>
+</div>
+
+<!-- ══ BARRA ══ -->
+<div class="screen" id="screen-bar">
+  <div class="kds-top">
+    <div><div class="kds-title">🍷 Barra</div><div class="kds-rest">${NOMBRE_RESTAURANTE} · ${CIUDAD}</div></div>
+    <div class="kds-clock" id="clk-b">23:33</div>
+  </div>
+  <div class="kds-empty" id="b-empty">
+    <div class="kds-empty-ico">🍸</div>
+    <div class="kds-empty-msg">Sin pedidos pendientes.<br>Envía un pedido desde la vista Cliente.</div>
+  </div>
+  <div class="grid" id="b-grid"></div>
+</div>
+
+<!-- ══ RESUMEN MESA ══ -->
+<div class="screen" id="screen-summary">
+  <div class="sum-hero">
+    <div class="sum-title">📋 Resumen de mesa</div>
+    <div class="sum-mesa" id="sum-mesa-label">Mesa 3</div>
+  </div>
+  <div id="sum-items"></div>
+  <div class="sum-total-bar">
+    <span class="sum-total-label">Total acumulado</span>
+    <span class="sum-total-amount" id="sum-grand-total">0,00€</span>
+  </div>
+  <button class="bill-btn" id="bill-btn" onclick="requestBill()" style="display:none">🧾 Solicitar la cuenta</button>
+  <div class="bill-requested-box" id="bill-requested-box" style="display:none"></div>
+</div>
+
+<!-- ══ ADMIN ══ -->
+<div class="screen" id="screen-admin">
+  <div class="admin-top">
+    <div>
+      <div class="admin-title">🔑 Panel Admin</div>
+      <div class="admin-sub">${NOMBRE_RESTAURANTE} · ${CIUDAD}</div>
+    </div>
+    <div class="kds-clock" id="clk-admin">--:--</div>
+  </div>
+
+  <!-- LOCK -->
+  <div class="admin-lock" id="admin-lock">
+    <h3>Acceso restringido</h3>
+    <p>Introduce el PIN de administrador</p>
+    <input class="admin-pin-input" id="admin-pin" type="password" maxlength="6" placeholder="····" onkeydown="if(event.key==='Enter')unlockAdmin()">
+    <button class="admin-pin-btn" onclick="unlockAdmin()">Entrar</button>
+    <div class="admin-pin-error" id="admin-pin-error">PIN incorrecto. Inténtalo de nuevo.</div>
+  </div>
+
+  <!-- CONTENT (hidden until unlocked) -->
+  <div id="admin-content" style="display:none">
+    <div class="admin-tabs">
+      <div class="admin-tab active" data-tab="tables" onclick="switchAdminTab('tables')">🍽️ Mesas</div>
+      <div class="admin-tab" data-tab="stock" onclick="switchAdminTab('stock')">🔴 Stock</div>
+      <div class="admin-tab" data-tab="qr" onclick="switchAdminTab('qr')">📲 QR</div>
+    </div>
+
+    <!-- PANEL MESAS -->
+    <div class="admin-panel active" id="apanel-tables">
+      <div id="admin-bill-alerts"></div>
+      <div class="table-grid" id="admin-tables-grid"></div>
+      <div class="admin-mesa-detail" id="admin-mesa-detail" style="display:none">
+        <div class="amd-head">
+          <div class="amd-title" id="admin-mesa-title">Mesa —</div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div class="amd-total" id="admin-mesa-total">0,00€</div>
+            <button id="admin-enter-mesa-btn" onclick="adminEnterMesa()" style="background:#c9913a;color:#0a0604;border:none;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer;border-radius:2px;white-space:nowrap;">👁️ Ver mesa →</button>
+          </div>
+        </div>
+        <div class="amd-tabs">
+          <div class="amd-tab active" onclick="switchAmdTab('pedido',this)">📋 Pedido actual</div>
+          <div class="amd-tab" onclick="switchAmdTab('anadir',this)">➕ Añadir artículo</div>
+        </div>
+        <div class="amd-panel active" id="amd-panel-pedido">
+          <div id="admin-mesa-items"></div>
+          <div class="amd-actions" style="padding:10px 14px 12px;">
+            <button class="amd-btn amd-btn-reset" id="admin-mesa-bill-btn">🗑️ Cerrar mesa</button>
+          </div>
+        </div>
+        <div class="amd-panel" id="amd-panel-anadir">
+          <div style="padding:10px 14px 4px;">
+            <input class="amd-add-search" id="amd-search" type="text" placeholder="Buscar plato o bebida..." oninput="filterAmdMenu(this.value)">
+            <div class="amd-menu-list" id="amd-menu-list"></div>
+          </div>
+          <div class="amd-cart-bar">
+            <div class="amd-cart-info" id="amd-cart-info">Sin artículos</div>
+            <button class="amd-send-btn" id="amd-send-btn" onclick="sendAdminOrder()" disabled>Enviar pedido</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANEL STOCK -->
+    <div class="admin-panel" id="apanel-stock">
+      <p class="qr-intro">Marca los platos agotados. Seguirán visibles en la carta pero no se podrán añadir al pedido.</p>
+      <div class="stock-agotado-count" id="stock-agotado-count"></div>
+      <input class="stock-search" id="stock-search" type="text" placeholder="Buscar plato..." oninput="filterStock(this.value)">
+      <div class="stock-list" id="stock-list"></div>
+    </div>
+
+    <!-- PANEL QR -->
+    <div class="admin-panel" id="apanel-qr">
+      <p class="qr-intro">Imprime los QR de cada mesa y el tuyo de administrador. Se imprime en tu impresora predeterminada.</p>
+      <div class="qr-admin-label">Tu QR de administrador</div>
+      <div id="admin-own-qr" class="qr-admin-wrap"></div>
+      <div class="qr-admin-label">QR por mesa</div>
+      <div class="qr-grid" id="admin-qr-grid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- TICKET MODAL -->
+<div class="ticket-overlay" id="ticket-overlay" onclick="closeTicket(event)">
+  <div class="ticket-wrap">
+    <div id="ticket-content"></div>
+    <div class="ticket-actions">
+      <button class="t-btn t-btn-print" onclick="printTicket()">🖨️ IMPRIMIR COMANDA</button>
+      <button class="t-btn t-btn-close" onclick="document.getElementById(&#39;ticket-overlay&#39;).classList.remove(&#39;show&#39;)">✕ Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ORDER MODAL -->
+<div class="overlay" id="modal">
+  <div class="modal">
+    <div class="modal-ico">✅</div>
+    <div class="modal-ttl">¡Pedido enviado!</div>
+    <div class="modal-txt" id="modal-txt"></div>
+    <button class="modal-btn" onclick="document.getElementById(&#39;modal&#39;).classList.remove(&#39;show&#39;)">Perfecto, gracias</button>
+  </div>
+</div>
+
+<script>
+// ── CONFIG ──
+const APP_KEY = 'kmarero_v1';
+const ADMIN_PIN = '${PIN_ADMIN}';
+const NUM_TABLES = 30;
+const TABLES = Array.from({length:NUM_TABLES}, (_,i) => i+1);
+
+// ── URL PARAMS ──
+const urlParams = new URLSearchParams(location.search);
+const TABLE_NUM = urlParams.get('mesa') || '3';
+const IS_ADMIN = urlParams.get('admin') === '1';
+
+// ── IN-MEMORY STATE ──
+let cart = [], kOrders = [], bOrders = [], oid = 1;
+
+// ── LOCALSTORAGE STATE ──
+function getState() {
+  try { return JSON.parse(localStorage.getItem(APP_KEY)) || {tables:{}}; }
+  catch(e) { return {tables:{}}; }
+}
+function setState(s) {
+  try { localStorage.setItem(APP_KEY, JSON.stringify(s)); } catch(e) {}
+}
+function getTable(num) {
+  const s = getState();
+  if (!s.tables[num]) s.tables[num] = {orders:[], billRequested:false, billRequestTime:null};
+  return {state:s, tbl:s.tables[num]};
+}
+
+// ── INIT ──
+(function init(){
+  document.querySelectorAll('.table-pill').forEach(el => el.textContent = `Mesa ${TABLE_NUM} · 2 personas`);
+  document.getElementById('nav-customer').textContent = `📱 Cliente (Mesa ${TABLE_NUM})`;
+  document.getElementById('sum-mesa-label').textContent = `Mesa ${TABLE_NUM}`;
+
+  if (IS_ADMIN) {
+    document.getElementById('nav-admin').style.display = '';
+    showScreen('admin', document.getElementById('nav-admin'));
+  }
+  // Restore saved name
+  const savedName = sessionStorage.getItem('kmarero_name_'+TABLE_NUM);
+  if (savedName) document.getElementById('customer-name').value = savedName;
+
+  applyStockState();
+  renderKDS('k');
+  renderKDS('b');
+})();
+
+function saveName(val) {
+  const name = val.trim();
+  sessionStorage.setItem('kmarero_name_'+TABLE_NUM, name);
+  updateNavName(name);
+}
+
+function updateNavName(name) {
+  document.getElementById('nav-customer').textContent = name
+    ? `📱 ${name} (Mesa ${TABLE_NUM})`
+    : `📱 Cliente (Mesa ${TABLE_NUM})`;
+}
+
+function getCustomerName() {
+  return (document.getElementById('customer-name').value || '').trim();
+}
+
+// ── STOCK ──
+function getStock() { return getState().stock || {}; }
+
+function applyStockState() {
+  const stock = getStock();
+  document.querySelectorAll('.add, .dual-btn').forEach(btn => {
+    const m = btn.getAttribute('onclick')?.match(/addItem\('([^']+)'/);
+    if (!m) return;
+    const name = m[1];
+    const outOfStock = !!stock[name];
+    btn.disabled = outOfStock;
+    btn.classList.toggle('agotado-btn', outOfStock);
+    const itemEl = btn.closest('.item');
+    if (itemEl) {
+      itemEl.classList.toggle('agotado-item', outOfStock);
+      let badge = itemEl.querySelector('.agotado-badge');
+      if (outOfStock && !badge) {
+        badge = document.createElement('span');
+        badge.className = 'agotado-badge';
+        badge.textContent = 'Agotado';
+        itemEl.querySelector('.item-body')?.appendChild(badge);
+      } else if (!outOfStock && badge) {
+        badge.remove();
+      }
+    }
+  });
+}
+
+function getAllMenuItems() {
+  const items = new Map();
+  document.querySelectorAll('.add, .dual-btn').forEach(btn => {
+    const m = btn.getAttribute('onclick')?.match(/addItem\('([^']+)',([0-9.]+),'([^']+)'/);
+    if (m) items.set(m[1], {price:parseFloat(m[2]), type:m[3]});
+  });
+  return [...items.entries()].map(([n,v]) => [n, v.price, v.type]).sort((a,b) => a[0].localeCompare(b[0]));
+}
+
+function renderStockPanel() {
+  const stock = getStock();
+  const items = getAllMenuItems();
+  const agotados = Object.keys(stock).filter(k => stock[k]).length;
+  document.getElementById('stock-agotado-count').textContent =
+    agotados ? `${agotados} plato${agotados===1?'':'s'} marcado${agotados===1?'':'s'} como agotado` : '';
+  renderStockList(items, stock, '');
+}
+
+function renderStockList(items, stock, filter) {
+  const list = document.getElementById('stock-list');
+  const filtered = filter ? items.filter(([n]) => n.toLowerCase().includes(filter.toLowerCase())) : items;
+  list.innerHTML = filtered.map(([name]) => `
+    <div class="stock-row">
+      <div class="stock-name">${name}</div>
+      <label class="stock-toggle" title="${stock[name]?'Disponible':'Agotado'}">
+        <input type="checkbox" ${stock[name]?'':'checked'} onchange="toggleStock('${name.replace(/'/g,"\\'")}',!this.checked)">
+        <span class="stock-slider"></span>
+      </label>
+    </div>`).join('') || '<div style="padding:16px;font-size:12px;color:rgba(255,255,255,0.25)">Sin resultados</div>';
+}
+
+function filterStock(val) {
+  const stock = getStock();
+  const items = getAllMenuItems();
+  renderStockList(items, stock, val);
+}
+
+function toggleStock(name, outOfStock) {
+  const s = getState();
+  if (!s.stock) s.stock = {};
+  if (outOfStock) s.stock[name] = true; else delete s.stock[name];
+  setState(s);
+  applyStockState();
+  const agotados = Object.keys(s.stock).filter(k => s.stock[k]).length;
+  document.getElementById('stock-agotado-count').textContent =
+    agotados ? `${agotados} plato${agotados===1?'':'s'} marcado${agotados===1?'':'s'} como agotado` : '';
+}
+
+// ── SONIDO ──
+function playOrderSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    [[0,880],[160,660],[320,880]].forEach(([delay,freq]) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.type = 'sine'; osc.frequency.value = freq;
+      const t = ctx.currentTime + delay/1000;
+      gain.gain.setValueAtTime(0.4, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t+0.25);
+      osc.start(t); osc.stop(t+0.25);
+    });
+  } catch(e) {}
+}
+
+// ── CART / ORDERING ──
+function addItem(name, price, type, e) {
+  const ex = cart.find(i => i.name === name);
+  if (ex) ex.qty++; else cart.push({name, price, type, qty:1, notes:''});
+  updateCart();
+  const btn = e.target;
+  btn.style.transform = 'scale(1.35)';
+  setTimeout(() => btn.style.transform = '', 160);
+}
+
+function updateCart() {
+  const total = cart.reduce((s,i) => s+i.price*i.qty, 0);
+  const count = cart.reduce((s,i) => s+i.qty, 0);
+  document.getElementById('cCount').textContent = count+(count===1?' artículo':' artículos');
+  document.getElementById('cTotal').textContent = total.toFixed(2).replace('.',',')+'€';
+  document.getElementById('cart').classList.toggle('show', count>0);
+}
+
+function sendOrder() {
+  if (!cart.length) return;
+  const now = new Date();
+  const t = now.toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'});
+  const id = oid++;
+  const name = getCustomerName();
+  const tableLabel = `Mesa ${TABLE_NUM}${name ? ' · '+name : ''}`;
+  const food = cart.filter(i => i.type==='food');
+  const drink = cart.filter(i => i.type==='drink');
+
+  if (food.length) { kOrders.push({id, table:tableLabel, time:t, ts:Date.now(), items:food}); renderKDS('k'); }
+  if (drink.length) { bOrders.push({id, table:tableLabel, time:t, ts:Date.now(), items:drink}); renderKDS('b'); }
+
+  // Accumulate in localStorage
+  const {state, tbl} = getTable(TABLE_NUM);
+  tbl.orders.push({id, time:t, ts:Date.now(), items:[...food,...drink]});
+  setState(state);
+
+  const fc = food.reduce((s,i) => s+i.qty, 0);
+  const dc = drink.reduce((s,i) => s+i.qty, 0);
+  const parts = [];
+  if (fc) parts.push(fc+(fc===1?' plato':' platos')+' enviados a cocina 🍳');
+  if (dc) parts.push(dc+(dc===1?' bebida':' bebidas')+' enviadas a barra 🍷');
+  document.getElementById('modal-txt').textContent = parts.join('\n')+'\n\nEl equipo de ${NOMBRE_RESTAURANTE} lo prepara enseguida.';
+  cart = []; updateCart();
+  document.getElementById('modal').classList.add('show');
+  flash('🔔 Nuevo pedido — '+tableLabel);
+  playOrderSound();
+}
+
+// ── KDS ──
+function renderKDS(s) {
+  const orders = s==='k' ? kOrders : bOrders;
+  const grid = document.getElementById(s+'-grid');
+  const empty = document.getElementById(s+'-empty');
+  empty.style.display = orders.length ? 'none' : 'block';
+  grid.innerHTML = '';
+  orders.forEach((o,idx) => {
+    const el = Math.floor((Date.now()-o.ts)/1000);
+    const m = Math.floor(el/60), sec = el%60;
+    const tl = m+':'+String(sec).padStart(2,'0');
+    const ec = m<5?'ok':m<10?'warn':'late';
+    const btnLabel = s==='k'?'✓ LISTO — PASAR A MESA':'✓ LISTO — SERVIR EN MESA';
+    const c = document.createElement('div');
+    c.className = 'ocard';
+    c.innerHTML = `
+      <div class="ocard-head">
+        <div><div class="o-table">Pedido #${o.id} · ${o.table}</div><div class="o-time">Recibido ${o.time}</div></div>
+        <div class="o-elapsed ${ec}" id="el-${s}-${o.id}">${tl}</div>
+      </div>
+      <div class="ocard-items">${o.items.map(i=>`<div class="oi"><span class="oi-q">${i.qty}×</span><span class="oi-n">${i.name}</span></div>${i.notes?`<div class="oi-notes">⚠️ ${i.notes}</div>`:''}`).join('')}</div>
+      <div class="card-actions">
+        <button class="done-btn" onclick="doneOrder('${s}',${idx})">${btnLabel}</button>
+        <button class="print-btn" onclick="showTicket('${s}',${idx})" title="Imprimir comanda">🖨️</button>
+      </div>`;
+    grid.appendChild(c);
+  });
+}
+
+function doneOrder(s, idx) {
+  if (s==='k') kOrders.splice(idx,1); else bOrders.splice(idx,1);
+  renderKDS(s);
+}
+
+setInterval(() => {
+  ['k','b'].forEach(s => {
+    const orders = s==='k' ? kOrders : bOrders;
+    orders.forEach(o => {
+      const el = document.getElementById(`el-${s}-${o.id}`);
+      if (!el) return;
+      const secs = Math.floor((Date.now()-o.ts)/1000);
+      const m = Math.floor(secs/60), sec = secs%60;
+      el.textContent = m+':'+String(sec).padStart(2,'0');
+      el.className = 'o-elapsed '+(m<5?'ok':m<10?'warn':'late');
+    });
+  });
+  const t = new Date().toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'});
+  document.getElementById('clk-k').textContent = t;
+  document.getElementById('clk-b').textContent = t;
+  const ca = document.getElementById('clk-admin');
+  if (ca) ca.textContent = t;
+}, 1000);
+
+// ── NAV / TABS ──
+function switchTab(name, el) {
+  document.querySelectorAll('.menu-section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  el.classList.add('active');
+}
+
+function showScreen(name, btn) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'summary') renderSummary();
+  if (name === 'admin' && document.getElementById('admin-content').style.display !== 'none') renderAdminTables();
+}
+
+function flash(msg) {
+  const f = document.getElementById('flash');
+  f.textContent = msg; f.classList.add('show');
+  setTimeout(() => f.classList.remove('show'), 3000);
+}
+
+// ── CART REVIEW ──
+function openReview() {
+  if (!cart.length) return;
+  renderReview();
+  document.getElementById('review-overlay').classList.add('show');
+}
+function closeReview() {
+  document.getElementById('review-overlay').classList.remove('show');
+}
+function closeReviewOutside(e) {
+  if (e.target === document.getElementById('review-overlay')) closeReview();
+}
+function renderReview() {
+  const body = document.getElementById('review-body');
+  if (!cart.length) {
+    body.innerHTML = '<div class="review-empty">No hay artículos en el pedido.</div>';
+    document.getElementById('review-total').textContent = '0,00€';
+    return;
+  }
+  body.innerHTML = cart.map((item,idx) => {
+    const sub = (item.price*item.qty).toFixed(2).replace('.',',');
+    return `<div class="review-item" style="flex-direction:column;align-items:stretch;gap:6px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="review-name">${item.name}</div>
+        <div class="qty-ctrl">
+          <button class="qty-btn" onclick="changeQty(${idx},-1)">−</button>
+          <div class="qty-num">${item.qty}</div>
+          <button class="qty-btn" onclick="changeQty(${idx},1)">+</button>
+        </div>
+        <div class="review-subtotal">${sub}€</div>
+      </div>
+      <textarea class="review-notes" rows="2" placeholder="Alergias o preferencias (opcional)..." oninput="setNote(${idx},this.value)">${item.notes||''}</textarea>
+    </div>`;
+  }).join('');
+  const total = cart.reduce((s,i) => s+i.price*i.qty, 0);
+  document.getElementById('review-total').textContent = total.toFixed(2).replace('.',',')+'€';
+}
+function setNote(idx, val) {
+  if (cart[idx]) cart[idx].notes = val;
+}
+
+function changeQty(idx, delta) {
+  cart[idx].qty += delta;
+  if (cart[idx].qty <= 0) cart.splice(idx,1);
+  updateCart();
+  if (!cart.length) { closeReview(); return; }
+  renderReview();
+}
+function confirmOrder() {
+  closeReview();
+  sendOrder();
+}
+
+// ── RESUMEN DE MESA ──
+function renderSummary() {
+  const {tbl} = getTable(TABLE_NUM);
+  const container = document.getElementById('sum-items');
+  const totalEl = document.getElementById('sum-grand-total');
+  const billBtn = document.getElementById('bill-btn');
+  const billBox = document.getElementById('bill-requested-box');
+
+  // Merge all sent orders
+  const merged = {};
+  tbl.orders.forEach(order => {
+    order.items.forEach(item => {
+      if (!merged[item.name]) merged[item.name] = {name:item.name, price:item.price, qty:0, pending:false};
+      merged[item.name].qty += item.qty;
+    });
+  });
+  // Add pending cart items (not yet sent)
+  cart.forEach(item => {
+    const key = item.name+'__pending';
+    if (!merged[key]) merged[key] = {name:item.name+' ⏳', price:item.price, qty:0, pending:true};
+    merged[key].qty += item.qty;
+  });
+
+  const items = Object.values(merged);
+
+  if (!items.length) {
+    container.innerHTML = '<div class="sum-empty">Todavía no has pedido nada.<br>¡Explora la carta!</div>';
+    totalEl.textContent = '0,00€';
+    billBtn.style.display = 'none';
+    billBox.style.display = 'none';
+    return;
+  }
+
+  container.innerHTML = items.map(item => {
+    const sub = (item.price*item.qty).toFixed(2).replace('.',',');
+    const style = item.pending ? 'opacity:0.6' : '';
+    return `<div class="sum-item" style="${style}">
+      <div class="sum-item-name">${item.name}</div>
+      <div class="sum-item-qty">${item.qty}×</div>
+      <div class="sum-item-price">${sub}€</div>
+    </div>`;
+  }).join('');
+
+  const grand = items.reduce((s,i) => s+i.price*i.qty, 0);
+  totalEl.textContent = grand.toFixed(2).replace('.',',')+'€';
+
+  if (tbl.billRequested) {
+    billBtn.style.display = 'none';
+    billBox.style.display = 'block';
+    billBox.innerHTML = `✓ Cuenta solicitada a las <strong>${tbl.billRequestTime}</strong><br>El camarero viene enseguida 🙂`;
+  } else if (tbl.orders.length > 0) {
+    billBtn.style.display = 'block';
+    billBox.style.display = 'none';
+  } else {
+    billBtn.style.display = 'none';
+    billBox.style.display = 'none';
+  }
+}
+
+function requestBill() {
+  const {state, tbl} = getTable(TABLE_NUM);
+  const t = new Date().toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'});
+  tbl.billRequested = true;
+  tbl.billRequestTime = t;
+  setState(state);
+  renderSummary();
+  flash('🧾 Cuenta solicitada — Mesa '+TABLE_NUM);
+}
+
+// ── ADMIN ──
+function unlockAdmin() {
+  const pin = document.getElementById('admin-pin').value;
+  if (pin === ADMIN_PIN) {
+    document.getElementById('admin-lock').style.display = 'none';
+    document.getElementById('admin-content').style.display = 'block';
+    renderAdminTables();
+  } else {
+    document.getElementById('admin-pin-error').style.display = 'block';
+    document.getElementById('admin-pin').value = '';
+  }
+}
+
+function switchAdminTab(name) {
+  document.querySelectorAll('.admin-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('apanel-'+name).classList.add('active');
+  document.querySelector(`.admin-tab[data-tab="${name}"]`).classList.add('active');
+  if (name === 'tables') renderAdminTables();
+  if (name === 'stock') renderStockPanel();
+  if (name === 'qr') renderAdminQR();
+}
+
+function renderAdminTables() {
+  const s = getState();
+  const alertsEl = document.getElementById('admin-bill-alerts');
+  const grid = document.getElementById('admin-tables-grid');
+
+  // Bill request alerts
+  const alerts = Object.entries(s.tables || {}).filter(([_,t]) => t.billRequested);
+  alertsEl.innerHTML = alerts.map(([num, t]) =>
+    `<div class="bill-alert-banner">
+      <div class="bab-text">🧾 Mesa ${num} solicita la cuenta · ${t.billRequestTime}</div>
+      <button class="bab-dismiss" onclick="clearBillRequest('${num}')">✓ Atendido</button>
+    </div>`
+  ).join('');
+
+  grid.innerHTML = TABLES.map(num => {
+    const t = s.tables?.[num] || {orders:[], billRequested:false};
+    const totalItems = t.orders.reduce((s,o) => s+o.items.reduce((ss,i) => ss+i.qty,0), 0);
+    const grand = t.orders.reduce((s,o) => s+o.items.reduce((ss,i) => ss+i.price*i.qty,0), 0);
+    const cls = t.billRequested ? 'bill-alert' : (totalItems>0 ? 'occupied' : '');
+    return `<div class="table-card ${cls}" onclick="adminOpenTable(${num})">
+      <div class="tc-num">Mesa ${num}</div>
+      <div class="tc-status">${totalItems ? totalItems+(totalItems===1?' artículo':' artículos') : 'Libre'}</div>
+      ${grand>0 ? `<div class="tc-total">${grand.toFixed(2).replace('.',',')}€</div>` : ''}
+      ${t.billRequested ? `<div class="tc-bill">🧾 Solicita cuenta</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function clearBillRequest(num) {
+  const {state, tbl} = getTable(num);
+  tbl.billRequested = false;
+  tbl.billRequestTime = null;
+  setState(state);
+  renderAdminTables();
+}
+
+let currentAdminTable = null;
+let adminCart = [];
+
+function adminEnterMesa() {
+  if (!currentAdminTable) return;
+  const base = location.href.split('?')[0];
+  window.open(`${base}?mesa=${currentAdminTable}`, '_blank');
+}
+
+function adminOpenTable(num) {
+  currentAdminTable = num;
+  adminCart = [];
+  document.getElementById('admin-mesa-detail').style.display = 'block';
+  document.getElementById('admin-mesa-title').textContent = `Mesa ${num}`;
+  document.getElementById('admin-mesa-bill-btn').onclick = () => resetTable(num);
+  switchAmdTab('pedido', document.querySelector('.amd-tab'));
+  renderAdminOrder(num);
+  document.getElementById('admin-mesa-detail').scrollIntoView({behavior:'smooth'});
+}
+
+function switchAmdTab(name, el) {
+  document.querySelectorAll('.amd-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.amd-panel').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('amd-panel-'+name).classList.add('active');
+  if (name === 'anadir') renderAmdMenu('');
+}
+
+function renderAdminOrder(num) {
+  const {tbl} = getTable(num);
+  const merged = {};
+  tbl.orders.forEach(o => o.items.forEach(i => {
+    if (!merged[i.name]) merged[i.name] = {name:i.name, price:i.price, qty:0};
+    merged[i.name].qty += i.qty;
+  }));
+  const items = Object.values(merged);
+  const grand = items.reduce((s,i) => s+i.price*i.qty, 0);
+  document.getElementById('admin-mesa-total').textContent = grand.toFixed(2).replace('.',',')+'€';
+  document.getElementById('admin-mesa-items').innerHTML = items.length
+    ? items.map(i => `
+      <div class="amd-order-item">
+        <div class="amd-order-name">${i.name}</div>
+        <div class="amd-qty-ctrl">
+          <button class="amd-qty-btn" onclick="adminChangeQty('${i.name.replace(/'/g,"\\'")}',${i.price},-1,${num})">−</button>
+          <div class="amd-qty-num">${i.qty}</div>
+          <button class="amd-qty-btn" onclick="adminChangeQty('${i.name.replace(/'/g,"\\'")}',${i.price},1,${num})">+</button>
+        </div>
+        <div class="amd-order-price">${(i.price*i.qty).toFixed(2).replace('.',',')}€</div>
+      </div>`).join('')
+    : '<div class="amd-empty" style="padding:16px 14px;font-size:12px;color:rgba(255,255,255,0.25);">Sin pedidos aún</div>';
+}
+
+function adminChangeQty(name, price, delta, num) {
+  const {state, tbl} = getTable(num);
+  let remaining = delta < 0 ? 1 : 0;
+  for (const o of tbl.orders) {
+    for (let i = o.items.length-1; i >= 0; i--) {
+      if (o.items[i].name === name) {
+        o.items[i].qty += delta;
+        if (o.items[i].qty <= 0) o.items.splice(i, 1);
+        remaining = 0;
+        break;
+      }
+    }
+    if (!remaining) break;
+  }
+  tbl.orders = tbl.orders.filter(o => o.items.length > 0);
+  setState(state);
+  renderAdminOrder(num);
+  renderAdminTables();
+}
+
+function renderAmdMenu(filter) {
+  const items = getAllMenuItems();
+  const filtered = filter ? items.filter(([n]) => n.toLowerCase().includes(filter.toLowerCase())) : items;
+  document.getElementById('amd-menu-list').innerHTML = filtered.map(([name, price]) =>
+    `<div class="amd-menu-item">
+      <div class="amd-menu-name">${name}</div>
+      <div class="amd-menu-price">${price.toFixed(2).replace('.',',')}€</div>
+      <button class="amd-menu-add" onclick="adminAddToCart('${name.replace(/'/g,"\\'")}',${price})">+</button>
+    </div>`
+  ).join('') || '<div style="padding:12px;font-size:12px;color:rgba(255,255,255,0.25);">Sin resultados</div>';
+  updateAmdCartBar();
+  updateAmdCartBar();
+}
+
+function filterAmdMenu(val) { renderAmdMenu(val); }
+
+function adminAddToCart(name, price) {
+  const ex = adminCart.find(i => i.name === name);
+  if (ex) ex.qty++; else adminCart.push({name, price, qty:1});
+  updateAmdCartBar();
+  flash(`➕ ${name}`);
+}
+
+function updateAmdCartBar() {
+  const count = adminCart.reduce((s,i) => s+i.qty, 0);
+  const total = adminCart.reduce((s,i) => s+i.price*i.qty, 0);
+  document.getElementById('amd-cart-info').textContent = count
+    ? `${count} artículo${count===1?'':'s'} · ${total.toFixed(2).replace('.',',')}€`
+    : 'Sin artículos';
+  document.getElementById('amd-send-btn').disabled = count === 0;
+}
+
+function sendAdminOrder() {
+  if (!adminCart.length || !currentAdminTable) return;
+  const now = new Date();
+  const t = now.toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'});
+  const id = oid++;
+  const tableLabel = `Mesa ${currentAdminTable} (Admin)`;
+  const menuMap = Object.fromEntries(getAllMenuItems().map(([n,p,t]) => [n,t]));
+  const food = adminCart.filter(i => menuMap[i.name] !== 'drink');
+  const drink = adminCart.filter(i => menuMap[i.name] === 'drink');
+  if (food.length) { kOrders.push({id, table:tableLabel, time:t, ts:Date.now(), items:food}); renderKDS('k'); }
+  if (drink.length) { bOrders.push({id, table:tableLabel, time:t, ts:Date.now(), items:drink}); renderKDS('b'); }
+  const {state, tbl} = getTable(currentAdminTable);
+  tbl.orders.push({id, time:t, ts:Date.now(), items:[...adminCart]});
+  setState(state);
+  adminCart = [];
+  updateAmdCartBar();
+  renderAdminOrder(currentAdminTable);
+  renderAdminTables();
+  playOrderSound();
+  flash(`🔔 Pedido admin enviado — Mesa ${currentAdminTable}`);
+}
+
+function resetTable(num) {
+  if (!confirm(`¿Cerrar la sesión de Mesa ${num}?\nSe borrarán todos sus pedidos del resumen.`)) return;
+  const {state} = getTable(num);
+  delete state.tables[num];
+  setState(state);
+  renderAdminTables();
+  document.getElementById('admin-mesa-detail').style.display = 'none';
+}
+
+function renderAdminQR() {
+  const base = location.href.split('?')[0];
+  const grid = document.getElementById('admin-qr-grid');
+  const adminWrap = document.getElementById('admin-own-qr');
+
+  // Admin QR
+  const adminUrl = base+'?admin=1';
+  adminWrap.innerHTML = buildQRCard(adminUrl, 'ADMIN · CAMARERO', true);
+
+  // Table QRs
+  grid.innerHTML = TABLES.map(num => {
+    const url = base+'?mesa='+num;
+    return buildQRCard(url, 'MESA '+num, false, num);
+  }).join('');
+}
+
+function buildQRCard(url, label, isAdmin, tableNum) {
+  const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data='+encodeURIComponent(url);
+  const extra = isAdmin ? ' admin-card' : '';
+  const printArg = isAdmin ? "'admin'" : tableNum;
+  return `<div class="qr-card${extra}">
+    <img src="${qrUrl}" alt="QR ${label}" loading="lazy">
+    <div class="qr-label">${label}</div>
+    <button class="qr-print-btn" onclick="printQR(${printArg})">🖨️ Imprimir</button>
+  </div>`;
+}
+
+function printQR(tableNum) {
+  const base = location.href.split('?')[0];
+  const isAdmin = tableNum === 'admin';
+  const url = isAdmin ? base+'?admin=1' : base+'?mesa='+tableNum;
+  const label = isAdmin ? 'ADMIN · CAMARERO' : 'MESA '+tableNum;
+  const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data='+encodeURIComponent(url);
+  const win = window.open('','_blank','width=320,height=440');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>QR ${label}</title>
+  <style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:'Courier New',monospace;width:280px;padding:20px;text-align:center;}
+  h2{font-size:16px;font-weight:700;margin-bottom:3px;}p{font-size:10px;color:#666;margin-bottom:14px;}
+  img{width:220px;height:220px;border:2px solid #000;display:block;margin:0 auto;}
+  .mesa{font-size:22px;font-weight:700;margin-top:14px;border:3px solid #000;padding:8px;letter-spacing:0.05em;}
+  .foot{font-size:9px;color:#aaa;margin-top:10px;word-break:break-all;}
+  @media print{body{-webkit-print-color-adjust:exact;}}</style>
+  </head><body>
+  <h2>${NOMBRE_RESTAURANTE}</h2>
+  <p>Escanea para ver la carta y pedir</p>
+  <img src="${qrUrl}" alt="QR">
+  <div class="mesa">${label}</div>
+  <div class="foot">${url}</div>
+  </body></html>`);
+  win.document.close();
+  win.focus();
+  setTimeout(() => { win.print(); win.close(); }, 800);
+}
+
+// ── TICKET ──
+let currentTicketHTML = '';
+
+function showTicket(s, idx) {
+  const order = s==='k' ? kOrders[idx] : bOrders[idx];
+  if (!order) return;
+  const station = s==='k'?'COCINA':'BARRA';
+  const stationIcon = s==='k'?'🔥':'🍷';
+  const now = new Date().toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+  const total = order.items.reduce((sum,i) => sum+i.price*i.qty, 0);
+  const itemRows = order.items.map(i => {
+    const sub = (i.price*i.qty).toFixed(2).replace('.',',');
+    return `<div class="tk-item-row"><span class="tk-qty">${i.qty}x</span><span class="tk-item-name">${i.name}</span><span style="text-align:right;min-width:45px">${sub}€</span></div>`;
+  }).join('');
+  currentTicketHTML = `
+    <div class="tk-logo">${NOMBRE_RESTAURANTE}</div>
+    <div class="tk-sub">Restaurante & Bar</div>
+    <div class="tk-addr">${DIRECCION} <br>${TELEFONO}</div>
+    <div class="tk-div2"></div>
+    <div class="tk-station">${stationIcon} ${station}</div>
+    <div class="tk-meta">Pedido: <span>#${order.id}</span></div>
+    <div class="tk-meta">Mesa: <span>${order.table}</span></div>
+    <div class="tk-meta">Hora pedido: <span>${order.time}</span></div>
+    <div class="tk-meta">Impresión: <span>${now}</span></div>
+    <div class="tk-div"></div>
+    ${itemRows}
+    <div class="tk-div"></div>
+    <div class="tk-total-row"><span>TOTAL</span><span>${total.toFixed(2).replace('.',',')}€</span></div>
+    <div class="tk-div2"></div>
+    <div class="tk-footer">Gracias por elegir ${NOMBRE_RESTAURANTE}<br>${ESLOGAN_RESTAURANTE}</div>
+    <div style="height:16px"></div>`;
+  document.getElementById('ticket-content').innerHTML = currentTicketHTML;
+  document.getElementById('ticket-overlay').classList.add('show');
+}
+
+function printTicket() {
+  const win = window.open('','_blank','width=320,height=600');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Comanda ${NOMBRE_RESTAURANTE}</title>
+  <style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:'Courier New',monospace;font-size:12px;width:302px;padding:10px;}
+  .tk-logo{text-align:center;font-size:18px;font-weight:700;}.tk-sub{text-align:center;font-size:10px;color:#555;}.tk-addr{text-align:center;font-size:9px;color:#777;margin-bottom:8px;}
+  .tk-div{border-top:1px dashed #aaa;margin:5px 0;}.tk-div2{border-top:2px solid #000;margin:5px 0;}
+  .tk-station{text-align:center;font-weight:700;font-size:13px;border:2px solid #000;padding:4px;margin-bottom:8px;letter-spacing:0.1em;}
+  .tk-meta{font-size:11px;margin-bottom:2px;display:flex;justify-content:space-between;}
+  .tk-item-row{display:flex;margin:3px 0;font-size:11px;}.tk-qty{width:28px;font-weight:700;}.tk-item-name{flex:1;}
+  .tk-total-row{display:flex;justify-content:space-between;font-weight:700;font-size:13px;margin-top:4px;}
+  .tk-footer{text-align:center;font-size:9px;color:#888;margin-top:8px;}</style>
+  </head><body>${currentTicketHTML}</body></html>`);
+  win.document.close(); win.focus();
+  setTimeout(() => { win.print(); win.close(); }, 400);
+}
+
+function closeTicket(e) {
+  if (e.target === document.getElementById('ticket-overlay'))
+    document.getElementById('ticket-overlay').classList.remove('show');
+}
+</script>
+
+
+</body></html>

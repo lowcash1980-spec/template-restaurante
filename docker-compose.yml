@@ -1,0 +1,81 @@
+services:
+
+  # ── Core (menú, disponibilidad, info) ─────────────────────
+  core:
+    build: ./core
+    expose: ["8000"]
+    env_file: ./core/.env
+    volumes:
+      - ./data/core.db:/app/core.db
+      - ./data/uploads:/app/uploads
+    restart: unless-stopped
+    networks: [restaurante]
+
+  # ── CRM (clientes, campañas WhatsApp) ─────────────────────
+  crm:
+    build: ./crm
+    expose: ["8003"]
+    env_file: ./crm/.env
+    volumes:
+      - ./data/crm.db:/app/crm.db
+    restart: unless-stopped
+    networks: [restaurante]
+
+  # ── Delivery (pedidos online) ──────────────────────────────
+  delivery:
+    build: ./delivery
+    expose: ["8001"]
+    env_file: ./delivery/.env
+    volumes:
+      - ./data/pedidos.db:/app/pedidos.db
+    restart: unless-stopped
+    networks: [restaurante]
+
+  # ── Kmarero (carta digital QR) ─────────────────────────────
+  kmarero:
+    build: ./kmarero
+    expose: ["80"]
+    env_file: ./kmarero/.env
+    restart: unless-stopped
+    networks: [restaurante]
+
+  # ── SARA (chatbot WhatsApp IA) ─────────────────────────────
+  sara:
+    build: ./sara
+    expose: ["8002"]
+    env_file: ./sara/.env
+    volumes:
+      - ./data/sara.db:/app/agent/sara.db
+    restart: unless-stopped
+    networks: [restaurante]
+
+  # ── Web (página web del restaurante) ──────────────────────
+  web:
+    build: ./web
+    expose: ["3000"]
+    env_file: ./web/.env
+    restart: unless-stopped
+    networks: [restaurante]
+
+  # ── Nginx (enruta dominios a servicios) ───────────────────
+  nginx:
+    image: nginx:alpine
+    # envsubst sustituye ${DOMINIO} con el valor del .env al arrancar
+    command: >
+      /bin/sh -c "envsubst '$$DOMINIO' < /etc/nginx/conf.d/nginx.conf.template
+      > /etc/nginx/conf.d/default.conf && exec nginx -g 'daemon off;'"
+    environment:
+      - DOMINIO=${DOMINIO}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf.template:/etc/nginx/conf.d/nginx.conf.template:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
+    depends_on: [core, crm, delivery, kmarero, sara, web]
+    restart: unless-stopped
+    networks: [restaurante]
+
+networks:
+  restaurante:
+    driver: bridge
