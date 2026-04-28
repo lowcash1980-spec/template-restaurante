@@ -14,7 +14,7 @@ services:
       - "traefik.enable=true"
       - "traefik.docker.network=easypanel"
       - "traefik.http.routers.${NOMBRE}-core.rule=Host(`admin.${DOMINIO}`)"
-      - "traefik.http.routers.${NOMBRE}-core.entrypoints=websecure"
+      - "traefik.http.routers.${NOMBRE}-core.entrypoints=https"
       - "traefik.http.routers.${NOMBRE}-core.tls.certresolver=letsencrypt"
       - "traefik.http.services.${NOMBRE}-core.loadbalancer.server.port=8000"
 
@@ -31,7 +31,7 @@ services:
       - "traefik.enable=true"
       - "traefik.docker.network=easypanel"
       - "traefik.http.routers.${NOMBRE}-crm.rule=Host(`crm.${DOMINIO}`)"
-      - "traefik.http.routers.${NOMBRE}-crm.entrypoints=websecure"
+      - "traefik.http.routers.${NOMBRE}-crm.entrypoints=https"
       - "traefik.http.routers.${NOMBRE}-crm.tls.certresolver=letsencrypt"
       - "traefik.http.services.${NOMBRE}-crm.loadbalancer.server.port=8003"
 
@@ -48,7 +48,7 @@ services:
       - "traefik.enable=true"
       - "traefik.docker.network=easypanel"
       - "traefik.http.routers.${NOMBRE}-delivery.rule=Host(`pedidos.${DOMINIO}`)"
-      - "traefik.http.routers.${NOMBRE}-delivery.entrypoints=websecure"
+      - "traefik.http.routers.${NOMBRE}-delivery.entrypoints=https"
       - "traefik.http.routers.${NOMBRE}-delivery.tls.certresolver=letsencrypt"
       - "traefik.http.services.${NOMBRE}-delivery.loadbalancer.server.port=8001"
 
@@ -63,7 +63,7 @@ services:
       - "traefik.enable=true"
       - "traefik.docker.network=easypanel"
       - "traefik.http.routers.${NOMBRE}-kmarero.rule=Host(`carta.${DOMINIO}`)"
-      - "traefik.http.routers.${NOMBRE}-kmarero.entrypoints=websecure"
+      - "traefik.http.routers.${NOMBRE}-kmarero.entrypoints=https"
       - "traefik.http.routers.${NOMBRE}-kmarero.tls.certresolver=letsencrypt"
       - "traefik.http.services.${NOMBRE}-kmarero.loadbalancer.server.port=80"
 
@@ -82,7 +82,7 @@ services:
       - "traefik.enable=true"
       - "traefik.docker.network=easypanel"
       - "traefik.http.routers.${NOMBRE}-sara.rule=Host(`sara.${DOMINIO}`)"
-      - "traefik.http.routers.${NOMBRE}-sara.entrypoints=websecure"
+      - "traefik.http.routers.${NOMBRE}-sara.entrypoints=https"
       - "traefik.http.routers.${NOMBRE}-sara.tls.certresolver=letsencrypt"
       - "traefik.http.services.${NOMBRE}-sara.loadbalancer.server.port=8002"
 
@@ -97,7 +97,7 @@ services:
       - "traefik.enable=true"
       - "traefik.docker.network=easypanel"
       - "traefik.http.routers.${NOMBRE}-web.rule=Host(`${DOMINIO}`) || Host(`www.${DOMINIO}`)"
-      - "traefik.http.routers.${NOMBRE}-web.entrypoints=websecure"
+      - "traefik.http.routers.${NOMBRE}-web.entrypoints=https"
       - "traefik.http.routers.${NOMBRE}-web.tls.certresolver=letsencrypt"
       - "traefik.http.services.${NOMBRE}-web.loadbalancer.server.port=3000"
 
