@@ -2,10 +2,13 @@ from dotenv import load_dotenv
 load_dotenv()
 
 import os
+import hmac
+import hashlib
 import yaml
 from pathlib import Path
-from fastapi import FastAPI, Request
-from fastapi.responses import PlainTextResponse
+from fastapi import FastAPI, Request, Header, HTTPException
+from fastapi.responses import PlainTextResponse, JSONResponse
+from starlette.middleware.base import BaseHTTPMiddleware
 from pydantic import BaseModel
 from contextlib import asynccontextmanager
 from agent.memory import init_db, guardar_mensaje, obtener_historial
@@ -24,8 +27,27 @@ try:
 except FileNotFoundError:
     logger.warning("No se encontró business.yaml — usando config por defecto")
     _business = {}
-ADMIN_PIN = _business.get("admin", {}).get("pin", "")
+ADMIN_PIN      = _business.get("admin", {}).get("pin", "")
+INTERNAL_KEY   = os.getenv("INTERNAL_KEY", "")
+TWILIO_TOKEN   = os.getenv("TWILIO_AUTH_TOKEN", "")
 logger.info(f"[STARTUP] ADMIN_PIN cargado: '{ADMIN_PIN}'")
+
+
+def _verify_twilio_signature(request_url: str, params: dict, signature: str) -> bool:
+    """Valida la firma HMAC-SHA1 de Twilio. Devuelve True si es válida o si no hay token configurado."""
+    if not TWILIO_TOKEN or not signature:
+        return not TWILIO_TOKEN  # sin token configurado, se permite (dev)
+    s = request_url + "".join(f"{k}{v}" for k, v in sorted(params.items()))
+    expected = __import__("base64").b64encode(
+        hmac.new(TWILIO_TOKEN.encode(), s.encode(), hashlib.sha1).digest()
+    ).decode()
+    return hmac.compare_digest(expected, signature)
+
+
+def _check_internal_key(key: str) -> bool:
+    if not INTERNAL_KEY:
+        return True
+    return hmac.compare_digest(str(key or ""), INTERNAL_KEY)
 
 
 proveedor = obtener_proveedor()
@@ -51,8 +73,10 @@ class NotificarIn(BaseModel):
     mensaje: str
 
 @app.post("/api/notificar")
-async def api_notificar(n: NotificarIn):
-    """Envía un mensaje de WhatsApp saliente. Llamado por Delivery u otros servicios."""
+async def api_notificar(n: NotificarIn, x_internal_key: str = Header(default=None)):
+    """Envía un mensaje de WhatsApp saliente. Requiere X-Internal-Key si INTERNAL_KEY está configurado."""
+    if not _check_internal_key(x_internal_key):
+        raise HTTPException(status_code=401, detail="No autorizado")
     try:
         await proveedor.enviar_mensaje(n.telefono, n.mensaje)
         logger.info(f"Notificación saliente enviada a {n.telefono}")
@@ -67,6 +91,13 @@ async def webhook(request: Request):
     try:
         form = await request.form()
         data = dict(form)
+
+        # Validar firma Twilio si hay token configurado
+        sig = request.headers.get("X-Twilio-Signature", "")
+        url = str(request.url)
+        if not _verify_twilio_signature(url, data, sig):
+            logger.warning("[WEBHOOK] Firma Twilio inválida — petición rechazada")
+            return PlainTextResponse("", status_code=403)
 
         mensaje = proveedor.parsear_webhook(data)
         if not mensaje:

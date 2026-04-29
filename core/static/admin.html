@@ -4,102 +4,139 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Panel de Gestión</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg: #0d0d0d; --card: #1a1a1a; --border: #2a2a2a;
-  --text: #f0f0f0; --muted: #888; --accent: #FF6B35;
-  --green: #22c55e; --red: #ef4444; --yellow: #eab308;
+  --bg: #09090f; --bg2: #0f0f18; --card: #131320; --card2: #1a1a2e;
+  --border: #252538; --border2: #32324e;
+  --text: #eeeef8; --text2: #9898b8; --muted: #555570;
+  --accent: #FF6B35; --accent-dim: rgba(255,107,53,.15); --accent-glow: rgba(255,107,53,.25);
+  --green: #22c55e; --green-dim: rgba(34,197,94,.12);
+  --red: #ef4444; --red-dim: rgba(239,68,68,.12);
+  --radius: 14px; --radius-sm: 9px;
+  --shadow: 0 8px 40px rgba(0,0,0,.5); --shadow-sm: 0 2px 12px rgba(0,0,0,.3);
+  --ease: cubic-bezier(.4,0,.2,1);
 }
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; -webkit-font-smoothing: antialiased; }
 
-/* LOGIN */
-#login { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }
-.login-box { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 40px; width: 100%; max-width: 360px; text-align: center; }
-.login-box h1 { font-size: 22px; margin-bottom: 8px; }
-.login-box p { color: var(--muted); font-size: 14px; margin-bottom: 28px; }
-.login-box input { width: 100%; padding: 12px 16px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 16px; margin-bottom: 12px; outline: none; }
-.login-box input:focus { border-color: var(--accent); }
-.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 11px 20px; border-radius: 10px; border: none; font-size: 15px; font-weight: 600; cursor: pointer; transition: opacity .15s; }
-.btn:hover { opacity: .85; }
-.btn-primary { background: var(--accent); color: #fff; width: 100%; }
-.btn-danger { background: var(--red); color: #fff; }
-.btn-ghost { background: var(--border); color: var(--text); }
-.btn-sm { padding: 6px 12px; font-size: 13px; border-radius: 8px; }
+/* ── LOGIN ─────────────────────────────────────────────────── */
+#login { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; background: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(255,107,53,.12) 0%, transparent 70%); }
+.login-box { background: var(--card); border: 1px solid var(--border2); border-radius: 22px; padding: 48px 40px; width: 100%; max-width: 380px; text-align: center; box-shadow: var(--shadow); }
+.login-logo { font-size: 44px; margin-bottom: 18px; filter: drop-shadow(0 4px 16px rgba(255,107,53,.4)); }
+.login-box h1 { font-size: 22px; font-weight: 800; letter-spacing: -.6px; margin-bottom: 6px; }
+.login-box > p { color: var(--text2); font-size: 14px; margin-bottom: 32px; }
+.login-box input { width: 100%; padding: 13px 16px; background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 15px; font-family: inherit; margin-bottom: 14px; outline: none; transition: border-color .2s var(--ease), box-shadow .2s var(--ease); }
+.login-box input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
 
-/* APP */
+/* ── BUTTONS ───────────────────────────────────────────────── */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 11px 20px; border-radius: var(--radius-sm); border: none; font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; transition: all .18s var(--ease); letter-spacing: -.1px; }
+.btn-primary { background: linear-gradient(135deg, #FF6B35 0%, #d94f18 100%); color: #fff; box-shadow: 0 4px 18px rgba(255,107,53,.4); width: 100%; }
+.btn-primary:hover { box-shadow: 0 6px 28px rgba(255,107,53,.55); transform: translateY(-1px); }
+.btn-primary:active { transform: translateY(0); }
+.btn-danger { background: var(--red-dim); color: var(--red); border: 1px solid rgba(239,68,68,.2); }
+.btn-danger:hover { background: var(--red); color: #fff; border-color: var(--red); }
+.btn-ghost { background: var(--card2); color: var(--text2); border: 1px solid var(--border); }
+.btn-ghost:hover { color: var(--text); border-color: var(--border2); background: var(--border); }
+.btn-sm { padding: 7px 14px; font-size: 13px; border-radius: 8px; }
+
+/* ── APP LAYOUT ────────────────────────────────────────────── */
 #app { display: none; flex-direction: column; min-height: 100vh; }
-header { background: var(--card); border-bottom: 1px solid var(--border); padding: 0 20px; display: flex; align-items: center; justify-content: space-between; height: 56px; position: sticky; top: 0; z-index: 100; }
-.header-name { font-weight: 700; font-size: 16px; display: flex; align-items: center; gap: 10px; }
-.header-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); }
+header { background: rgba(19,19,32,.9); border-bottom: 1px solid var(--border); padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 60px; position: sticky; top: 0; z-index: 100; backdrop-filter: blur(16px); }
+.header-name { font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 10px; letter-spacing: -.3px; }
+.header-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 3px var(--green-dim); animation: pulse-dot 2s infinite; }
+@keyframes pulse-dot { 0%,100% { box-shadow: 0 0 0 3px var(--green-dim); } 50% { box-shadow: 0 0 0 6px rgba(34,197,94,.05); } }
 
-nav { display: flex; gap: 4px; padding: 12px 20px; background: var(--card); border-bottom: 1px solid var(--border); overflow-x: auto; }
-.nav-btn { padding: 8px 16px; border-radius: 8px; border: none; background: transparent; color: var(--muted); font-size: 14px; font-weight: 500; cursor: pointer; white-space: nowrap; transition: all .15s; }
-.nav-btn.active { background: var(--accent); color: #fff; }
+nav { display: flex; gap: 4px; padding: 10px 24px; background: rgba(19,19,32,.7); border-bottom: 1px solid var(--border); overflow-x: auto; scrollbar-width: none; backdrop-filter: blur(12px); }
+nav::-webkit-scrollbar { display: none; }
+.nav-btn { padding: 8px 18px; border-radius: 999px; border: 1px solid transparent; background: transparent; color: var(--muted); font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; white-space: nowrap; transition: all .18s var(--ease); letter-spacing: -.1px; }
+.nav-btn:hover { color: var(--text2); background: var(--card2); border-color: var(--border); }
+.nav-btn.active { background: var(--accent-dim); color: var(--accent); border-color: rgba(255,107,53,.3); }
 
-.panel { display: none; padding: 20px; max-width: 800px; margin: 0 auto; width: 100%; }
-.panel.active { display: block; }
+.panel { display: none; padding: 28px 24px; max-width: 820px; margin: 0 auto; width: 100%; }
+.panel.active { display: block; animation: fadeUp .22s var(--ease); }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
-/* CARDS */
-.card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 16px; }
-.card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
-.card-title { font-weight: 700; font-size: 15px; }
+/* ── CARDS ─────────────────────────────────────────────────── */
+.card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px; margin-bottom: 16px; transition: border-color .18s var(--ease); }
+.card:hover { border-color: var(--border2); }
+.card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+.card-title { font-weight: 700; font-size: 15px; letter-spacing: -.3px; }
 
-/* TOGGLE SWITCH */
+/* ── TOGGLE SWITCH ─────────────────────────────────────────── */
 .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); }
 .toggle-row:last-child { border-bottom: none; }
 .toggle-info { flex: 1; min-width: 0; margin-right: 16px; }
-.toggle-name { font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.toggle-price { color: var(--accent); font-size: 13px; font-weight: 700; margin-top: 2px; cursor: pointer; }
-.toggle-price:hover { text-decoration: underline; }
-.switch { position: relative; width: 48px; height: 26px; flex-shrink: 0; }
+.toggle-name { font-weight: 600; font-size: 14px; letter-spacing: -.2px; }
+.toggle-price { color: var(--accent); font-size: 13px; font-weight: 700; margin-top: 3px; cursor: pointer; display: inline-block; transition: opacity .15s; }
+.toggle-price:hover { opacity: .75; }
+.switch { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
 .switch input { opacity: 0; width: 0; height: 0; }
-.slider { position: absolute; inset: 0; background: var(--border); border-radius: 26px; cursor: pointer; transition: .3s; }
-.slider:before { content: ''; position: absolute; width: 20px; height: 20px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: .3s; }
+.slider { position: absolute; inset: 0; background: var(--border2); border-radius: 999px; cursor: pointer; transition: background .22s var(--ease); }
+.slider::before { content: ''; position: absolute; width: 18px; height: 18px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: transform .22s var(--ease); box-shadow: 0 1px 4px rgba(0,0,0,.35); }
 input:checked + .slider { background: var(--green); }
-input:checked + .slider:before { transform: translateX(22px); }
+input:checked + .slider::before { transform: translateX(20px); }
 
-/* FORM */
-.field { margin-bottom: 16px; }
-.field label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; font-weight: 500; }
-.field input, .field textarea, .field select { width: 100%; padding: 10px 14px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 15px; outline: none; font-family: inherit; }
-.field input:focus, .field textarea:focus, .field select:focus { border-color: var(--accent); }
-.field textarea { min-height: 80px; resize: vertical; }
-.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+/* ── FORMS ─────────────────────────────────────────────────── */
+.field { margin-bottom: 18px; }
+.field label { display: block; font-size: 11px; color: var(--text2); margin-bottom: 7px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; }
+.field input, .field textarea, .field select { width: 100%; padding: 11px 14px; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-size: 14px; outline: none; font-family: inherit; transition: border-color .18s var(--ease), box-shadow .18s var(--ease); }
+.field input:focus, .field textarea:focus, .field select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
+.field input[type=color] { height: 44px; padding: 4px 8px; cursor: pointer; }
+.field textarea { min-height: 88px; resize: vertical; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 
-/* PLATO CARD */
-.plato-item { display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 8px; }
-.plato-foto { width: 52px; height: 52px; border-radius: 8px; object-fit: cover; background: var(--border); flex-shrink: 0; }
+/* ── PLATO ITEM ────────────────────────────────────────────── */
+.plato-item { display: flex; align-items: center; gap: 14px; padding: 13px; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 8px; transition: all .18s var(--ease); }
+.plato-item:hover { border-color: var(--border2); background: var(--card2); }
+.plato-foto { width: 48px; height: 48px; border-radius: 8px; object-fit: cover; background: var(--border); flex-shrink: 0; }
 .plato-data { flex: 1; min-width: 0; }
-.plato-nombre { font-weight: 600; font-size: 14px; }
-.plato-desc { color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.plato-precio { color: var(--accent); font-weight: 700; font-size: 14px; }
+.plato-nombre { font-weight: 600; font-size: 14px; letter-spacing: -.2px; }
+.plato-desc { color: var(--text2); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+.plato-precio { color: var(--accent); font-weight: 700; font-size: 13px; margin-top: 3px; }
 .plato-actions { display: flex; gap: 6px; flex-shrink: 0; }
 
-/* HORARIOS */
-.horario-row { display: grid; grid-template-columns: 100px 1fr 1fr 1fr; gap: 12px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
+/* ── HORARIOS ──────────────────────────────────────────────── */
+.horario-row { display: grid; grid-template-columns: 110px 48px 1fr 1fr; gap: 12px; align-items: center; padding: 11px 0; border-bottom: 1px solid var(--border); }
 .horario-row:last-child { border-bottom: none; }
-.horario-dia { font-weight: 600; font-size: 14px; text-transform: capitalize; }
-.horario-row input[type=time] { padding: 8px 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 14px; }
+.horario-dia { font-weight: 600; font-size: 14px; text-transform: capitalize; letter-spacing: -.2px; }
+.horario-row input[type=time] { padding: 8px 10px; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 13px; font-family: inherit; outline: none; transition: border-color .18s; }
+.horario-row input[type=time]:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
 
-/* MODAL */
-.overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 200; align-items: center; justify-content: center; padding: 20px; }
-.overlay.open { display: flex; }
-.modal { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 24px; width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto; }
-.modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
-.modal-title { font-size: 17px; font-weight: 700; }
-.close-btn { background: none; border: none; color: var(--muted); font-size: 22px; cursor: pointer; line-height: 1; }
-.modal-footer { display: flex; gap: 10px; margin-top: 20px; }
+/* ── MODAL ─────────────────────────────────────────────────── */
+.overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.75); backdrop-filter: blur(8px); z-index: 200; align-items: center; justify-content: center; padding: 20px; }
+.overlay.open { display: flex; animation: overlayIn .2s ease; }
+@keyframes overlayIn { from { opacity: 0; } to { opacity: 1; } }
+.modal { background: var(--card); border: 1px solid var(--border2); border-radius: 20px; padding: 28px; width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto; box-shadow: var(--shadow); animation: modalIn .25s cubic-bezier(.34,1.56,.64,1); }
+@keyframes modalIn { from { opacity: 0; transform: scale(.94) translateY(12px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+.modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
+.modal-title { font-size: 17px; font-weight: 800; letter-spacing: -.5px; }
+.close-btn { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: var(--bg2); border: 1px solid var(--border); border-radius: 50%; color: var(--text2); font-size: 18px; cursor: pointer; transition: all .18s; line-height: 1; }
+.close-btn:hover { background: var(--red-dim); border-color: var(--red); color: var(--red); }
+.modal-footer { display: flex; gap: 10px; margin-top: 24px; }
 
-/* TOAST */
-#toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px 20px; font-size: 14px; font-weight: 500; display: none; z-index: 999; white-space: nowrap; box-shadow: 0 4px 24px rgba(0,0,0,.4); }
-#toast.show { display: block; }
+/* ── TOAST ─────────────────────────────────────────────────── */
+#toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(16px); background: var(--card2); border: 1px solid var(--border2); border-radius: 12px; padding: 13px 24px; font-size: 14px; font-weight: 600; font-family: inherit; display: none; z-index: 999; white-space: nowrap; box-shadow: var(--shadow); opacity: 0; transition: transform .28s cubic-bezier(.34,1.56,.64,1), opacity .2s ease; }
+#toast.show { display: block; transform: translateX(-50%) translateY(0); opacity: 1; }
 
-.section-label { font-size: 11px; text-transform: uppercase; letter-spacing: .12em; color: var(--muted); font-weight: 600; margin-bottom: 12px; }
-.empty { text-align: center; color: var(--muted); padding: 32px; font-size: 14px; }
-.badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 700; }
-.badge-green { background: rgba(34,197,94,.15); color: var(--green); }
-.badge-red { background: rgba(239,68,68,.15); color: var(--red); }
+/* ── MISC ──────────────────────────────────────────────────── */
+.section-label { font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); font-weight: 700; margin-bottom: 14px; }
+.empty { text-align: center; color: var(--muted); padding: 48px 32px; font-size: 14px; line-height: 1.6; }
+.empty-icon { font-size: 40px; margin-bottom: 12px; opacity: .6; }
+.badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; letter-spacing: .02em; }
+.badge-green { background: var(--green-dim); color: var(--green); }
+.badge-red { background: var(--red-dim); color: var(--red); }
+.divider { height: 1px; background: var(--border); margin: 20px 0; }
+
+/* ── RESPONSIVE ────────────────────────────────────────────── */
+@media (max-width: 500px) {
+  .field-row { grid-template-columns: 1fr; }
+  .horario-row { grid-template-columns: 80px 40px 1fr 1fr; gap: 8px; }
+  .panel { padding: 16px 12px; }
+  header, nav { padding-left: 16px; padding-right: 16px; }
+}
 </style>
 </head>
 <body>
@@ -107,12 +144,12 @@ input:checked + .slider:before { transform: translateX(22px); }
 <!-- LOGIN -->
 <div id="login">
   <div class="login-box">
-    <div style="font-size:36px;margin-bottom:12px">🍽️</div>
+    <div class="login-logo">🍽️</div>
     <h1>Panel de Gestión</h1>
     <p>Accede con tu contraseña de administrador</p>
     <input type="password" id="pass-input" placeholder="Contraseña" autocomplete="current-password">
     <button class="btn btn-primary" onclick="doLogin()">Entrar</button>
-    <p id="login-err" style="color:var(--red);font-size:13px;margin-top:12px;display:none">Contraseña incorrecta</p>
+    <p id="login-err" style="color:var(--red);font-size:13px;margin-top:14px;display:none">Contraseña incorrecta</p>
   </div>
 </div>
 
@@ -136,19 +173,17 @@ input:checked + .slider:before { transform: translateX(22px); }
 
   <!-- DISPONIBILIDAD -->
   <div id="panel-disponibilidad" class="panel active">
-    <div style="margin-bottom:16px">
-      <p style="color:var(--muted);font-size:14px">Activa o desactiva platos al instante. El cambio se aplica en todas las aplicaciones.</p>
-    </div>
+    <p style="color:var(--text2);font-size:14px;margin-bottom:20px">Activa o desactiva platos al instante. El cambio se aplica en todas las aplicaciones.</p>
     <div id="disp-list"></div>
   </div>
 
   <!-- MENÚ -->
   <div id="panel-menu" class="panel">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-      <div class="section-label">Categorías y platos</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div class="section-label" style="margin:0">Categorías y platos</div>
       <div style="display:flex;gap:8px">
         <button class="btn btn-ghost btn-sm" onclick="openCatModal()">+ Categoría</button>
-        <button class="btn btn-primary btn-sm" onclick="openPlatoModal()">+ Plato</button>
+        <button class="btn btn-primary btn-sm" style="width:auto" onclick="openPlatoModal()">+ Plato</button>
       </div>
     </div>
     <div id="menu-list"></div>
@@ -165,8 +200,8 @@ input:checked + .slider:before { transform: translateX(22px); }
         <div class="field"><label>WhatsApp (con prefijo)</label><input id="i-whatsapp" type="tel" placeholder="34612345678"></div>
       </div>
       <div class="field"><label>Dirección</label><input id="i-direccion" type="text"></div>
-      <div class="field"><label>Color corporativo</label><input id="i-color" type="color" style="height:42px;padding:4px 8px;cursor:pointer"></div>
-      <button class="btn btn-primary btn-sm" onclick="saveInfo()">Guardar cambios</button>
+      <div class="field"><label>Color corporativo</label><input id="i-color" type="color"></div>
+      <button class="btn btn-primary btn-sm" style="width:auto" onclick="saveInfo()">Guardar cambios</button>
     </div>
   </div>
 
@@ -175,16 +210,19 @@ input:checked + .slider:before { transform: translateX(22px); }
     <div class="card">
       <div class="card-header"><div class="card-title">Horario semanal</div></div>
       <div id="horarios-list"></div>
-      <br>
-      <button class="btn btn-primary btn-sm" onclick="saveHorarios()">Guardar horarios</button>
+      <div class="divider"></div>
+      <button class="btn btn-primary btn-sm" style="width:auto" onclick="saveHorarios()">Guardar horarios</button>
     </div>
   </div>
 
   <!-- FUERA DE CARTA -->
   <div id="panel-fuera" class="panel">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-      <div class="section-label">Platos fuera de carta</div>
-      <button class="btn btn-primary btn-sm" onclick="openFueraModal()">+ Añadir</button>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div>
+        <div class="section-label" style="margin:0">Platos fuera de carta</div>
+        <p style="color:var(--text2);font-size:13px;margin-top:4px">SARA los incluirá en el mensaje de bienvenida del día de la reserva.</p>
+      </div>
+      <button class="btn btn-primary btn-sm" style="width:auto;flex-shrink:0;margin-left:16px" onclick="openFueraModal()">+ Añadir</button>
     </div>
     <div id="fuera-list"></div>
   </div>
@@ -198,10 +236,7 @@ input:checked + .slider:before { transform: translateX(22px); }
       <button class="close-btn" onclick="closeModal('modal-plato')">×</button>
     </div>
     <input type="hidden" id="mp-id">
-    <div class="field">
-      <label>Categoría</label>
-      <select id="mp-cat"></select>
-    </div>
+    <div class="field"><label>Categoría</label><select id="mp-cat"></select></div>
     <div class="field"><label>Nombre del plato</label><input id="mp-nombre" type="text" placeholder="Ej: Ensalada mediterránea"></div>
     <div class="field"><label>Descripción</label><textarea id="mp-desc" placeholder="Ingredientes, alérgenos, etc."></textarea></div>
     <div class="field-row">
@@ -210,8 +245,8 @@ input:checked + .slider:before { transform: translateX(22px); }
     </div>
     <div class="field">
       <label>Foto (URL o subir imagen)</label>
-      <input id="mp-foto" type="text" placeholder="https://... o sube una imagen abajo">
-      <input type="file" id="mp-file" accept="image/*" style="margin-top:8px" onchange="uploadFoto()">
+      <input id="mp-foto" type="text" placeholder="https://...">
+      <input type="file" id="mp-file" accept="image/*" style="margin-top:8px;font-size:13px;color:var(--text2)" onchange="uploadFoto()">
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-plato')">Cancelar</button>
@@ -228,7 +263,7 @@ input:checked + .slider:before { transform: translateX(22px); }
       <button class="close-btn" onclick="closeModal('modal-cat')">×</button>
     </div>
     <div class="field"><label>Nombre</label><input id="mc-nombre" type="text" placeholder="Ej: Entrantes"></div>
-    <div class="field"><label>Icono (emoji)</label><input id="mc-icono" type="text" placeholder="🥗" maxlength="4" style="width:80px"></div>
+    <div class="field"><label>Icono (emoji)</label><input id="mc-icono" type="text" placeholder="🥗" maxlength="4" style="width:72px"></div>
     <div class="modal-footer">
       <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-cat')">Cancelar</button>
       <button class="btn btn-primary" style="flex:2" onclick="saveCat()">Crear categoría</button>
@@ -281,7 +316,7 @@ function toast(msg, ok = true) {
   const el = document.getElementById('toast');
   el.textContent = (ok ? '✅ ' : '❌ ') + msg;
   el.className = 'show';
-  setTimeout(() => el.className = '', 2800);
+  setTimeout(() => el.className = '', 3000);
 }
 
 async function doLogin() {
@@ -306,6 +341,7 @@ function logout() {
   document.getElementById('login').style.display = 'flex';
   document.getElementById('app').style.display = 'none';
   document.getElementById('pass-input').value = '';
+  document.getElementById('login-err').style.display = 'none';
 }
 
 async function loadAll() {
@@ -323,15 +359,18 @@ async function loadAll() {
   renderFuera();
 }
 
-// ── DISPONIBILIDAD ────────────────────────────────────────────
+// ── DISPONIBILIDAD ──────────────────────────────────────────
 function renderDisponibilidad() {
   const el = document.getElementById('disp-list');
-  if (!menu.length) { el.innerHTML = '<div class="empty">No hay platos todavía. Añade categorías y platos en el panel Menú.</div>'; return; }
+  if (!menu.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">🍽️</div>No hay platos todavía.<br>Añade categorías y platos en el panel Menú.</div>';
+    return;
+  }
   el.innerHTML = menu.map(cat => `
     <div class="card">
       <div class="card-header">
         <div class="card-title">${cat.icono} ${cat.nombre}</div>
-        <span class="badge badge-green">${cat.platos.filter(p=>p.disponible).length}/${cat.platos.length} disponibles</span>
+        <span class="badge ${cat.platos.filter(p=>p.disponible).length === cat.platos.length ? 'badge-green' : 'badge-red'}">${cat.platos.filter(p=>p.disponible).length}/${cat.platos.length} disponibles</span>
       </div>
       ${cat.platos.length
         ? cat.platos.map(p => `
@@ -345,17 +384,14 @@ function renderDisponibilidad() {
               <span class="slider"></span>
             </label>
           </div>`).join('')
-        : '<div class="empty" style="padding:16px">Sin platos</div>'
+        : '<div class="empty" style="padding:16px">Sin platos en esta categoría</div>'
       }
     </div>`).join('');
 }
 
 async function toggleDisp(id, disponible) {
   try {
-    await apiFetch(`/api/platos/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify({ disponible })
-    });
+    await apiFetch(`/api/platos/${id}`, { method: 'PUT', body: JSON.stringify({ disponible }) });
     menu.forEach(cat => cat.platos.forEach(p => { if (p.id === id) p.disponible = disponible; }));
     renderDisponibilidad();
     toast(disponible ? 'Plato disponible' : 'Plato no disponible');
@@ -367,7 +403,7 @@ async function editPrecioInline(id, el) {
   if (!plato) return;
   const input = document.createElement('input');
   input.type = 'number'; input.step = '0.10'; input.value = plato.precio;
-  input.style.cssText = 'width:80px;padding:4px 8px;background:var(--bg);border:1px solid var(--accent);border-radius:6px;color:var(--text);font-size:13px;font-weight:700';
+  input.style.cssText = 'width:80px;padding:4px 8px;background:var(--bg);border:1px solid var(--accent);border-radius:6px;color:var(--text);font-size:13px;font-weight:700;font-family:inherit';
   el.replaceWith(input);
   input.focus(); input.select();
   const save = async () => {
@@ -385,10 +421,13 @@ async function editPrecioInline(id, el) {
   input.addEventListener('keydown', e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') renderDisponibilidad(); });
 }
 
-// ── MENÚ ──────────────────────────────────────────────────────
+// ── MENÚ ────────────────────────────────────────────────────
 function renderMenu() {
   const el = document.getElementById('menu-list');
-  if (!menu.length) { el.innerHTML = '<div class="empty">Empieza creando una categoría</div>'; return; }
+  if (!menu.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">📋</div>Empieza creando una categoría.</div>';
+    return;
+  }
   el.innerHTML = menu.map(cat => `
     <div class="card">
       <div class="card-header">
@@ -400,7 +439,7 @@ function renderMenu() {
       </div>
       ${cat.platos.map(p => `
         <div class="plato-item">
-          ${p.foto_url ? `<img class="plato-foto" src="${p.foto_url}" onerror="this.style.display='none'">` : '<div class="plato-foto" style="display:flex;align-items:center;justify-content:center;font-size:22px">🍽️</div>'}
+          ${p.foto_url ? `<img class="plato-foto" src="${p.foto_url}" onerror="this.style.display='none'">` : '<div class="plato-foto" style="display:flex;align-items:center;justify-content:center;font-size:20px">🍽️</div>'}
           <div class="plato-data">
             <div class="plato-nombre">${p.nombre} ${p.es_especial ? '⭐' : ''}</div>
             <div class="plato-desc">${p.descripcion || '—'}</div>
@@ -414,7 +453,7 @@ function renderMenu() {
     </div>`).join('');
 }
 
-// ── INFO ──────────────────────────────────────────────────────
+// ── INFO ────────────────────────────────────────────────────
 function renderInfo() {
   document.getElementById('i-nombre').value = info.nombre || '';
   document.getElementById('i-eslogan').value = info.eslogan || '';
@@ -445,7 +484,7 @@ async function saveInfo() {
   } catch { toast('Error al guardar', false); }
 }
 
-// ── HORARIOS ──────────────────────────────────────────────────
+// ── HORARIOS ────────────────────────────────────────────────
 function renderHorarios() {
   const dias = { lunes:'Lunes', martes:'Martes', miercoles:'Miércoles', jueves:'Jueves', viernes:'Viernes', sabado:'Sábado', domingo:'Domingo' };
   document.getElementById('horarios-list').innerHTML = horarios.map(h => `
@@ -480,13 +519,99 @@ async function saveHorarios() {
   } catch { toast('Error al guardar horarios', false); }
 }
 
-// ── MODALES ───────────────────────────────────────────────────
+// ── FUERA DE CARTA ──────────────────────────────────────────
+function renderFuera() {
+  const el = document.getElementById('fuera-list');
+  if (!fueraLista.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">🌟</div>Sin platos fuera de carta.<br>Añade uno con el botón + y SARA lo informará automáticamente.</div>';
+    return;
+  }
+  el.innerHTML = fueraLista.map(f => `
+    <div class="plato-item">
+      <div class="plato-data">
+        <div class="plato-nombre">${f.nombre} ${!f.activo ? '<span class="badge badge-red">Inactivo</span>' : ''}</div>
+        <div class="plato-desc">${f.descripcion || '—'}</div>
+        <div class="plato-precio">${f.precio.toFixed(2)} € · <span style="color:var(--text2);font-weight:500">${f.unidades} unidades</span></div>
+      </div>
+      <div class="plato-actions">
+        <button class="btn btn-ghost btn-sm" onclick="updateUnidades(${f.id},${f.unidades})">✏️ Uds</button>
+        <button class="btn btn-ghost btn-sm" onclick="openFueraModal(${f.id})">✏️</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteFuera(${f.id},'${f.nombre}')">🗑️</button>
+      </div>
+    </div>`).join('');
+}
+
+async function updateUnidades(id, actual) {
+  const val = prompt('Unidades disponibles:', actual);
+  if (val === null) return;
+  const unidades = parseInt(val);
+  if (isNaN(unidades) || unidades < 0) { toast('Número no válido', false); return; }
+  try {
+    await apiFetch(`/api/fuera-carta/${id}`, { method: 'PUT', body: JSON.stringify({ unidades }) });
+    fueraLista = fueraLista.map(f => f.id === id ? { ...f, unidades } : f);
+    renderFuera();
+    toast('Unidades actualizadas');
+  } catch { toast('Error al actualizar', false); }
+}
+
+function openFueraModal(id = null) {
+  document.getElementById('modal-fuera-title').textContent = id ? 'Editar plato' : 'Nuevo plato fuera de carta';
+  document.getElementById('mf-id').value = id || '';
+  if (id) {
+    const f = fueraLista.find(f => f.id === id);
+    if (f) {
+      document.getElementById('mf-nombre').value = f.nombre;
+      document.getElementById('mf-desc').value = f.descripcion || '';
+      document.getElementById('mf-precio').value = f.precio;
+      document.getElementById('mf-unidades').value = f.unidades;
+    }
+  } else {
+    document.getElementById('mf-nombre').value = '';
+    document.getElementById('mf-desc').value = '';
+    document.getElementById('mf-precio').value = '';
+    document.getElementById('mf-unidades').value = '0';
+  }
+  document.getElementById('modal-fuera').classList.add('open');
+}
+
+async function saveFuera() {
+  const id = document.getElementById('mf-id').value;
+  const body = {
+    nombre: document.getElementById('mf-nombre').value,
+    descripcion: document.getElementById('mf-desc').value,
+    precio: parseFloat(document.getElementById('mf-precio').value),
+    unidades: parseInt(document.getElementById('mf-unidades').value) || 0,
+  };
+  if (!body.nombre || isNaN(body.precio)) { toast('Rellena nombre y precio', false); return; }
+  try {
+    if (id) {
+      await apiFetch(`/api/fuera-carta/${id}`, { method: 'PUT', body: JSON.stringify(body) });
+    } else {
+      await apiFetch('/api/fuera-carta', { method: 'POST', body: JSON.stringify(body) });
+    }
+    closeModal('modal-fuera');
+    fueraLista = await apiFetch('/api/fuera-carta/all');
+    renderFuera();
+    toast(id ? 'Plato actualizado' : 'Plato añadido');
+  } catch { toast('Error al guardar', false); }
+}
+
+async function deleteFuera(id, nombre) {
+  if (!confirm(`¿Borrar "${nombre}"?`)) return;
+  try {
+    await apiFetch(`/api/fuera-carta/${id}`, { method: 'DELETE' });
+    fueraLista = fueraLista.filter(f => f.id !== id);
+    renderFuera();
+    toast('Plato eliminado');
+  } catch { toast('Error al borrar', false); }
+}
+
+// ── MODALES ─────────────────────────────────────────────────
 function openPlatoModal(id = null, catId = null) {
   document.getElementById('modal-plato-title').textContent = id ? 'Editar plato' : 'Nuevo plato';
   document.getElementById('mp-id').value = id || '';
   const catSel = document.getElementById('mp-cat');
   catSel.innerHTML = menu.map(c => `<option value="${c.id}" ${c.id === catId ? 'selected' : ''}>${c.icono} ${c.nombre}</option>`).join('');
-
   if (id) {
     const p = menu.flatMap(c => c.platos).find(p => p.id === id);
     if (p) {
@@ -575,99 +700,11 @@ async function uploadFoto() {
   const fd = new FormData();
   fd.append('file', file);
   try {
-    const res = await fetch('/api/upload', {
-      method: 'POST',
-      headers: { 'X-Admin-Pass': PASS },
-      body: fd
-    });
+    const res = await fetch('/api/upload', { method: 'POST', headers: { 'X-Admin-Pass': PASS }, body: fd });
     const { url } = await res.json();
     document.getElementById('mp-foto').value = url;
     toast('Foto subida');
   } catch { toast('Error al subir foto', false); }
-}
-
-// ── FUERA DE CARTA ────────────────────────────────────────────
-function renderFuera() {
-  const el = document.getElementById('fuera-list');
-  if (!fueraLista.length) { el.innerHTML = '<div class="empty">Sin platos fuera de carta. Añade uno con el botón +.</div>'; return; }
-  el.innerHTML = fueraLista.map(f => `
-    <div class="plato-item">
-      <div class="plato-data">
-        <div class="plato-nombre">${f.nombre} ${!f.activo ? '<span class="badge badge-red">Inactivo</span>' : ''}</div>
-        <div class="plato-desc">${f.descripcion || '—'}</div>
-        <div class="plato-precio">${f.precio.toFixed(2)} € · <span style="color:var(--muted)">${f.unidades} uds</span></div>
-      </div>
-      <div class="plato-actions">
-        <button class="btn btn-ghost btn-sm" onclick="updateUnidades(${f.id},${f.unidades})">✏️ Uds</button>
-        <button class="btn btn-ghost btn-sm" onclick="openFueraModal(${f.id})">✏️</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteFuera(${f.id},'${f.nombre}')">🗑️</button>
-      </div>
-    </div>`).join('');
-}
-
-async function updateUnidades(id, actual) {
-  const val = prompt('Unidades disponibles:', actual);
-  if (val === null) return;
-  const unidades = parseInt(val);
-  if (isNaN(unidades) || unidades < 0) { toast('Número no válido', false); return; }
-  try {
-    await apiFetch(`/api/fuera-carta/${id}`, { method: 'PUT', body: JSON.stringify({ unidades }) });
-    fueraLista = fueraLista.map(f => f.id === id ? { ...f, unidades } : f);
-    renderFuera();
-    toast('Unidades actualizadas');
-  } catch { toast('Error al actualizar', false); }
-}
-
-function openFueraModal(id = null) {
-  document.getElementById('modal-fuera-title').textContent = id ? 'Editar plato' : 'Nuevo plato fuera de carta';
-  document.getElementById('mf-id').value = id || '';
-  if (id) {
-    const f = fueraLista.find(f => f.id === id);
-    if (f) {
-      document.getElementById('mf-nombre').value = f.nombre;
-      document.getElementById('mf-desc').value = f.descripcion || '';
-      document.getElementById('mf-precio').value = f.precio;
-      document.getElementById('mf-unidades').value = f.unidades;
-    }
-  } else {
-    document.getElementById('mf-nombre').value = '';
-    document.getElementById('mf-desc').value = '';
-    document.getElementById('mf-precio').value = '';
-    document.getElementById('mf-unidades').value = '0';
-  }
-  document.getElementById('modal-fuera').classList.add('open');
-}
-
-async function saveFuera() {
-  const id = document.getElementById('mf-id').value;
-  const body = {
-    nombre: document.getElementById('mf-nombre').value,
-    descripcion: document.getElementById('mf-desc').value,
-    precio: parseFloat(document.getElementById('mf-precio').value),
-    unidades: parseInt(document.getElementById('mf-unidades').value) || 0,
-  };
-  if (!body.nombre || isNaN(body.precio)) { toast('Rellena nombre y precio', false); return; }
-  try {
-    if (id) {
-      await apiFetch(`/api/fuera-carta/${id}`, { method: 'PUT', body: JSON.stringify(body) });
-    } else {
-      await apiFetch('/api/fuera-carta', { method: 'POST', body: JSON.stringify(body) });
-    }
-    closeModal('modal-fuera');
-    fueraLista = await apiFetch('/api/fuera-carta/all');
-    renderFuera();
-    toast(id ? 'Plato actualizado' : 'Plato añadido');
-  } catch { toast('Error al guardar', false); }
-}
-
-async function deleteFuera(id, nombre) {
-  if (!confirm(`¿Borrar "${nombre}"?`)) return;
-  try {
-    await apiFetch(`/api/fuera-carta/${id}`, { method: 'DELETE' });
-    fueraLista = fueraLista.filter(f => f.id !== id);
-    renderFuera();
-    toast('Plato eliminado');
-  } catch { toast('Error al borrar', false); }
 }
 
 function showPanel(name, btn) {
@@ -677,7 +714,6 @@ function showPanel(name, btn) {
   btn.classList.add('active');
 }
 
-// Cerrar modal al clicar fuera
 document.querySelectorAll('.overlay').forEach(o => {
   o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
 });

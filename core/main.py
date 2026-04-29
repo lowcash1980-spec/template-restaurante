@@ -1,23 +1,68 @@
 from dotenv import load_dotenv
 load_dotenv()
 
-from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, Header, Body
+from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, Header, Body, Request
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.responses import FileResponse, StreamingResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
 from pydantic import BaseModel
 from typing import Optional, AsyncIterator
-import sqlite3, json, os, logging, asyncio, shutil, uuid
+import sqlite3, json, os, logging, asyncio, shutil, uuid, hmac, time
+from collections import defaultdict
 from pathlib import Path
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # ── Config ────────────────────────────────────────────────────
-ADMIN_PASS  = os.getenv("ADMIN_PASS", "admin1234")
-DB_PATH     = "core.db"
-UPLOADS_DIR = Path("uploads")
+ADMIN_PASS       = os.getenv("ADMIN_PASS", "admin1234")
+DB_PATH          = "core.db"
+UPLOADS_DIR      = Path("uploads")
 UPLOADS_DIR.mkdir(exist_ok=True)
+MAX_UPLOAD_BYTES = 5 * 1024 * 1024          # 5 MB
+ALLOWED_ORIGINS  = os.getenv("ALLOWED_ORIGINS", "*").split(",")
+# ──────────────────────────────────────────────────────────────
+
+
+# ── Seguridad: cabeceras HTTP ─────────────────────────────────
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        response.headers["X-Content-Type-Options"]  = "nosniff"
+        response.headers["X-Frame-Options"]         = "DENY"
+        response.headers["X-XSS-Protection"]        = "1; mode=block"
+        response.headers["Referrer-Policy"]         = "strict-origin-when-cross-origin"
+        response.headers["Permissions-Policy"]      = "camera=(), microphone=(), geolocation=()"
+        return response
+# ──────────────────────────────────────────────────────────────
+
+
+# ── Seguridad: anti-fuerza bruta ──────────────────────────────
+_failed: dict[str, list[float]] = defaultdict(list)
+MAX_ATTEMPTS   = 5
+LOCKOUT_SECS   = 300  # 5 minutos
+
+def _is_locked(ip: str) -> bool:
+    now = time.time()
+    _failed[ip] = [t for t in _failed[ip] if now - t < LOCKOUT_SECS]
+    return len(_failed[ip]) >= MAX_ATTEMPTS
+
+def _record_fail(ip: str):
+    _failed[ip].append(time.time())
+# ──────────────────────────────────────────────────────────────
+
+
+# ── Seguridad: rate limiting simple ───────────────────────────
+_rl: dict[str, list[float]] = defaultdict(list)
+
+def _rate_exceeded(ip: str, limit: int = 120, window: int = 60) -> bool:
+    now = time.time()
+    _rl[ip] = [t for t in _rl[ip] if now - t < window]
+    if len(_rl[ip]) >= limit:
+        return True
+    _rl[ip].append(now)
+    return False
 # ──────────────────────────────────────────────────────────────
 
 
@@ -106,19 +151,38 @@ init_db()
 
 
 # ── Auth ──────────────────────────────────────────────────────
-def auth(x_admin_pass: str = Header(default=None)):
-    if x_admin_pass != ADMIN_PASS:
+def auth(request: Request, x_admin_pass: str = Header(default=None)):
+    ip = request.client.host if request.client else "unknown"
+    if _is_locked(ip):
+        raise HTTPException(status_code=429, detail="Demasiados intentos fallidos. Espera 5 minutos.")
+    if not hmac.compare_digest(str(x_admin_pass or ""), ADMIN_PASS):
+        _record_fail(ip)
         raise HTTPException(status_code=401, detail="No autorizado")
 # ──────────────────────────────────────────────────────────────
 
 
-app = FastAPI(title="Restaurante Core")
+app = FastAPI(title="Restaurante Core", docs_url=None, redoc_url=None)
+
+app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(
-    CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"]
+    CORSMiddleware,
+    allow_origins=ALLOWED_ORIGINS,
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
+    allow_headers=["Content-Type", "X-Admin-Pass"],
 )
 
 
-# ── Public endpoints (todos los servicios los consumen) ───────
+# ── Rate limiting middleware ───────────────────────────────────
+@app.middleware("http")
+async def rate_limit_middleware(request: Request, call_next):
+    ip = request.client.host if request.client else "unknown"
+    if _rate_exceeded(ip):
+        return JSONResponse(status_code=429, content={"detail": "Demasiadas peticiones. Intenta más tarde."})
+    return await call_next(request)
+# ──────────────────────────────────────────────────────────────
+
+
+# ── Public endpoints ──────────────────────────────────────────
 
 @app.get("/api/menu")
 def api_menu():
@@ -132,10 +196,7 @@ def api_menu():
                 "SELECT * FROM platos WHERE categoria_id=? ORDER BY orden, id",
                 (cat["id"],)
             ).fetchall()
-            result.append({
-                **dict(cat),
-                "platos": [dict(p) for p in platos]
-            })
+            result.append({**dict(cat), "platos": [dict(p) for p in platos]})
     return result
 
 
@@ -157,6 +218,14 @@ def api_stock():
         ).fetchall()]
 
 
+@app.get("/api/fuera-carta")
+def api_fuera_carta():
+    with db() as conn:
+        return [dict(r) for r in conn.execute(
+            "SELECT * FROM fuera_carta WHERE activo=1 ORDER BY id"
+        ).fetchall()]
+
+
 @app.get("/api/events")
 async def api_events():
     q: asyncio.Queue = asyncio.Queue()
@@ -168,7 +237,7 @@ async def api_events():
     )
 
 
-# ── Admin endpoints (requieren autenticación) ─────────────────
+# ── Admin endpoints ───────────────────────────────────────────
 
 class PlatoIn(BaseModel):
     categoria_id: Optional[int] = None
@@ -270,14 +339,6 @@ async def eliminar_categoria(cid: int):
     return {"ok": True}
 
 
-@app.get("/api/fuera-carta")
-def api_fuera_carta():
-    with db() as conn:
-        return [dict(r) for r in conn.execute(
-            "SELECT * FROM fuera_carta WHERE activo=1 ORDER BY id"
-        ).fetchall()]
-
-
 @app.get("/api/fuera-carta/all", dependencies=[Depends(auth)])
 def api_fuera_carta_all():
     with db() as conn:
@@ -353,9 +414,11 @@ async def upload_foto(file: UploadFile = File(...)):
     ext = Path(file.filename).suffix.lower()
     if ext not in [".jpg", ".jpeg", ".png", ".webp"]:
         raise HTTPException(400, "Solo JPG, PNG o WEBP")
+    content = await file.read(MAX_UPLOAD_BYTES + 1)
+    if len(content) > MAX_UPLOAD_BYTES:
+        raise HTTPException(413, "Imagen demasiado grande. Máximo 5 MB.")
     filename = f"{uuid.uuid4().hex}{ext}"
-    with (UPLOADS_DIR / filename).open("wb") as f:
-        shutil.copyfileobj(file.file, f)
+    (UPLOADS_DIR / filename).write_bytes(content)
     return {"url": f"/uploads/{filename}"}
 
 
