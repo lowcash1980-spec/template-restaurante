@@ -36,12 +36,19 @@ class Reserva(Base):
     notas = Column(Text, default="")
     fecha_datetime = Column(DateTime, nullable=True)
     recordatorio_enviado = Column(Boolean, default=False)
+    bienvenida_enviada = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
 async def init_db():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        try:
+            await conn.execute(__import__('sqlalchemy').text(
+                "ALTER TABLE reservas ADD COLUMN bienvenida_enviada BOOLEAN DEFAULT 0"
+            ))
+        except Exception:
+            pass
 
 
 async def guardar_mensaje(telefono: str, rol: str, contenido: str):
@@ -129,4 +136,31 @@ async def marcar_recordatorio_enviado(reserva_id: int):
         reserva = result.scalar_one_or_none()
         if reserva:
             reserva.recordatorio_enviado = True
+            await session.commit()
+
+
+async def obtener_reservas_para_bienvenida() -> list[Reserva]:
+    """Reservas de hoy cuya hora está entre ahora y 30 minutos desde ahora, bienvenida no enviada."""
+    from sqlalchemy import select
+    ahora = datetime.utcnow()
+    ventana_fin = ahora + timedelta(minutes=30)
+
+    async with AsyncSessionLocal() as session:
+        result = await session.execute(
+            select(Reserva).where(
+                Reserva.fecha_datetime >= ahora,
+                Reserva.fecha_datetime <= ventana_fin,
+                Reserva.bienvenida_enviada == False,
+            )
+        )
+        return result.scalars().all()
+
+
+async def marcar_bienvenida_enviada(reserva_id: int):
+    from sqlalchemy import select
+    async with AsyncSessionLocal() as session:
+        result = await session.execute(select(Reserva).where(Reserva.id == reserva_id))
+        reserva = result.scalar_one_or_none()
+        if reserva:
+            reserva.bienvenida_enviada = True
             await session.commit()

@@ -78,6 +78,14 @@ def init_db():
                 apertura TEXT DEFAULT '13:00',
                 cierre   TEXT DEFAULT '23:00'
             );
+            CREATE TABLE IF NOT EXISTS fuera_carta (
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                nombre      TEXT NOT NULL,
+                descripcion TEXT DEFAULT '',
+                precio      REAL NOT NULL,
+                unidades    INTEGER DEFAULT 0,
+                activo      INTEGER DEFAULT 1
+            );
         """)
         defaults = {
             "nombre": "[NOMBRE_RESTAURANTE]",
@@ -187,6 +195,20 @@ class CategoriaIn(BaseModel):
     icono: Optional[str] = "🍽️"
     orden: Optional[int] = 0
 
+class FueraCartaIn(BaseModel):
+    nombre: str
+    descripcion: Optional[str] = ""
+    precio: float
+    unidades: Optional[int] = 0
+    activo: Optional[bool] = True
+
+class FueraCartaUpdate(BaseModel):
+    nombre: Optional[str] = None
+    descripcion: Optional[str] = None
+    precio: Optional[float] = None
+    unidades: Optional[int] = None
+    activo: Optional[bool] = None
+
 
 @app.post("/api/platos", dependencies=[Depends(auth)])
 async def crear_plato(p: PlatoIn):
@@ -245,6 +267,61 @@ async def eliminar_categoria(cid: int):
         conn.execute("DELETE FROM categorias WHERE id=?", (cid,))
         conn.commit()
     await _broadcast("categoria_eliminada", {"id": cid})
+    return {"ok": True}
+
+
+@app.get("/api/fuera-carta")
+def api_fuera_carta():
+    with db() as conn:
+        return [dict(r) for r in conn.execute(
+            "SELECT * FROM fuera_carta WHERE activo=1 ORDER BY id"
+        ).fetchall()]
+
+
+@app.get("/api/fuera-carta/all", dependencies=[Depends(auth)])
+def api_fuera_carta_all():
+    with db() as conn:
+        return [dict(r) for r in conn.execute(
+            "SELECT * FROM fuera_carta ORDER BY id"
+        ).fetchall()]
+
+
+@app.post("/api/fuera-carta", dependencies=[Depends(auth)])
+async def crear_fuera_carta(f: FueraCartaIn):
+    with db() as conn:
+        cur = conn.execute(
+            "INSERT INTO fuera_carta (nombre,descripcion,precio,unidades,activo) VALUES (?,?,?,?,?)",
+            (f.nombre, f.descripcion, f.precio, f.unidades, int(f.activo))
+        )
+        conn.commit()
+        item = dict(conn.execute("SELECT * FROM fuera_carta WHERE id=?", (cur.lastrowid,)).fetchone())
+    await _broadcast("fuera_carta_creado", item)
+    return item
+
+
+@app.put("/api/fuera-carta/{fid}", dependencies=[Depends(auth)])
+async def actualizar_fuera_carta(fid: int, f: FueraCartaUpdate):
+    with db() as conn:
+        if not conn.execute("SELECT id FROM fuera_carta WHERE id=?", (fid,)).fetchone():
+            raise HTTPException(404, "Plato no encontrado")
+        fields = {k: v for k, v in f.model_dump().items() if v is not None}
+        if "activo" in fields:
+            fields["activo"] = int(fields["activo"])
+        if fields:
+            sets = ", ".join(f"{k}=?" for k in fields)
+            conn.execute(f"UPDATE fuera_carta SET {sets} WHERE id=?", [*fields.values(), fid])
+            conn.commit()
+        item = dict(conn.execute("SELECT * FROM fuera_carta WHERE id=?", (fid,)).fetchone())
+    await _broadcast("fuera_carta_actualizado", item)
+    return item
+
+
+@app.delete("/api/fuera-carta/{fid}", dependencies=[Depends(auth)])
+async def eliminar_fuera_carta(fid: int):
+    with db() as conn:
+        conn.execute("DELETE FROM fuera_carta WHERE id=?", (fid,))
+        conn.commit()
+    await _broadcast("fuera_carta_eliminado", {"id": fid})
     return {"ok": True}
 
 

@@ -1,11 +1,18 @@
 import json
+import os
 import yaml
 import logging
+import httpx
 from datetime import datetime
 from pathlib import Path
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from agent.memory import obtener_reservas_para_recordatorio, marcar_recordatorio_enviado
+from agent.memory import (
+    obtener_reservas_para_recordatorio, marcar_recordatorio_enviado,
+    obtener_reservas_para_bienvenida, marcar_bienvenida_enviada,
+)
+
+CORE_URL = os.getenv("CORE_URL", "http://core:8000")
 
 logger = logging.getLogger(__name__)
 
@@ -71,6 +78,42 @@ def _build_recordatorio(reserva) -> str:
     return msg
 
 
+async def _fetch_fuera_carta() -> list[dict]:
+    try:
+        async with httpx.AsyncClient(timeout=5) as client:
+            r = await client.get(f"{CORE_URL}/api/fuera-carta")
+            return r.json() if r.status_code == 200 else []
+    except Exception:
+        return []
+
+
+def _build_bienvenida(reserva, fuera_carta: list[dict]) -> str:
+    nombre = reserva.nombre.split()[0]
+    hora = reserva.hora_texto
+    personas = reserva.personas
+
+    msg = (
+        f"¡Hola {nombre}! 🎉 Os esperamos hoy en *{NEGOCIO_NOMBRE}* a las {hora}.\n\n"
+        f"👥 *Personas:* {personas}\n\n"
+        f"Esperamos que tengáis una experiencia increíble. "
+        f"Si necesitáis algo antes de llegar, aquí estamos. 😊"
+    )
+
+    activos = [f for f in fuera_carta if f.get("unidades", 0) > 0]
+    if activos:
+        lineas = ["\n\n🌟 *Hoy tenemos disponible fuera de carta:*"]
+        for f in activos:
+            lineas.append(f"  • {f['nombre']} — {f['precio']:.2f}€ ({f['unidades']} uds)")
+        lineas.append(
+            "\nSi queréis reservar alguno, avisadnos respondiendo a este mensaje. "
+            "Los platos especiales necesitan preparación con antelación 🙂"
+        )
+        msg += "\n".join(lineas)
+
+    msg += f"\n\n_{NEGOCIO_NOMBRE} — {NEGOCIO_TELEFONO}_"
+    return msg
+
+
 async def check_recordatorios(proveedor):
     try:
         reservas = await obtener_reservas_para_recordatorio()
@@ -89,6 +132,25 @@ async def check_recordatorios(proveedor):
         logger.error(f"[SCHEDULER] Error enviando recordatorios: {e}")
 
 
+async def check_bienvenidas(proveedor):
+    try:
+        reservas = await obtener_reservas_para_bienvenida()
+        if not reservas:
+            return
+
+        fuera_carta = await _fetch_fuera_carta()
+        logger.info(f"[SCHEDULER] {len(reservas)} bienvenida(s) pendiente(s)")
+
+        for reserva in reservas:
+            mensaje = _build_bienvenida(reserva, fuera_carta)
+            await proveedor.enviar_mensaje(reserva.telefono, mensaje)
+            await marcar_bienvenida_enviada(reserva.id)
+            logger.info(f"[SCHEDULER] Bienvenida enviada a {reserva.telefono} ({reserva.nombre})")
+
+    except Exception as e:
+        logger.error(f"[SCHEDULER] Error enviando bienvenidas: {e}")
+
+
 def iniciar_scheduler(proveedor) -> AsyncIOScheduler:
     scheduler = AsyncIOScheduler()
     scheduler.add_job(
@@ -99,6 +161,14 @@ def iniciar_scheduler(proveedor) -> AsyncIOScheduler:
         id="recordatorios",
         replace_existing=True,
     )
+    scheduler.add_job(
+        check_bienvenidas,
+        trigger="interval",
+        minutes=5,
+        args=[proveedor],
+        id="bienvenidas",
+        replace_existing=True,
+    )
     scheduler.start()
-    logger.info("[SCHEDULER] Iniciado — comprobación cada 30 minutos")
+    logger.info("[SCHEDULER] Iniciado — recordatorios cada 30 min | bienvenidas cada 5 min")
     return scheduler

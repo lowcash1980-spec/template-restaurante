@@ -131,6 +131,7 @@ input:checked + .slider:before { transform: translateX(22px); }
     <button class="nav-btn" onclick="showPanel('menu',this)">🍽️ Menú</button>
     <button class="nav-btn" onclick="showPanel('info',this)">🏠 Info</button>
     <button class="nav-btn" onclick="showPanel('horarios',this)">🕐 Horarios</button>
+    <button class="nav-btn" onclick="showPanel('fuera',this)">🌟 Fuera de carta</button>
   </nav>
 
   <!-- DISPONIBILIDAD -->
@@ -177,6 +178,15 @@ input:checked + .slider:before { transform: translateX(22px); }
       <br>
       <button class="btn btn-primary btn-sm" onclick="saveHorarios()">Guardar horarios</button>
     </div>
+  </div>
+
+  <!-- FUERA DE CARTA -->
+  <div id="panel-fuera" class="panel">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div class="section-label">Platos fuera de carta</div>
+      <button class="btn btn-primary btn-sm" onclick="openFueraModal()">+ Añadir</button>
+    </div>
+    <div id="fuera-list"></div>
   </div>
 </div>
 
@@ -226,6 +236,27 @@ input:checked + .slider:before { transform: translateX(22px); }
   </div>
 </div>
 
+<!-- MODAL FUERA DE CARTA -->
+<div class="overlay" id="modal-fuera">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-fuera-title">Nuevo plato fuera de carta</div>
+      <button class="close-btn" onclick="closeModal('modal-fuera')">×</button>
+    </div>
+    <input type="hidden" id="mf-id">
+    <div class="field"><label>Nombre del plato</label><input id="mf-nombre" type="text" placeholder="Ej: Lubina a la sal"></div>
+    <div class="field"><label>Descripción (opcional)</label><textarea id="mf-desc" placeholder="Procedencia, acompañamiento..."></textarea></div>
+    <div class="field-row">
+      <div class="field"><label>Precio (€)</label><input id="mf-precio" type="number" step="0.10" min="0"></div>
+      <div class="field"><label>Unidades disponibles</label><input id="mf-unidades" type="number" min="0" value="0"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-fuera')">Cancelar</button>
+      <button class="btn btn-primary" style="flex:2" onclick="saveFuera()">Guardar</button>
+    </div>
+  </div>
+</div>
+
 <!-- TOAST -->
 <div id="toast"></div>
 
@@ -234,6 +265,7 @@ let PASS = '';
 let menu = [];
 let info = {};
 let horarios = [];
+let fueraLista = [];
 const API = '';
 
 async function apiFetch(path, opts = {}) {
@@ -277,9 +309,10 @@ function logout() {
 }
 
 async function loadAll() {
-  [menu, { horarios: horarios, ...info }] = await Promise.all([
+  [menu, { horarios: horarios, ...info }, fueraLista] = await Promise.all([
     apiFetch('/api/menu'),
-    apiFetch('/api/info')
+    apiFetch('/api/info'),
+    apiFetch('/api/fuera-carta/all'),
   ]);
   document.getElementById('h-nombre').textContent = info.nombre || 'Restaurante';
   document.documentElement.style.setProperty('--accent', info.color || '#FF6B35');
@@ -287,6 +320,7 @@ async function loadAll() {
   renderMenu();
   renderInfo();
   renderHorarios();
+  renderFuera();
 }
 
 // ── DISPONIBILIDAD ────────────────────────────────────────────
@@ -550,6 +584,90 @@ async function uploadFoto() {
     document.getElementById('mp-foto').value = url;
     toast('Foto subida');
   } catch { toast('Error al subir foto', false); }
+}
+
+// ── FUERA DE CARTA ────────────────────────────────────────────
+function renderFuera() {
+  const el = document.getElementById('fuera-list');
+  if (!fueraLista.length) { el.innerHTML = '<div class="empty">Sin platos fuera de carta. Añade uno con el botón +.</div>'; return; }
+  el.innerHTML = fueraLista.map(f => `
+    <div class="plato-item">
+      <div class="plato-data">
+        <div class="plato-nombre">${f.nombre} ${!f.activo ? '<span class="badge badge-red">Inactivo</span>' : ''}</div>
+        <div class="plato-desc">${f.descripcion || '—'}</div>
+        <div class="plato-precio">${f.precio.toFixed(2)} € · <span style="color:var(--muted)">${f.unidades} uds</span></div>
+      </div>
+      <div class="plato-actions">
+        <button class="btn btn-ghost btn-sm" onclick="updateUnidades(${f.id},${f.unidades})">✏️ Uds</button>
+        <button class="btn btn-ghost btn-sm" onclick="openFueraModal(${f.id})">✏️</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteFuera(${f.id},'${f.nombre}')">🗑️</button>
+      </div>
+    </div>`).join('');
+}
+
+async function updateUnidades(id, actual) {
+  const val = prompt('Unidades disponibles:', actual);
+  if (val === null) return;
+  const unidades = parseInt(val);
+  if (isNaN(unidades) || unidades < 0) { toast('Número no válido', false); return; }
+  try {
+    await apiFetch(`/api/fuera-carta/${id}`, { method: 'PUT', body: JSON.stringify({ unidades }) });
+    fueraLista = fueraLista.map(f => f.id === id ? { ...f, unidades } : f);
+    renderFuera();
+    toast('Unidades actualizadas');
+  } catch { toast('Error al actualizar', false); }
+}
+
+function openFueraModal(id = null) {
+  document.getElementById('modal-fuera-title').textContent = id ? 'Editar plato' : 'Nuevo plato fuera de carta';
+  document.getElementById('mf-id').value = id || '';
+  if (id) {
+    const f = fueraLista.find(f => f.id === id);
+    if (f) {
+      document.getElementById('mf-nombre').value = f.nombre;
+      document.getElementById('mf-desc').value = f.descripcion || '';
+      document.getElementById('mf-precio').value = f.precio;
+      document.getElementById('mf-unidades').value = f.unidades;
+    }
+  } else {
+    document.getElementById('mf-nombre').value = '';
+    document.getElementById('mf-desc').value = '';
+    document.getElementById('mf-precio').value = '';
+    document.getElementById('mf-unidades').value = '0';
+  }
+  document.getElementById('modal-fuera').classList.add('open');
+}
+
+async function saveFuera() {
+  const id = document.getElementById('mf-id').value;
+  const body = {
+    nombre: document.getElementById('mf-nombre').value,
+    descripcion: document.getElementById('mf-desc').value,
+    precio: parseFloat(document.getElementById('mf-precio').value),
+    unidades: parseInt(document.getElementById('mf-unidades').value) || 0,
+  };
+  if (!body.nombre || isNaN(body.precio)) { toast('Rellena nombre y precio', false); return; }
+  try {
+    if (id) {
+      await apiFetch(`/api/fuera-carta/${id}`, { method: 'PUT', body: JSON.stringify(body) });
+    } else {
+      await apiFetch('/api/fuera-carta', { method: 'POST', body: JSON.stringify(body) });
+    }
+    closeModal('modal-fuera');
+    fueraLista = await apiFetch('/api/fuera-carta/all');
+    renderFuera();
+    toast(id ? 'Plato actualizado' : 'Plato añadido');
+  } catch { toast('Error al guardar', false); }
+}
+
+async function deleteFuera(id, nombre) {
+  if (!confirm(`¿Borrar "${nombre}"?`)) return;
+  try {
+    await apiFetch(`/api/fuera-carta/${id}`, { method: 'DELETE' });
+    fueraLista = fueraLista.filter(f => f.id !== id);
+    renderFuera();
+    toast('Plato eliminado');
+  } catch { toast('Error al borrar', false); }
 }
 
 function showPanel(name, btn) {
