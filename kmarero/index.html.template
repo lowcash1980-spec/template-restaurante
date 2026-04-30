@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+[Resource from github at repo://lowcash1980-spec/template-restaurante/sha/4ae6ee4bfae5640947e7ec37b4c2f962ed915163/contents/kmarero/index.html.template] <!DOCTYPE html>
 
 <html lang="es"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
@@ -333,6 +333,7 @@ body{font-family:'DM Sans',sans-serif;background:#1a1008;min-height:100vh;}
 
 <!-- ══ CLIENTE ══ -->
 <div class="screen active" id="screen-customer">
+<div id="seguimiento-activo" class="seguimiento-wrap" style="display:none"></div>
   <div class="hero">
     <div class="hero-sub">${CIUDAD}</div>
     <div class="hero-name">Al<em>M</em>a</div>
@@ -995,6 +996,7 @@ body{font-family:'DM Sans',sans-serif;background:#1a1008;min-height:100vh;}
       <div class="review-title">🧾 Tu pedido</div>
       <button class="review-close" onclick="closeReview()">✕</button>
     </div>
+    <div id="review-orden" style="display:none"></div>
     <div class="review-body" id="review-body"></div>
     <div class="review-footer">
       <div class="review-total-row">
@@ -1163,6 +1165,7 @@ const IS_ADMIN = urlParams.get('admin') === '1';
 
 // ── IN-MEMORY STATE ──
 let cart = [], kOrders = [], bOrders = [], oid = 1;
+let ordenItems = [];
 
 // ── LOCALSTORAGE STATE ──
 function getState() {
@@ -1331,16 +1334,20 @@ function sendOrder() {
   const id = oid++;
   const name = getCustomerName();
   const tableLabel = `Mesa ${TABLE_NUM}${name ? ' · '+name : ''}`;
-  const food = cart.filter(i => i.type==='food');
-  const drink = cart.filter(i => i.type==='drink');
+  var turnoByIdx = {};
+  ordenItems.forEach(function(oi) { turnoByIdx[oi._idx] = oi.turno; });
+  var cartWithTurno = cart.map(function(item, idx) { return Object.assign({}, item, {turno: turnoByIdx[idx] || (idx+1)}); });
+  const food = cartWithTurno.filter(i => i.type==='food');
+  const drink = cartWithTurno.filter(i => i.type==='drink');
 
   if (food.length) { kOrders.push({id, table:tableLabel, time:t, ts:Date.now(), items:food}); renderKDS('k'); }
   if (drink.length) { bOrders.push({id, table:tableLabel, time:t, ts:Date.now(), items:drink}); renderKDS('b'); }
 
   // Accumulate in localStorage
   const {state, tbl} = getTable(TABLE_NUM);
-  tbl.orders.push({id, time:t, ts:Date.now(), items:[...food,...drink]});
+  tbl.orders.push({id, time:t, ts:Date.now(), items:[...food,...drink], turnoActual: 1});
   setState(state);
+  renderSeguimientoActivo();
 
   const fc = food.reduce((s,i) => s+i.qty, 0);
   const dc = drink.reduce((s,i) => s+i.qty, 0);
@@ -1422,6 +1429,7 @@ function showScreen(name, btn) {
   btn.classList.add('active');
   if (name === 'summary') renderSummary();
   if (name === 'admin' && document.getElementById('admin-content').style.display !== 'none') renderAdminTables();
+  if (name === 'customer') renderSeguimientoActivo();
 }
 
 function flash(msg) {
@@ -1433,6 +1441,7 @@ function flash(msg) {
 // ── CART REVIEW ──
 function openReview() {
   if (!cart.length) return;
+  initOrden(); renderOrdenReview();
   renderReview();
   document.getElementById('review-overlay').classList.add('show');
 }
@@ -1844,7 +1853,30 @@ function printTicket() {
   .tk-meta{font-size:11px;margin-bottom:2px;display:flex;justify-content:space-between;}
   .tk-item-row{display:flex;margin:3px 0;font-size:11px;}.tk-qty{width:28px;font-weight:700;}.tk-item-name{flex:1;}
   .tk-total-row{display:flex;justify-content:space-between;font-weight:700;font-size:13px;margin-top:4px;}
-  .tk-footer{text-align:center;font-size:9px;color:#888;margin-top:8px;}</style>
+  .tk-footer{text-align:center;font-size:9px;color:#888;margin-top:8px;}
+/* -- Orden de platos -- */
+.orden-seccion { padding: 14px 16px 8px; border-bottom: 1px solid rgba(0,0,0,.08); }
+.orden-titulo { font-size: 12px; font-weight: 800; letter-spacing: 1px; color: var(--terra); margin-bottom: 4px; }
+.orden-hint { font-size: 12px; color: rgba(0,0,0,.5); margin-bottom: 10px; }
+.orden-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid rgba(0,0,0,.06); }
+.orden-row:last-child { border-bottom: none; }
+.orden-num { width: 26px; height: 26px; border-radius: 50%; background: var(--terra); color: #fff; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.orden-name { flex: 1; font-size: 13px; font-weight: 600; }
+.orden-btns { display: flex; flex-direction: column; gap: 2px; }
+.orden-arrow { width: 24px; height: 22px; border: 1px solid rgba(0,0,0,.2); border-radius: 5px; background: #fff; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.orden-arrow.hidden { visibility: hidden; }
+/* -- Seguimiento activo -- */
+.seguimiento-wrap { margin: 0; padding: 12px 14px; background: rgba(0,0,0,.04); border-bottom: 1px solid rgba(0,0,0,.1); }
+.seguimiento-card { background: #fff; border-radius: 12px; padding: 14px; box-shadow: 0 1px 4px rgba(0,0,0,.1); }
+.turno-progress { display: flex; gap: 4px; margin-bottom: 10px; }
+.turno-dot { height: 6px; flex: 1; border-radius: 3px; background: rgba(0,0,0,.12); }
+.turno-dot.done { background: #22c55e; }
+.turno-dot.active { background: var(--terra); }
+.seg-label { font-size: 11px; font-weight: 800; letter-spacing: 1px; color: var(--terra); margin-bottom: 4px; }
+.seg-platos { font-size: 13px; font-weight: 600; color: #222; margin-bottom: 10px; }
+.btn-sig-km { width: 100%; padding: 11px; background: var(--terra); color: #fff; border: none; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; }
+.seg-fin { text-align: center; font-size: 13px; color: #22c55e; font-weight: 700; }
+</style>
   </head><body>${currentTicketHTML}</body></html>`);
   win.document.close(); win.focus();
   setTimeout(() => { win.print(); win.close(); }, 400);
@@ -1854,6 +1886,85 @@ function closeTicket(e) {
   if (e.target === document.getElementById('ticket-overlay'))
     document.getElementById('ticket-overlay').classList.remove('show');
 }
+
+function initOrden() {
+  ordenItems = cart.map((item, idx) => ({...item, _idx: idx, turno: idx + 1}));
+}
+
+function renderOrdenReview() {
+  const c = document.getElementById('review-orden');
+  if (!c) return;
+  if (ordenItems.length < 2) { c.style.display = 'none'; return; }
+  c.style.display = 'block';
+  c.innerHTML = '<div class="orden-seccion">' +
+    '<div class="orden-titulo">ORDEN DE SALIDA DE LOS PLATOS</div>' +
+    '<p class="orden-hint">Indica el orden en que quieres que salgan. Usa las flechas para reordenar.</p>' +
+    ordenItems.map(function(item, i) {
+      return '<div class="orden-row">' +
+        '<span class="orden-num">' + (i+1) + '</span>' +
+        '<span class="orden-name">' + item.name + '</span>' +
+        '<div class="orden-btns">' +
+          '<button class="orden-arrow' + (i === 0 ? ' hidden' : '') + '" onclick="moverOrdenKm(' + i + ',-1)">\u2191</button>' +
+          '<button class="orden-arrow' + (i === ordenItems.length-1 ? ' hidden' : '') + '" onclick="moverOrdenKm(' + i + ',1)">\u2193</button>' +
+        '</div></div>';
+    }).join('') + '</div>';
+}
+
+function moverOrdenKm(idx, dir) {
+  var ni = idx + dir;
+  if (ni < 0 || ni >= ordenItems.length) return;
+  var tmp = ordenItems[idx]; ordenItems[idx] = ordenItems[ni]; ordenItems[ni] = tmp;
+  ordenItems.forEach(function(item, i) { item.turno = i + 1; });
+  renderOrdenReview();
+}
+
+function renderSeguimientoActivo() {
+  var c = document.getElementById('seguimiento-activo');
+  if (!c) return;
+  var tableData = getTable(TABLE_NUM);
+  var tbl = tableData.tbl;
+  if (!tbl.orders || !tbl.orders.length) { c.style.display = 'none'; return; }
+  var lastOrder = tbl.orders[tbl.orders.length - 1];
+  var items = lastOrder.items || [];
+  var turnos = items.map(function(i) { return i.turno || 1; });
+  var maxT = Math.max.apply(null, turnos);
+  if (maxT <= 1) { c.style.display = 'none'; return; }
+  var ta = lastOrder.turnoActual || 1;
+  if (ta > maxT) { c.style.display = 'none'; return; }
+  var platosActuales = items.filter(function(i) { return (i.turno||1) === ta; }).map(function(i) { return i.name; }).join(', ');
+  var allTurnos = [];
+  for (var t = 1; t <= maxT; t++) allTurnos.push(t);
+  c.style.display = 'block';
+  c.innerHTML = '<div class="seguimiento-card">' +
+    '<div class="turno-progress">' +
+      allTurnos.map(function(t) {
+        var cls = t < ta ? 'turno-dot done' : t === ta ? 'turno-dot active' : 'turno-dot';
+        return '<div class="' + cls + '"></div>';
+      }).join('') +
+    '</div>' +
+    '<div class="seg-label">EN COCINA \u00b7 PLATO ' + ta + ' DE ' + maxT + '</div>' +
+    '<div class="seg-platos">' + platosActuales + '</div>' +
+    (ta < maxT
+      ? '<button class="btn-sig-km" onclick="siguientePlatoKm()">Siguiente plato \u2192</button>'
+      : '<div class="seg-fin">\u2713 \u00daltimo plato en cocina</div>') +
+    '</div>';
+}
+
+function siguientePlatoKm() {
+  var tableData = getTable(TABLE_NUM);
+  var state = tableData.state;
+  var tbl = tableData.tbl;
+  if (!tbl.orders || !tbl.orders.length) return;
+  var lastOrder = tbl.orders[tbl.orders.length - 1];
+  var items = lastOrder.items || [];
+  var maxT = Math.max.apply(null, items.map(function(i) { return i.turno||1; }));
+  if ((lastOrder.turnoActual || 1) < maxT) {
+    lastOrder.turnoActual = (lastOrder.turnoActual || 1) + 1;
+    setState(state);
+    renderSeguimientoActivo();
+  }
+}
+
 </script>
 
 
