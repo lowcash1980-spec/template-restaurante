@@ -1,4 +1,4 @@
-[Resource from github at repo://lowcash1980-spec/template-restaurante/sha/4ae6ee4bfae5640947e7ec37b4c2f962ed915163/contents/kmarero/index.html.template] <!DOCTYPE html>
+[Resource from github at repo://lowcash1980-spec/template-restaurante/sha/00c42336c7fe5c43276467b34601669ac16e5efc/contents/kmarero/index.html.template] [Resource from github at repo://lowcash1980-spec/template-restaurante/sha/4ae6ee4bfae5640947e7ec37b4c2f962ed915163/contents/kmarero/index.html.template] <!DOCTYPE html>
 
 <html lang="es"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
@@ -996,7 +996,7 @@ body{font-family:'DM Sans',sans-serif;background:#1a1008;min-height:100vh;}
       <div class="review-title">🧾 Tu pedido</div>
       <button class="review-close" onclick="closeReview()">✕</button>
     </div>
-    <div id="review-orden" style="display:none"></div>
+    <div id="review-orden-obsoleto" style="display:none"></div>
     <div class="review-body" id="review-body"></div>
     <div class="review-footer">
       <div class="review-total-row">
@@ -1165,7 +1165,7 @@ const IS_ADMIN = urlParams.get('admin') === '1';
 
 // ── IN-MEMORY STATE ──
 let cart = [], kOrders = [], bOrders = [], oid = 1;
-let ordenItems = [];
+
 
 // ── LOCALSTORAGE STATE ──
 function getState() {
@@ -1334,18 +1334,17 @@ function sendOrder() {
   const id = oid++;
   const name = getCustomerName();
   const tableLabel = `Mesa ${TABLE_NUM}${name ? ' · '+name : ''}`;
-  var turnoByIdx = {};
-  ordenItems.forEach(function(oi) { turnoByIdx[oi._idx] = oi.turno; });
-  var cartWithTurno = cart.map(function(item, idx) { return Object.assign({}, item, {turno: turnoByIdx[idx] || (idx+1)}); });
-  const food = cartWithTurno.filter(i => i.type==='food');
-  const drink = cartWithTurno.filter(i => i.type==='drink');
+  // Asegurar que cada item tiene su turno asignado
+  cart.forEach(function(item, idx) { if (!item.turno) item.turno = idx + 1; });
+  const food = cart.filter(i => i.type==='food');
+  const drink = cart.filter(i => i.type==='drink');
 
   if (food.length) { kOrders.push({id, table:tableLabel, time:t, ts:Date.now(), items:food}); renderKDS('k'); }
   if (drink.length) { bOrders.push({id, table:tableLabel, time:t, ts:Date.now(), items:drink}); renderKDS('b'); }
 
   // Accumulate in localStorage
   const {state, tbl} = getTable(TABLE_NUM);
-  tbl.orders.push({id, time:t, ts:Date.now(), items:[...food,...drink], turnoActual: 1});
+  tbl.orders.push({id, time:t, ts:Date.now(), items:[...food,...drink], turnosMap: {}});
   setState(state);
   renderSeguimientoActivo();
 
@@ -1441,9 +1440,13 @@ function flash(msg) {
 // ── CART REVIEW ──
 function openReview() {
   if (!cart.length) return;
-  initOrden(); renderOrdenReview();
   renderReview();
   document.getElementById('review-overlay').classList.add('show');
+}
+function setItemTurno(idx, turno) {
+  if (idx < 0 || idx >= cart.length) return;
+  cart[idx].turno = turno;
+  renderReview();
 }
 function closeReview() {
   document.getElementById('review-overlay').classList.remove('show');
@@ -1460,6 +1463,12 @@ function renderReview() {
   }
   body.innerHTML = cart.map((item,idx) => {
     const sub = (item.price*item.qty).toFixed(2).replace('.',',');
+    const maxTurno = Math.min(cart.length, 8);
+    const turnoActualItem = (item.turno || idx + 1);
+    const ordenSelectorHtml = `<div class="orden-selector">
+  <div class="orden-selector-label">* Orden de salida</div>
+  <div class="orden-nums">${Array.from({length: maxTurno}, (_,i) => `<button class="orden-num-btn${turnoActualItem === i+1 ? ' sel' : ''}" onclick="setItemTurno(${idx},${i+1})">${i+1}</button>`).join('')}</div>
+</div>`;
     return `<div class="review-item" style="flex-direction:column;align-items:stretch;gap:6px;">
       <div style="display:flex;align-items:center;gap:10px;">
         <div class="review-name">${item.name}</div>
@@ -1470,6 +1479,7 @@ function renderReview() {
         </div>
         <div class="review-subtotal">${sub}€</div>
       </div>
+      ${ordenSelectorHtml}
       <textarea class="review-notes" rows="2" placeholder="Alergias o preferencias (opcional)..." oninput="setNote(${idx},this.value)">${item.notes||''}</textarea>
     </div>`;
   }).join('');
@@ -1855,27 +1865,23 @@ function printTicket() {
   .tk-total-row{display:flex;justify-content:space-between;font-weight:700;font-size:13px;margin-top:4px;}
   .tk-footer{text-align:center;font-size:9px;color:#888;margin-top:8px;}
 /* -- Orden de platos -- */
-.orden-seccion { padding: 14px 16px 8px; border-bottom: 1px solid rgba(0,0,0,.08); }
-.orden-titulo { font-size: 12px; font-weight: 800; letter-spacing: 1px; color: var(--terra); margin-bottom: 4px; }
-.orden-hint { font-size: 12px; color: rgba(0,0,0,.5); margin-bottom: 10px; }
-.orden-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid rgba(0,0,0,.06); }
-.orden-row:last-child { border-bottom: none; }
-.orden-num { width: 26px; height: 26px; border-radius: 50%; background: var(--terra); color: #fff; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.orden-name { flex: 1; font-size: 13px; font-weight: 600; }
-.orden-btns { display: flex; flex-direction: column; gap: 2px; }
-.orden-arrow { width: 24px; height: 22px; border: 1px solid rgba(0,0,0,.2); border-radius: 5px; background: #fff; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-.orden-arrow.hidden { visibility: hidden; }
-/* -- Seguimiento activo -- */
-.seguimiento-wrap { margin: 0; padding: 12px 14px; background: rgba(0,0,0,.04); border-bottom: 1px solid rgba(0,0,0,.1); }
-.seguimiento-card { background: #fff; border-radius: 12px; padding: 14px; box-shadow: 0 1px 4px rgba(0,0,0,.1); }
-.turno-progress { display: flex; gap: 4px; margin-bottom: 10px; }
-.turno-dot { height: 6px; flex: 1; border-radius: 3px; background: rgba(0,0,0,.12); }
-.turno-dot.done { background: #22c55e; }
-.turno-dot.active { background: var(--terra); }
-.seg-label { font-size: 11px; font-weight: 800; letter-spacing: 1px; color: var(--terra); margin-bottom: 4px; }
-.seg-platos { font-size: 13px; font-weight: 600; color: #222; margin-bottom: 10px; }
-.btn-sig-km { width: 100%; padding: 11px; background: var(--terra); color: #fff; border: none; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; }
-.seg-fin { text-align: center; font-size: 13px; color: #22c55e; font-weight: 700; }
+/* ── Orden de platos (selector de turno por item) ── */
+.orden-selector { padding: 6px 0 8px; }
+.orden-selector-label { font-size: 10px; font-weight: 700; color: #7c3f1e; letter-spacing: .5px; margin-bottom: 6px; }
+.orden-nums { display: flex; gap: 6px; flex-wrap: wrap; }
+.orden-num-btn { width: 32px; height: 32px; border-radius: 8px; border: 2px solid #ddd; background: #f5f5f5; color: #555; font-size: 14px; font-weight: 700; cursor: pointer; transition: all .15s; display: flex; align-items: center; justify-content: center; }
+.orden-num-btn.sel { border-color: #7c3f1e; background: #7c3f1e; color: #fff; }
+/* ── Semáforo de turnos (pantalla principal) ── */
+.seg-wrap { padding: 12px 14px; background: #fdf8f5; border-bottom: 2px solid rgba(124,63,30,.2); }
+.seg-title { font-size: 11px; font-weight: 800; letter-spacing: 1px; color: #7c3f1e; margin-bottom: 10px; }
+.seg-turnos { display: flex; gap: 8px; flex-wrap: wrap; }
+.turno-badge { flex: 1; min-width: 72px; border-radius: 12px; padding: 10px 8px; text-align: center; cursor: pointer; border: 2px solid transparent; transition: all .2s; user-select: none; }
+.turno-badge.pendiente { background: #f0fdf4; border-color: #22c55e; }
+.turno-badge.en-cocina { background: #fefce8; border-color: #eab308; }
+.turno-badge.servido { background: #f1f5f9; border-color: #94a3b8; opacity: .6; cursor: default; }
+.turno-badge .semaforo { font-size: 22px; display: block; margin-bottom: 4px; }
+.turno-badge .turno-n { font-size: 11px; font-weight: 800; color: #333; margin-bottom: 3px; }
+.turno-badge .turno-items { font-size: 10px; color: #555; line-height: 1.3; }
 </style>
   </head><body>${currentTicketHTML}</body></html>`);
   win.document.close(); win.focus();
@@ -1887,37 +1893,6 @@ function closeTicket(e) {
     document.getElementById('ticket-overlay').classList.remove('show');
 }
 
-function initOrden() {
-  ordenItems = cart.map((item, idx) => ({...item, _idx: idx, turno: idx + 1}));
-}
-
-function renderOrdenReview() {
-  const c = document.getElementById('review-orden');
-  if (!c) return;
-  if (ordenItems.length < 2) { c.style.display = 'none'; return; }
-  c.style.display = 'block';
-  c.innerHTML = '<div class="orden-seccion">' +
-    '<div class="orden-titulo">ORDEN DE SALIDA DE LOS PLATOS</div>' +
-    '<p class="orden-hint">Indica el orden en que quieres que salgan. Usa las flechas para reordenar.</p>' +
-    ordenItems.map(function(item, i) {
-      return '<div class="orden-row">' +
-        '<span class="orden-num">' + (i+1) + '</span>' +
-        '<span class="orden-name">' + item.name + '</span>' +
-        '<div class="orden-btns">' +
-          '<button class="orden-arrow' + (i === 0 ? ' hidden' : '') + '" onclick="moverOrdenKm(' + i + ',-1)">\u2191</button>' +
-          '<button class="orden-arrow' + (i === ordenItems.length-1 ? ' hidden' : '') + '" onclick="moverOrdenKm(' + i + ',1)">\u2193</button>' +
-        '</div></div>';
-    }).join('') + '</div>';
-}
-
-function moverOrdenKm(idx, dir) {
-  var ni = idx + dir;
-  if (ni < 0 || ni >= ordenItems.length) return;
-  var tmp = ordenItems[idx]; ordenItems[idx] = ordenItems[ni]; ordenItems[ni] = tmp;
-  ordenItems.forEach(function(item, i) { item.turno = i + 1; });
-  renderOrdenReview();
-}
-
 function renderSeguimientoActivo() {
   var c = document.getElementById('seguimiento-activo');
   if (!c) return;
@@ -1926,43 +1901,36 @@ function renderSeguimientoActivo() {
   if (!tbl.orders || !tbl.orders.length) { c.style.display = 'none'; return; }
   var lastOrder = tbl.orders[tbl.orders.length - 1];
   var items = lastOrder.items || [];
-  var turnos = items.map(function(i) { return i.turno || 1; });
-  var maxT = Math.max.apply(null, turnos);
-  if (maxT <= 1) { c.style.display = 'none'; return; }
-  var ta = lastOrder.turnoActual || 1;
-  if (ta > maxT) { c.style.display = 'none'; return; }
-  var platosActuales = items.filter(function(i) { return (i.turno||1) === ta; }).map(function(i) { return i.name; }).join(', ');
-  var allTurnos = [];
-  for (var t = 1; t <= maxT; t++) allTurnos.push(t);
+  var turnosMap = lastOrder.turnosMap || {};
+  var turnoNums = [];
+  items.forEach(function(i) { var t = i.turno || 1; if (turnoNums.indexOf(t) < 0) turnoNums.push(t); });
+  turnoNums.sort(function(a,b){return a-b;});
+  if (turnoNums.length < 2) { c.style.display = 'none'; return; }
   c.style.display = 'block';
-  c.innerHTML = '<div class="seguimiento-card">' +
-    '<div class="turno-progress">' +
-      allTurnos.map(function(t) {
-        var cls = t < ta ? 'turno-dot done' : t === ta ? 'turno-dot active' : 'turno-dot';
-        return '<div class="' + cls + '"></div>';
-      }).join('') +
-    '</div>' +
-    '<div class="seg-label">EN COCINA \u00b7 PLATO ' + ta + ' DE ' + maxT + '</div>' +
-    '<div class="seg-platos">' + platosActuales + '</div>' +
-    (ta < maxT
-      ? '<button class="btn-sig-km" onclick="siguientePlatoKm()">Siguiente plato \u2192</button>'
-      : '<div class="seg-fin">\u2713 \u00daltimo plato en cocina</div>') +
-    '</div>';
+  var badgesHtml = turnoNums.map(function(t) {
+    var estado = turnosMap[t] || 'pendiente';
+    var emoji = estado === 'pendiente' ? '🟢' : estado === 'en-cocina' ? '🟡' : '🔴';
+    var platosDelTurno = items.filter(function(i){ return (i.turno||1) === t; }).map(function(i){ return i.name; }).join(', ');
+    var clickable = estado !== 'servido';
+    return '<div class="turno-badge ' + estado + '"' + (clickable ? ' onclick="tickTurno(' + t + ')"' : '') + '>' +
+      '<span class="semaforo">' + emoji + '</span>' +
+      '<div class="turno-n">Plato ' + t + '</div>' +
+      '<div class="turno-items">' + platosDelTurno + '</div>' +
+      '</div>';
+  }).join('');
+  c.innerHTML = '<div class="seg-wrap"><div class="seg-title">ORDEN DE TU PEDIDO</div><div class="seg-turnos">' + badgesHtml + '</div></div>';
 }
-
-function siguientePlatoKm() {
+function tickTurno(t) {
   var tableData = getTable(TABLE_NUM);
   var state = tableData.state;
   var tbl = tableData.tbl;
   if (!tbl.orders || !tbl.orders.length) return;
   var lastOrder = tbl.orders[tbl.orders.length - 1];
-  var items = lastOrder.items || [];
-  var maxT = Math.max.apply(null, items.map(function(i) { return i.turno||1; }));
-  if ((lastOrder.turnoActual || 1) < maxT) {
-    lastOrder.turnoActual = (lastOrder.turnoActual || 1) + 1;
-    setState(state);
-    renderSeguimientoActivo();
-  }
+  if (!lastOrder.turnosMap) lastOrder.turnosMap = {};
+  var estado = lastOrder.turnosMap[t] || 'pendiente';
+  lastOrder.turnosMap[t] = estado === 'pendiente' ? 'en-cocina' : estado === 'en-cocina' ? 'servido' : 'servido';
+  setState(state);
+  renderSeguimientoActivo();
 }
 
 </script>
