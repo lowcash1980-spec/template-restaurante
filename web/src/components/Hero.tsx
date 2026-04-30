@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useRef } from 'react'
 import { gsap } from 'gsap'
+import Logo3D from './Logo3D'
 
 interface Props {
   nombre: string
@@ -9,7 +10,6 @@ interface Props {
 }
 
 export default function Hero({ nombre, eslogan, abierto }: Props) {
-  const titleRef = useRef<HTMLHeadingElement>(null)
   const subRef = useRef<HTMLParagraphElement>(null)
   const ctaRef = useRef<HTMLDivElement>(null)
   const badgeRef = useRef<HTMLDivElement>(null)
@@ -17,8 +17,7 @@ export default function Hero({ nombre, eslogan, abierto }: Props) {
   useEffect(() => {
     const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
     tl.from(badgeRef.current, { opacity: 0, y: -20, duration: 0.6, delay: 0.3 })
-      .from(titleRef.current, { opacity: 0, y: 60, duration: 1 }, '-=0.2')
-      .from(subRef.current, { opacity: 0, y: 30, duration: 0.8 }, '-=0.5')
+      .from(subRef.current, { opacity: 0, y: 30, duration: 0.8 }, '-=0.3')
       .from(ctaRef.current, { opacity: 0, y: 20, duration: 0.6 }, '-=0.4')
   }, [])
 
@@ -40,9 +39,10 @@ export default function Hero({ nombre, eslogan, abierto }: Props) {
           {abierto ? 'Abierto ahora' : 'Cerrado ahora'}
         </div>
 
-        <h1 ref={titleRef} className="font-serif font-black leading-none mb-6" style={{ fontSize: 'clamp(3rem, 10vw, 8rem)', letterSpacing: '-0.02em' }}>
-          {nombre}
-        </h1>
+        {/* Logo 3D */}
+        <div className="mb-6">
+          <Logo3D nombre={nombre} />
+        </div>
 
         <p ref={subRef} className="text-lg md:text-2xl font-light mb-10 max-w-xl mx-auto" style={{ color: 'var(--muted)' }}>
           {eslogan}
