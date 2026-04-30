@@ -37,7 +37,7 @@
       overflow-x: hidden;
     }
 
-    /* -- Wrapper -- */
+    /* â”€â”€ Wrapper â”€â”€ */
     .app-wrap {
       background: var(--brand);
       max-width: 900px;
@@ -46,13 +46,13 @@
       position: relative;
     }
 
-    /* -- Checker -- */
+    /* â”€â”€ Checker â”€â”€ */
     .checker {
       height: 18px;
       background: repeating-conic-gradient(var(--black) 0% 25%, var(--brand) 0% 50%) 0 0 / 18px 18px;
     }
 
-    /* -- Header -- */
+    /* â”€â”€ Header â”€â”€ */
     .app-header {
       background: var(--brand);
       padding: 18px 16px 12px;
@@ -74,7 +74,7 @@
       margin-top: 2px;
     }
 
-    /* -- Timer banner -- */
+    /* â”€â”€ Timer banner â”€â”€ */
     .timer-banner {
       display: none;
       background: var(--black);
@@ -90,7 +90,7 @@
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.75} }
     #timer-count { font-size: 18px; font-weight: 900; }
 
-    /* -- Step dots -- */
+    /* â”€â”€ Step dots â”€â”€ */
     .step-nav {
       display: flex;
       justify-content: center;
@@ -101,13 +101,13 @@
     .step-dot.active { background: var(--black); }
     .step-dot.done { background: rgba(0,0,0,.4); }
 
-    /* -- Steps -- */
+    /* â”€â”€ Steps â”€â”€ */
     .step { display: none; padding: 0 0 100px; }
     .step.active { display: block; }
     .step-title { font-size: 26px; font-weight: 900; letter-spacing: -.5px; padding: 20px 16px 4px; }
     .step-subtitle { font-size: 14px; color: rgba(0,0,0,.55); padding: 0 16px 16px; }
 
-    /* -- Cards -- */
+    /* â”€â”€ Cards â”€â”€ */
     .card {
       background: var(--white);
       border-radius: var(--radius);
@@ -116,7 +116,7 @@
       box-shadow: 0 2px 12px rgba(0,0,0,.08);
     }
 
-    /* -- Step 1: Tipo -- */
+    /* â”€â”€ Step 1: Tipo â”€â”€ */
     .tipo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 16px; margin-top: 8px; }
     .tipo-btn {
       background: var(--white);
@@ -133,7 +133,7 @@
     .tipo-btn .tipo-icon { font-size: 42px; margin-bottom: 10px; }
     .tipo-btn .tipo-label { font-size: 17px; font-weight: 800; }
 
-    /* -- Step 2: Datos -- */
+    /* â”€â”€ Step 2: Datos â”€â”€ */
     .form-group { margin-bottom: 14px; }
     .form-label { display: block; font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; color: rgba(0,0,0,.6); }
     .form-input {
@@ -148,7 +148,7 @@
     }
     .form-input:focus { border-color: var(--black); }
 
-    /* -- Botones -- */
+    /* â”€â”€ Botones â”€â”€ */
     .btn-primary {
       width: 100%; padding: 16px;
       background: var(--black);
@@ -185,7 +185,7 @@
     }
     .btn-row { padding: 0 12px; margin-top: 8px; }
 
-    /* -- Step 3: Selector de fechas -- */
+    /* â”€â”€ Step 3: Selector de fechas â”€â”€ */
     .fechas-scroll {
       display: flex; gap: 8px; overflow-x: auto; padding: 0 12px 12px;
       scrollbar-width: none;
@@ -208,7 +208,7 @@
     .fecha-btn.selected .fecha-btn-mes,
     .fecha-btn.selected .fecha-btn-num { opacity: 1; }
 
-    /* -- Step 3: Slots -- */
+    /* â”€â”€ Step 3: Slots â”€â”€ */
     .fecha-label { font-size: 14px; font-weight: 600; color: rgba(0,0,0,.55); padding: 0 16px 10px; }
     .slots-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 0 12px; }
     .slot-btn {
@@ -225,7 +225,7 @@
     .slot-btn.lleno { background: var(--gray); color: var(--gray-mid); cursor: not-allowed; text-decoration: line-through; }
     .slot-disponibles { font-size: 10px; font-weight: 500; opacity: .6; margin-top: 2px; }
 
-    /* -- Step 4: Tabs -- */
+    /* â”€â”€ Step 4: Tabs â”€â”€ */
     .tabs-bar {
       display: flex; flex-wrap: wrap; justify-content: center; gap: 4px;
       padding: 12px 12px 8px;
@@ -245,7 +245,7 @@
     .tab-panel { display: none; padding: 0 0 8px; }
     .tab-panel.active { display: block; }
 
-    /* -- Menu items -- */
+    /* â”€â”€ Menu items â”€â”€ */
     .menu-item {
       display: flex; align-items: flex-start;
       justify-content: space-between;
@@ -280,7 +280,7 @@
     .detroit-opt:active { background: var(--black); color: var(--white); }
     .seccion-label { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: rgba(0,0,0,.4); padding: 14px 14px 4px; }
 
-    /* -- Cart bar -- */
+    /* â”€â”€ Cart bar â”€â”€ */
     .cart-bar {
       position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
       width: 100%; max-width: 900px;
@@ -302,7 +302,7 @@
       font-size: 13px; font-weight: 900;
     }
 
-    /* -- Step 5: Resumen editable -- */
+    /* â”€â”€ Step 5: Resumen editable â”€â”€ */
     .resumen-row {
       display: flex; align-items: center;
       padding: 10px 0; border-bottom: 1px solid #f0f0f0; gap: 8px;
@@ -330,7 +330,7 @@
     .info-row { display: flex; align-items: center; gap: 8px; font-size: 14px; padding: 5px 0; }
     .nota-caja { font-size: 11px; color: rgba(0,0,0,.4); text-align: center; padding: 4px 16px 0; }
 
-    /* -- Modal: ConfirmaciÃ³n final -- */
+    /* â”€â”€ Modal: ConfirmaciÃ³n final â”€â”€ */
     .modal-overlay {
       position: fixed; inset: 0;
       background: rgba(0,0,0,.6);
@@ -360,7 +360,7 @@
     .modal-footer { padding: 12px 16px; border-top: 1px solid #eee; }
     .btn-row-two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
-    /* -- Modal: Pizza al gusto -- */
+    /* â”€â”€ Modal: Pizza al gusto â”€â”€ */
     .chips-section { padding: 14px 14px 4px; }
     .chips-section-title { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: rgba(0,0,0,.45); margin-bottom: 10px; }
     .chips-wrap { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -375,13 +375,13 @@
     .chip.base-chip.selected { background: var(--brand); color: var(--black); border-color: var(--black); }
     .modal-footer-sticky { position: sticky; bottom: 0; background: var(--white); border-top: 1px solid #eee; padding: 14px 16px; }
 
-    /* -- Modal: Tiempo agotado -- */
+    /* â”€â”€ Modal: Tiempo agotado â”€â”€ */
     #modal-timeout .modal-sheet { text-align: center; padding: 32px 24px 40px; border-radius: 20px 20px 0 0; }
     .timeout-icon { font-size: 56px; margin-bottom: 12px; }
     .timeout-title { font-size: 22px; font-weight: 900; margin-bottom: 8px; }
     .timeout-text { font-size: 14px; color: #666; margin-bottom: 24px; line-height: 1.5; }
 
-    /* -- Step 6: ConfirmaciÃ³n -- */
+    /* â”€â”€ Step 6: ConfirmaciÃ³n â”€â”€ */
     .confirm-screen { text-align: center; padding: 40px 24px; }
     .confirm-icon { font-size: 72px; margin-bottom: 20px; }
     .confirm-title { font-size: 32px; font-weight: 900; margin-bottom: 8px; }
@@ -393,7 +393,7 @@
     .confirm-info { background: var(--white); border-radius: var(--radius); padding: 18px; text-align: left; margin-bottom: 16px; box-shadow: 0 2px 12px rgba(0,0,0,.08); }
     .confirm-info p { padding: 5px 0; font-size: 15px; }
 
-    /* -- Misc -- */
+    /* â”€â”€ Misc â”€â”€ */
     .error-msg {
       background: #fff0f0; color: var(--danger);
       border-radius: 10px; padding: 12px 14px;
@@ -446,6 +446,29 @@
       .confirm-screen { padding: 60px 40px; }
       .confirm-title { font-size: 42px; }
     }
+
+    /* -- Orden de platos -- */
+    .orden-section-title { font-size: 11px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(0,0,0,.55); margin-bottom: 14px; }
+    .orden-hint { font-size: 12px; color: rgba(0,0,0,.4); margin: -6px 0 12px; line-height: 1.4; }
+    .orden-item { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
+    .orden-item:last-child { border-bottom: none; }
+    .orden-num { width: 30px; height: 30px; border-radius: 50%; background: var(--black); color: var(--white); font-size: 14px; font-weight: 900; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .orden-name { flex: 1; font-size: 14px; font-weight: 600; min-width: 0; }
+    .orden-arrows { display: flex; flex-direction: column; gap: 3px; }
+    .orden-arrow { width: 26px; height: 26px; border-radius: 6px; border: 1.5px solid rgba(0,0,0,.2); background: transparent; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: rgba(0,0,0,.5); transition: all .12s; padding: 0; }
+    .orden-arrow:active { background: var(--black); color: var(--white); border-color: var(--black); }
+    .orden-arrow:disabled { opacity: .25; cursor: default; }
+
+    /* -- Seguimiento turno (Step 6) -- */
+    .seguimiento-card { background: var(--white); border-radius: var(--radius); padding: 16px; margin-bottom: 16px; box-shadow: 0 2px 12px rgba(0,0,0,.08); text-align: left; }
+    .turno-label { font-size: 11px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(0,0,0,.4); margin-bottom: 8px; }
+    .turno-platos { font-size: 15px; font-weight: 700; line-height: 1.6; margin-bottom: 14px; }
+    .btn-siguiente { width: 100%; padding: 14px; background: var(--black); color: var(--white); border: none; border-radius: var(--radius); font-size: 14px; font-weight: 800; cursor: pointer; transition: opacity .15s; }
+    .btn-siguiente:disabled { opacity: .4; cursor: not-allowed; }
+    .turno-progress { display: flex; gap: 4px; margin-bottom: 14px; flex-wrap: wrap; }
+    .turno-dot { height: 8px; flex: 1; border-radius: 4px; background: rgba(0,0,0,.12); min-width: 20px; }
+    .turno-dot.done { background: var(--green); }
+    .turno-dot.active { background: var(--black); }
   </style>
 </head>
 <body>
@@ -577,6 +600,12 @@
   <div class="card" id="resumen-items"></div>
   <div class="nota-caja" id="nota-caja"></div>
 
+  <div class="card" style="margin-top:6px;display:none" id="orden-platos-card">
+    <div class="orden-section-title">Orden de salida de los platos</div>
+    <p class="orden-hint">Indica en qu&#233; orden quieres que salgan tus platos. Usa las flechas para reordenar.</p>
+    <div id="orden-platos-list"></div>
+  </div>
+
   <div class="card" style="margin-top:6px" id="resumen-cliente"></div>
 
   <div class="error-msg" id="err-pedido"></div>
@@ -592,6 +621,10 @@
     <div class="confirm-title">Â¡Pedido enviado!</div>
     <div class="confirm-num" id="confirm-num">NÂº â€”</div>
     <div class="confirm-info" id="confirm-info"></div>
+
+    <div id="seguimiento-wrap" style="display:none;width:100%">
+      <div class="seguimiento-card" id="seguimiento-card"></div>
+    </div>
     <p style="color:rgba(0,0,0,.5);font-size:13px;margin-bottom:24px">
       Si necesitas algo llÃ¡manos:<br>
       <strong style="color:var(--black);font-size:17px" class="tel-negocio"></strong>
@@ -732,6 +765,9 @@ const state = {
   timerSegundos: 0,
   gusto_base: '',
   gusto_ing: new Set(),
+  ordenPlatos: [],
+  turnoActual: 1,
+  pedidoTurnos: [],
 };
 
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
@@ -745,7 +781,7 @@ function goToStep(n) {
   renderStepDots();
   window.scrollTo(0, 0);
   if (n === 3) cargarSlots();
-  if (n === 5) renderResumen();
+  if (n === 5) { initOrdenPlatos(); renderOrdenPlatos(); renderResumen(); }
 }
 
 function renderStepDots() {
@@ -1137,6 +1173,94 @@ function addPizzaGusto() {
 // CART
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
+// ORDEN DE PLATOS
+
+function initOrdenPlatos() {
+  const actuales = new Set(state.cart.map(i => i.id));
+  state.ordenPlatos = state.ordenPlatos.filter(o => actuales.has(o.id));
+  state.cart.forEach(item => {
+    if (!state.ordenPlatos.find(o => o.id === item.id)) {
+      state.ordenPlatos.push({ id: item.id, nombre: item.nombre, cantidad: item.cantidad, turno: state.ordenPlatos.length + 1 });
+    }
+  });
+  const sorted = [...state.ordenPlatos].sort((a, b) => a.turno - b.turno);
+  sorted.forEach((o, i) => { o.turno = i + 1; });
+}
+
+function renderOrdenPlatos() {
+  const el = document.getElementById('orden-platos-list');
+  const card = document.getElementById('orden-platos-card');
+  if (!el || !card) return;
+  if (state.cart.length <= 1) { card.style.display = 'none'; return; }
+  card.style.display = '';
+  const sorted = [...state.ordenPlatos].sort((a, b) => a.turno - b.turno);
+  el.innerHTML = sorted.map((item, idx) => `
+    <div class="orden-item">
+      <div class="orden-num">${item.turno}</div>
+      <div class="orden-name">${item.cantidad > 1 ? item.cantidad + '&#215; ' : ''}${item.nombre}</div>
+      <div class="orden-arrows">
+        <button class="orden-arrow" onclick="moverOrden('${item.id}',-1)" ${idx===0?'disabled':''}>&#8593;</button>
+        <button class="orden-arrow" onclick="moverOrden('${item.id}',1)" ${idx===sorted.length-1?'disabled':''}>&#8595;</button>
+      </div>
+    </div>`).join('');
+}
+
+function moverOrden(id, dir) {
+  const sorted = [...state.ordenPlatos].sort((a, b) => a.turno - b.turno);
+  const idx = sorted.findIndex(i => i.id === id);
+  const swapIdx = idx + dir;
+  if (swapIdx < 0 || swapIdx >= sorted.length) return;
+  const tmp = sorted[idx].turno;
+  sorted[idx].turno = sorted[swapIdx].turno;
+  sorted[swapIdx].turno = tmp;
+  sorted.forEach(s => { const o = state.ordenPlatos.find(i => i.id === s.id); if (o) o.turno = s.turno; });
+  renderOrdenPlatos();
+}
+
+function buildPedidoTurnos() {
+  const grouped = {};
+  state.cart.forEach(item => {
+    const t = (state.ordenPlatos.find(o => o.id === item.id) || { turno: 1 }).turno;
+    if (!grouped[t]) grouped[t] = [];
+    grouped[t].push(item.cantidad > 1 ? item.cantidad + 'x ' + item.nombre : item.nombre);
+  });
+  return Object.keys(grouped).map(Number).sort((a,b)=>a-b).map(t => ({ turno: t, platos: grouped[t] }));
+}
+
+function renderSeguimiento() {
+  const wrap = document.getElementById('seguimiento-wrap');
+  if (!wrap || !state.pedidoTurnos.length || state.pedidoTurnos.length <= 1) {
+    if (wrap) wrap.style.display='none'; return;
+  }
+  wrap.style.display = '';
+  const card = document.getElementById('seguimiento-card');
+  const maxTurno = state.pedidoTurnos.length;
+  const dots = state.pedidoTurnos.map((t, i) => {
+    const cls = i+1 < state.turnoActual ? 'done' : i+1 === state.turnoActual ? 'active' : '';
+    return `<div class="turno-dot ${cls}"></div>`;
+  }).join('');
+  if (state.turnoActual > maxTurno) {
+    card.innerHTML = `<div class="turno-label">Orden de platos</div><div class="turno-progress">${dots}</div><div style="text-align:center;color:var(--green);font-weight:800;padding:8px 0">&#10003; Todos los platos servidos &#8212; &#161;Que aproveche!</div>`;
+    return;
+  }
+  const current = state.pedidoTurnos.find(t => t.turno === state.turnoActual);
+  const next    = state.pedidoTurnos.find(t => t.turno === state.turnoActual + 1);
+  card.innerHTML = `
+    <div class="turno-label">Plato ${state.turnoActual} de ${maxTurno}</div>
+    <div class="turno-progress">${dots}</div>
+    <div class="turno-platos">${current ? current.platos.join(' &bull; ') : ''}</div>
+    ${next
+      ? `<button class="btn-siguiente" onclick="siguientePlato()">Siguiente &#8594; ${next.platos.join(', ')}</button>`
+      : `<div style="font-size:13px;color:rgba(0,0,0,.4);text-align:center;padding:4px 0">&#218;ltimo plato en cocina</div>`}`;
+}
+
+async function siguientePlato() {
+  if (!state.pedidoId) return;
+  state.turnoActual++;
+  renderSeguimiento();
+  try { await fetch('/api/pedido/' + state.pedidoId + '/siguiente-plato', { method: 'POST' }); } catch(e) {}
+}
+
 function calcCart() {
   const subtotal = state.cart.reduce((s, i) => s + i.precio * i.cantidad, 0);
   const num_pizzas = state.cart.filter(i => i.es_pizza).reduce((s, i) => s + i.cantidad, 0);
@@ -1272,6 +1396,7 @@ async function enviarPedido() {
   const items = state.cart.map(i => ({
     nombre: i.nombre, descripcion: i.descripcion || '',
     precio: i.precio, cantidad: i.cantidad, es_pizza: i.es_pizza,
+    turno: (state.ordenPlatos.find(o => o.id === i.id) || { turno: 1 }).turno,
   }));
 
   try {
@@ -1302,6 +1427,8 @@ async function enviarPedido() {
 
     pararTimer();
     state.pedidoId = data.id;
+    state.pedidoTurnos = buildPedidoTurnos();
+    state.turnoActual = 1;
     cerrarModal('modal-confirm');
 
     // Pantalla Ã©xito
@@ -1313,6 +1440,7 @@ async function enviarPedido() {
       <p>ðŸ’¶ <strong>${fmt(tot)}</strong></p>
       <p>${state.metodo_pago === 'tarjeta' ? 'ðŸ’³' : 'ðŸ’µ'} Pago: <strong>${state.metodo_pago === 'tarjeta' ? 'Tarjeta' : 'Efectivo'}</strong></p>`;
     goToStep(6);
+    renderSeguimiento();
   } catch(e) {
     cerrarModal('modal-confirm');
     mostrarErr('err-pedido', 'Error de conexiÃ³n. IntÃ©ntalo de nuevo.');
@@ -1329,6 +1457,7 @@ function reiniciar() {
   pararTimer();
   state.tipo = null; state.cliente = {}; state.hora = '';
   state.cart = []; state.pedidoId = null; state.token = null;
+  state.ordenPlatos = []; state.pedidoTurnos = []; state.turnoActual = 1;
   state.metodo_pago = 'efectivo';
   ['btn-domicilio','btn-recogida'].forEach(id => document.getElementById(id).classList.remove('selected'));
   document.getElementById('btn-c1').disabled = true;
