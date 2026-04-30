@@ -60,7 +60,6 @@ def init_db():
                 estado       TEXT    NOT NULL DEFAULT 'pendiente',
                 notas        TEXT    DEFAULT '',
                 metodo_pago  TEXT    DEFAULT 'efectivo',
-                turno_actual INTEGER DEFAULT 1,
                 created_at   TEXT    DEFAULT (datetime('now'))
             )
         """)
@@ -77,7 +76,6 @@ def init_db():
         conn.commit()
         for col_sql in [
             "ALTER TABLE pedidos ADD COLUMN metodo_pago TEXT DEFAULT 'efectivo'",
-            "ALTER TABLE pedidos ADD COLUMN turno_actual INTEGER DEFAULT 1",
         ]:
             try:
                 conn.execute(col_sql)
@@ -210,7 +208,6 @@ class ItemIn(BaseModel):
     precio: float
     cantidad: int
     es_pizza: bool = False
-    turno: Optional[int] = None   # orden de salida del plato (1=primero, 2=segundo...)
 
 
 class PedidoIn(BaseModel):
@@ -256,8 +253,8 @@ def api_crear_pedido(p: PedidoIn):
 
         cursor = conn.execute(
             """INSERT INTO pedidos
-               (tipo,nombre,telefono,direccion,fecha,hora,items,subtotal,cargo_cajas,total,notas,metodo_pago,turno_actual)
-               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,1)""",
+               (tipo,nombre,telefono,direccion,fecha,hora,items,subtotal,cargo_cajas,total,notas,metodo_pago)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
             (p.tipo, p.nombre, p.telefono, p.direccion,
              p.fecha, p.hora,
              json.dumps([i.model_dump() for i in p.items], ensure_ascii=False),
@@ -301,40 +298,6 @@ def api_restaurante_info():
         "eslogan": ESLOGAN_NEGOCIO,
         "telefono": TELEFONO_NEGOCIO,
     }
-
-
-# -- Turno / orden de platos ---------------------------------------
-
-@app.post("/api/pedido/{pedido_id}/siguiente-plato")
-def api_siguiente_plato(pedido_id: int):
-    with sqlite3.connect(DB_PATH) as conn:
-        row = conn.execute(
-            "SELECT items, COALESCE(turno_actual,1) FROM pedidos WHERE id=?",
-            (pedido_id,)
-        ).fetchone()
-        if not row:
-            raise HTTPException(404, "Pedido no encontrado")
-        items = json.loads(row[0])
-        turno_actual = row[1]
-        max_turno = max((i.get("turno") or 1 for i in items), default=1)
-        nuevo_turno = min(turno_actual + 1, max_turno + 1)
-        conn.execute("UPDATE pedidos SET turno_actual=? WHERE id=?", (nuevo_turno, pedido_id))
-        conn.commit()
-    finalizado = nuevo_turno > max_turno
-    return {"ok": True, "turno_actual": nuevo_turno, "finalizado": finalizado}
-
-
-@app.get("/api/pedido/{pedido_id}/turno")
-def api_get_turno(pedido_id: int):
-    with sqlite3.connect(DB_PATH) as conn:
-        row = conn.execute(
-            "SELECT items, COALESCE(turno_actual,1) FROM pedidos WHERE id=?",
-            (pedido_id,)
-        ).fetchone()
-    if not row:
-        raise HTTPException(404, "Pedido no encontrado")
-    items = json.loads(row[0])
-    return {"ok": True, "turno_actual": row[1], "items": items}
 
 
 # -- Notificaciones post-pedido (hilo daemon) ----------------------
@@ -427,20 +390,6 @@ async function avisarCliente(id) {
     else { btn.textContent = 'Error'; btn.style.background='#dc2626'; btn.disabled=false; }
   } catch(e) { btn.textContent = 'Sin conexion'; btn.disabled=false; }
 }
-async function siguientePlatoAdmin(id) {
-  const btn = document.getElementById('btn-turno-' + id);
-  const lbl = document.getElementById('turno-lbl-' + id);
-  if (!btn) return;
-  btn.disabled = true;
-  try {
-    const r = await fetch('/api/pedido/' + id + '/siguiente-plato', {method:'POST'});
-    const d = await r.json();
-    if (d.ok) {
-      if (d.finalizado) { lbl.textContent = 'Todos servidos'; btn.style.display='none'; }
-      else { lbl.textContent = 'Plato ' + d.turno_actual; btn.disabled = false; }
-    } else { btn.disabled=false; }
-  } catch(e) { btn.disabled=false; }
-}
 </script>"""
 
 
@@ -462,7 +411,6 @@ def admin_page(clave: str = "", fecha: str = ""):
             """SELECT id, tipo, nombre, telefono, direccion, fecha, hora, items,
                       subtotal, cargo_cajas, total, estado, notas,
                       COALESCE(metodo_pago,'efectivo') AS metodo_pago,
-                      COALESCE(turno_actual,1) AS turno_actual,
                       created_at
                FROM pedidos WHERE fecha=? ORDER BY hora, created_at""",
             (fecha,)
@@ -470,7 +418,7 @@ def admin_page(clave: str = "", fecha: str = ""):
 
     cols = ["id","tipo","nombre","telefono","direccion","fecha","hora",
             "items","subtotal","cargo_cajas","total","estado","notas",
-            "metodo_pago","turno_actual","created_at"]
+            "metodo_pago","created_at"]
     pedidos = []
     for row in rows:
         d = dict(zip(cols, row))
@@ -484,30 +432,12 @@ def admin_page(clave: str = "", fecha: str = ""):
         dir_html  = f"<br>Dir: {p['direccion']}" if p["direccion"] else ""
         notas_html = f"<br>Notas: {p['notas']}" if p.get("notas") else ""
 
-        # Group items by turno
-        items_by_turno = {}
-        for i in p["items"]:
-            t = i.get("turno") or 1
-            items_by_turno.setdefault(t, []).append(i)
-        max_turno = max(items_by_turno.keys()) if items_by_turno else 1
-        turno_actual = p.get("turno_actual", 1)
-
-        items_html = ""
-        for t in sorted(items_by_turno.keys()):
-            if len(items_by_turno) > 1:
-                status = "SERVIDO" if t < turno_actual else ("EN COCINA" if t == turno_actual else "PENDIENTE")
-                color = "#16a34a" if t < turno_actual else ("#111" if t == turno_actual else "#999")
-                items_html += f"<li style='list-style:none;font-size:11px;font-weight:800;color:{color};letter-spacing:1px;padding:4px 0 2px'>PLATO {t} &mdash; {status}</li>"
-            for i in items_by_turno[t]:
-                opacity = "0.45" if t < turno_actual else "1"
-                items_html += f"<li style='opacity:{opacity}'>{i['cantidad']}x {i['nombre']} &mdash; {i['precio']:.2f}&euro;</li>"
-
-        turno_label = f"Plato {turno_actual} / {max_turno}" if max_turno > 1 else ""
+        items_html = "".join(
+            f"<li>{i['cantidad']}x {i['nombre']} &mdash; {i['precio']:.2f}&euro;</li>"
+            for i in p["items"]
+        )
+        turno_label = ""
         turno_btn = ""
-        if max_turno > 1 and turno_actual <= max_turno:
-            turno_btn = f"""<button id="btn-turno-{p['id']}" onclick="siguientePlatoAdmin({p['id']})"
-              style="padding:6px 14px;background:#111;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;margin-right:6px">
-              Siguiente plato &rarr;</button>"""
 
         avisar_label = "En camino" if p["tipo"] == "domicilio" else "Listo para recoger"
         filas += f"""
@@ -516,7 +446,6 @@ def admin_page(clave: str = "", fecha: str = ""):
             <div>
               <strong style="font-size:18px">{p['hora']} &mdash; {p['nombre']}</strong>
               <div style="font-size:13px;color:#555;margin-top:2px">{emoji} &bull; {pago_icon}{dir_html}{notas_html}</div>
-              {f'<div id="turno-lbl-{p["id"]}" style="font-size:12px;font-weight:800;color:#555;margin-top:4px;letter-spacing:1px">{turno_label}</div>' if turno_label else ''}
             </div>
             <span style="font-size:18px;font-weight:700;white-space:nowrap">{p['total']:.2f}&euro;</span>
           </div>
