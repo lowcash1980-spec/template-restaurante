@@ -14,7 +14,7 @@ import httpx
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# ── Config — todo desde .env del cliente ─────────────────────
+# -- Config -- todo desde .env del cliente -------------------------
 def _time(env: str, default: str) -> time:
     try:
         h, m = os.getenv(env, default).split(":")
@@ -37,10 +37,9 @@ DB_PATH            = "pedidos.db"
 CORE_URL         = os.getenv("CORE_URL", "http://core:8000")
 CRM_URL          = os.getenv("CRM_URL", "http://crm:8003")
 SARA_URL         = os.getenv("SARA_URL", "http://sara:8002")
-# Días cerrados como string "1,2" (1=lunes…7=domingo). Vacío = abierto todos los días.
 _dias = os.getenv("DIAS_CERRADO", "")
 DIAS_CERRADO     = [int(d) for d in _dias.split(",") if d.strip().isdigit()]
-# ──────────────────────────────────────────────────────────────
+# ------------------------------------------------------------------
 
 
 def init_db():
@@ -61,6 +60,7 @@ def init_db():
                 estado       TEXT    NOT NULL DEFAULT 'pendiente',
                 notas        TEXT    DEFAULT '',
                 metodo_pago  TEXT    DEFAULT 'efectivo',
+                turno_actual INTEGER DEFAULT 1,
                 created_at   TEXT    DEFAULT (datetime('now'))
             )
         """)
@@ -75,11 +75,15 @@ def init_db():
             )
         """)
         conn.commit()
-        try:
-            conn.execute("ALTER TABLE pedidos ADD COLUMN metodo_pago TEXT DEFAULT 'efectivo'")
-            conn.commit()
-        except Exception:
-            pass
+        for col_sql in [
+            "ALTER TABLE pedidos ADD COLUMN metodo_pago TEXT DEFAULT 'efectivo'",
+            "ALTER TABLE pedidos ADD COLUMN turno_actual INTEGER DEFAULT 1",
+        ]:
+            try:
+                conn.execute(col_sql)
+                conn.commit()
+            except Exception:
+                pass
 
 
 init_db()
@@ -90,7 +94,7 @@ app.add_middleware(
 )
 
 
-# ── Helpers ───────────────────────────────────────────────────
+# -- Helpers -------------------------------------------------------
 
 def _limpiar_temp(conn):
     ahora = datetime.utcnow().isoformat()
@@ -122,7 +126,6 @@ def _slots_para(tipo: str, fecha: str) -> list:
 
     slots = []
     inicio = datetime.combine(fecha_dt, HORARIO_INICIO)
-    # Soporte para horarios que cruzan medianoche (ej: 20:30 - 00:30)
     if HORARIO_FIN <= HORARIO_INICIO:
         fin = datetime.combine(fecha_dt + timedelta(days=1), HORARIO_FIN)
     else:
@@ -149,7 +152,7 @@ def _slots_para(tipo: str, fecha: str) -> list:
     return slots
 
 
-# ── API ───────────────────────────────────────────────────────
+# -- API -----------------------------------------------------------
 
 @app.get("/api/config")
 def api_config():
@@ -189,7 +192,7 @@ def api_reservar_slot(r: ReservaSlotIn):
         )
         conn.commit()
 
-    logger.info(f"Slot reservado: {r.tipo} {r.fecha} {r.hora} → token {token[:8]}…")
+    logger.info(f"Slot reservado: {r.tipo} {r.fecha} {r.hora} -> token {token[:8]}...")
     return {"ok": True, "token": token, "segundos": RESERVA_SEGUNDOS}
 
 
@@ -207,6 +210,7 @@ class ItemIn(BaseModel):
     precio: float
     cantidad: int
     es_pizza: bool = False
+    turno: Optional[int] = None   # orden de salida del plato (1=primero, 2=segundo...)
 
 
 class PedidoIn(BaseModel):
@@ -248,12 +252,12 @@ def api_crear_pedido(p: PedidoIn):
         if confirmados >= maximo:
             conn.execute("DELETE FROM reservas_temp WHERE token=?", (p.token,))
             conn.commit()
-            return {"ok": False, "error": "Este horario ya está completo. Por favor elige otro."}
+            return {"ok": False, "error": "Este horario ya esta completo. Por favor elige otro."}
 
         cursor = conn.execute(
             """INSERT INTO pedidos
-               (tipo,nombre,telefono,direccion,fecha,hora,items,subtotal,cargo_cajas,total,notas,metodo_pago)
-               VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
+               (tipo,nombre,telefono,direccion,fecha,hora,items,subtotal,cargo_cajas,total,notas,metodo_pago,turno_actual)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,1)""",
             (p.tipo, p.nombre, p.telefono, p.direccion,
              p.fecha, p.hora,
              json.dumps([i.model_dump() for i in p.items], ensure_ascii=False),
@@ -264,7 +268,7 @@ def api_crear_pedido(p: PedidoIn):
         conn.execute("DELETE FROM reservas_temp WHERE token=?", (p.token,))
         conn.commit()
 
-    logger.info(f"Pedido #{pedido_id} | {p.tipo} | {p.nombre} | {p.hora} | {p.total:.2f}€")
+    logger.info(f"Pedido #{pedido_id} | {p.tipo} | {p.nombre} | {p.hora} | {p.total:.2f}EUR")
 
     threading.Thread(
         target=_post_pedido_notifications,
@@ -277,7 +281,7 @@ def api_crear_pedido(p: PedidoIn):
     return {"ok": True, "id": pedido_id}
 
 
-# ── Carta (proxy al Core) ──────────────────────────────────────
+# -- Carta (proxy al Core) -----------------------------------------
 
 @app.get("/api/carta")
 def api_carta():
@@ -299,45 +303,76 @@ def api_restaurante_info():
     }
 
 
-# ── Notificaciones post-pedido (hilo daemon) ───────────────────
+# -- Turno / orden de platos ---------------------------------------
+
+@app.post("/api/pedido/{pedido_id}/siguiente-plato")
+def api_siguiente_plato(pedido_id: int):
+    with sqlite3.connect(DB_PATH) as conn:
+        row = conn.execute(
+            "SELECT items, COALESCE(turno_actual,1) FROM pedidos WHERE id=?",
+            (pedido_id,)
+        ).fetchone()
+        if not row:
+            raise HTTPException(404, "Pedido no encontrado")
+        items = json.loads(row[0])
+        turno_actual = row[1]
+        max_turno = max((i.get("turno") or 1 for i in items), default=1)
+        nuevo_turno = min(turno_actual + 1, max_turno + 1)
+        conn.execute("UPDATE pedidos SET turno_actual=? WHERE id=?", (nuevo_turno, pedido_id))
+        conn.commit()
+    finalizado = nuevo_turno > max_turno
+    return {"ok": True, "turno_actual": nuevo_turno, "finalizado": finalizado}
+
+
+@app.get("/api/pedido/{pedido_id}/turno")
+def api_get_turno(pedido_id: int):
+    with sqlite3.connect(DB_PATH) as conn:
+        row = conn.execute(
+            "SELECT items, COALESCE(turno_actual,1) FROM pedidos WHERE id=?",
+            (pedido_id,)
+        ).fetchone()
+    if not row:
+        raise HTTPException(404, "Pedido no encontrado")
+    items = json.loads(row[0])
+    return {"ok": True, "turno_actual": row[1], "items": items}
+
+
+# -- Notificaciones post-pedido (hilo daemon) ----------------------
 
 def _post_pedido_notifications(pedido_id: int, nombre: str, telefono: str,
                                 direccion, tipo: str, fecha: str, hora: str,
                                 items: list, total: float, metodo_pago: str = "efectivo"):
-    # 1. CRM — registrar cliente
     try:
         httpx.post(
             f"{CRM_URL}/api/interaccion",
             json={
                 "telefono": telefono, "tipo": "pedido", "nombre": nombre,
                 "direccion": direccion or "",
-                "resumen": f"Pedido {tipo} — {total:.2f}€", "importe": total,
+                "resumen": f"Pedido {tipo} -- {total:.2f}EUR", "importe": total,
             },
             timeout=5,
         )
     except Exception:
         pass
 
-    # 2. SARA — confirmación WhatsApp al cliente
     if not SARA_URL:
         return
     try:
-        tipo_label  = "a domicilio 🛵" if tipo == "domicilio" else "para recoger 🛍️"
+        tipo_label  = "a domicilio" if tipo == "domicilio" else "para recoger"
         entrega     = "Entrega" if tipo == "domicilio" else "Recogida"
-        aviso       = "salga hacia tu dirección" if tipo == "domicilio" else "esté listo"
+        aviso       = "salga hacia tu direccion" if tipo == "domicilio" else "este listo"
         nombre_corto = nombre.split()[0] if nombre else nombre
         items_txt   = "\n".join(
-            f"• {i['cantidad']}× {i['nombre']} — {i['precio']:.2f}€" for i in items
+            f"- {i['cantidad']}x {i['nombre']} -- {i['precio']:.2f}EUR" for i in items
         )
-        pago_emoji = "💳" if metodo_pago == "tarjeta" else "💵"
-        pago_label = "Tarjeta" if metodo_pago == "tarjeta" else "Efectivo"
+        pago_emoji = "tarjeta" if metodo_pago == "tarjeta" else "efectivo"
         mensaje = (
-            f"¡Hola {nombre_corto}! 👋 Hemos recibido tu pedido.\n\n"
-            f"📋 *Pedido #{pedido_id}* — {tipo_label}\n"
+            f"Hola {nombre_corto}! Hemos recibido tu pedido.\n\n"
+            f"Pedido #{pedido_id} -- {tipo_label}\n"
             f"{items_txt}\n\n"
-            f"⏰ {entrega}: *{hora}* — {fecha}\n"
-            f"💰 Total: *{total:.2f}€* · {pago_emoji} Pago: *{pago_label}*\n\n"
-            f"Te avisaremos cuando {aviso}. ¡Gracias! 🙏"
+            f"Entrega/Recogida: {hora} -- {fecha}\n"
+            f"Total: {total:.2f}EUR - Pago: {pago_emoji}\n\n"
+            f"Te avisaremos cuando {aviso}. Gracias!"
         )
         httpx.post(f"{SARA_URL}/api/notificar",
                    json={"telefono": telefono, "mensaje": mensaje}, timeout=5)
@@ -345,7 +380,7 @@ def _post_pedido_notifications(pedido_id: int, nombre: str, telefono: str,
         pass
 
 
-# ── Pedido en camino / listo (llamado desde el admin) ──────────
+# -- Pedido en camino / listo --------------------------------------
 
 @app.post("/api/pedido/{pedido_id}/en-camino")
 def api_pedido_en_camino(pedido_id: int):
@@ -360,64 +395,62 @@ def api_pedido_en_camino(pedido_id: int):
 
     nombre, telefono, tipo, metodo_pago = row
     if not SARA_URL:
-        return {"ok": False, "error": "SARA no configurada (SARA_URL vacío)"}
+        return {"ok": False, "error": "SARA no configurada (SARA_URL vacio)"}
 
     nombre_corto = nombre.split()[0] if nombre else "Cliente"
-    pago_emoji = "💳" if metodo_pago == "tarjeta" else "💵"
     pago_label = "Tarjeta" if metodo_pago == "tarjeta" else "Efectivo"
     if tipo == "domicilio":
-        mensaje = (
-            f"🛵 *¡Hola {nombre_corto}!* Tu pedido #{pedido_id} ya está en camino.\n\n"
-            f"{pago_emoji} Recuerda que pagas con *{pago_label}*. ¡Que aproveche! 😊"
-        )
+        mensaje = f"Hola {nombre_corto}! Tu pedido #{pedido_id} ya esta en camino. Pago: {pago_label}. Que aproveche!"
     else:
-        mensaje = (
-            f"✅ *¡Hola {nombre_corto}!* Tu pedido #{pedido_id} está listo para recoger.\n\n"
-            f"{pago_emoji} Pago: *{pago_label}*. ¡Te esperamos cuando quieras! 😊"
-        )
+        mensaje = f"Hola {nombre_corto}! Tu pedido #{pedido_id} esta listo para recoger. Pago: {pago_label}. Te esperamos!"
 
     try:
         r = httpx.post(f"{SARA_URL}/api/notificar",
                        json={"telefono": telefono, "mensaje": mensaje}, timeout=5)
         return {"ok": r.status_code == 200}
     except Exception as e:
-        logger.error(f"Error notificando vía SARA: {e}")
+        logger.error(f"Error notificando via SARA: {e}")
         return {"ok": False, "error": str(e)}
 
 
-# ── Admin ─────────────────────────────────────────────────────
+# -- Admin ---------------------------------------------------------
 
 _ADMIN_SCRIPT = """<script>
 async function avisarCliente(id) {
   const btn = document.getElementById('btn-avisar-' + id);
   if (!btn) return;
-  btn.disabled = true;
-  btn.textContent = 'Enviando...';
+  btn.disabled = true; btn.textContent = 'Enviando...';
   try {
     const r = await fetch('/api/pedido/' + id + '/en-camino', {method:'POST'});
-    const data = await r.json();
-    if (data.ok) {
-      btn.textContent = '✅ Enviado';
-      btn.style.background = '#16a34a';
-    } else {
-      btn.textContent = '❌ Error';
-      btn.style.background = '#dc2626';
-      btn.disabled = false;
-    }
-  } catch(e) {
-    btn.textContent = '❌ Sin conexión';
-    btn.disabled = false;
-  }
+    const d = await r.json();
+    if (d.ok) { btn.textContent = 'Enviado'; btn.style.background='#16a34a'; }
+    else { btn.textContent = 'Error'; btn.style.background='#dc2626'; btn.disabled=false; }
+  } catch(e) { btn.textContent = 'Sin conexion'; btn.disabled=false; }
+}
+async function siguientePlatoAdmin(id) {
+  const btn = document.getElementById('btn-turno-' + id);
+  const lbl = document.getElementById('turno-lbl-' + id);
+  if (!btn) return;
+  btn.disabled = true;
+  try {
+    const r = await fetch('/api/pedido/' + id + '/siguiente-plato', {method:'POST'});
+    const d = await r.json();
+    if (d.ok) {
+      if (d.finalizado) { lbl.textContent = 'Todos servidos'; btn.style.display='none'; }
+      else { lbl.textContent = 'Plato ' + d.turno_actual; btn.disabled = false; }
+    } else { btn.disabled=false; }
+  } catch(e) { btn.disabled=false; }
 }
 </script>"""
+
 
 @app.get("/admin", response_class=HTMLResponse)
 def admin_page(clave: str = "", fecha: str = ""):
     if clave != ADMIN_PASS:
         return HTMLResponse(f"""
         <html><body style="font-family:sans-serif;padding:40px;background:{BRAND_COLOR}">
-        <h2>🔒 Acceso restringido</h2>
-        <form><input name="clave" placeholder="Contraseña" type="password" style="padding:8px;font-size:16px">
+        <h2>Acceso restringido</h2>
+        <form><input name="clave" placeholder="Contrasena" type="password" style="padding:8px;font-size:16px">
         <button style="padding:8px 16px;font-size:16px">Entrar</button></form>
         </body></html>""", status_code=401)
 
@@ -428,13 +461,16 @@ def admin_page(clave: str = "", fecha: str = ""):
         rows = conn.execute(
             """SELECT id, tipo, nombre, telefono, direccion, fecha, hora, items,
                       subtotal, cargo_cajas, total, estado, notas,
-                      COALESCE(metodo_pago,'efectivo') AS metodo_pago, created_at
+                      COALESCE(metodo_pago,'efectivo') AS metodo_pago,
+                      COALESCE(turno_actual,1) AS turno_actual,
+                      created_at
                FROM pedidos WHERE fecha=? ORDER BY hora, created_at""",
             (fecha,)
         ).fetchall()
 
     cols = ["id","tipo","nombre","telefono","direccion","fecha","hora",
-            "items","subtotal","cargo_cajas","total","estado","notas","metodo_pago","created_at"]
+            "items","subtotal","cargo_cajas","total","estado","notas",
+            "metodo_pago","turno_actual","created_at"]
     pedidos = []
     for row in rows:
         d = dict(zip(cols, row))
@@ -443,47 +479,73 @@ def admin_page(clave: str = "", fecha: str = ""):
 
     filas = ""
     for p in pedidos:
-        emoji = "🛵" if p["tipo"] == "domicilio" else "🛍️"
-        items_html = "".join(
-            f"<li>{i['cantidad']}x {i['nombre']} — {i['precio']:.2f}€</li>"
-            for i in p["items"]
-        )
-        pago_icon   = "💳" if p.get("metodo_pago") == "tarjeta" else "💵"
-        dir_html    = f"<br>📍 {p['direccion']}" if p["direccion"] else ""
-        notas_html  = f"<br>📝 {p['notas']}" if p.get("notas") else ""
-        pago_html   = f"<br>{pago_icon} {p.get('metodo_pago', 'efectivo').capitalize()}"
-        avisar_label = "🛵 En camino" if p["tipo"] == "domicilio" else "✅ Listo para recoger"
+        emoji = "Domicilio" if p["tipo"] == "domicilio" else "Recogida"
+        pago_icon = "Tarjeta" if p.get("metodo_pago") == "tarjeta" else "Efectivo"
+        dir_html  = f"<br>Dir: {p['direccion']}" if p["direccion"] else ""
+        notas_html = f"<br>Notas: {p['notas']}" if p.get("notas") else ""
+
+        # Group items by turno
+        items_by_turno = {}
+        for i in p["items"]:
+            t = i.get("turno") or 1
+            items_by_turno.setdefault(t, []).append(i)
+        max_turno = max(items_by_turno.keys()) if items_by_turno else 1
+        turno_actual = p.get("turno_actual", 1)
+
+        items_html = ""
+        for t in sorted(items_by_turno.keys()):
+            if len(items_by_turno) > 1:
+                status = "SERVIDO" if t < turno_actual else ("EN COCINA" if t == turno_actual else "PENDIENTE")
+                color = "#16a34a" if t < turno_actual else ("#111" if t == turno_actual else "#999")
+                items_html += f"<li style='list-style:none;font-size:11px;font-weight:800;color:{color};letter-spacing:1px;padding:4px 0 2px'>PLATO {t} &mdash; {status}</li>"
+            for i in items_by_turno[t]:
+                opacity = "0.45" if t < turno_actual else "1"
+                items_html += f"<li style='opacity:{opacity}'>{i['cantidad']}x {i['nombre']} &mdash; {i['precio']:.2f}&euro;</li>"
+
+        turno_label = f"Plato {turno_actual} / {max_turno}" if max_turno > 1 else ""
+        turno_btn = ""
+        if max_turno > 1 and turno_actual <= max_turno:
+            turno_btn = f"""<button id="btn-turno-{p['id']}" onclick="siguientePlatoAdmin({p['id']})"
+              style="padding:6px 14px;background:#111;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;margin-right:6px">
+              Siguiente plato &rarr;</button>"""
+
+        avisar_label = "En camino" if p["tipo"] == "domicilio" else "Listo para recoger"
         filas += f"""
         <div style="background:#fff;border-radius:12px;padding:16px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,.1)">
-          <div style="display:flex;justify-content:space-between;align-items:center">
-            <strong style="font-size:18px">{emoji} {p['hora']} — {p['nombre']}</strong>
-            <span style="font-size:18px;font-weight:700">{p['total']:.2f}€</span>
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+            <div>
+              <strong style="font-size:18px">{p['hora']} &mdash; {p['nombre']}</strong>
+              <div style="font-size:13px;color:#555;margin-top:2px">{emoji} &bull; {pago_icon}{dir_html}{notas_html}</div>
+              {f'<div id="turno-lbl-{p["id"]}" style="font-size:12px;font-weight:800;color:#555;margin-top:4px;letter-spacing:1px">{turno_label}</div>' if turno_label else ''}
+            </div>
+            <span style="font-size:18px;font-weight:700;white-space:nowrap">{p['total']:.2f}&euro;</span>
           </div>
-          <div style="color:#555;margin:4px 0">📞 {p['telefono']}{dir_html}{notas_html}{pago_html}</div>
-          <ul style="margin:8px 0 0 16px;color:#333">{items_html}</ul>
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px">
+          <ul style="margin:10px 0 0 16px;color:#333">{items_html}</ul>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px;flex-wrap:wrap;gap:8px">
             <span style="font-size:12px;color:#999">Pedido #{p['id']}</span>
-            <button id="btn-avisar-{p['id']}" onclick="avisarCliente({p['id']})"
-                    style="padding:6px 14px;background:#25D366;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">
-              📲 {avisar_label}
-            </button>
+            <div>
+              {turno_btn}
+              <button id="btn-avisar-{p['id']}" onclick="avisarCliente({p['id']})"
+                      style="padding:6px 14px;background:#25D366;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">
+                {avisar_label}</button>
+            </div>
           </div>
         </div>"""
 
     if not filas:
-        filas = "<p style='text-align:center;color:#555;padding:40px'>No hay pedidos todavía.</p>"
+        filas = "<p style='text-align:center;color:#555;padding:40px'>No hay pedidos todavia.</p>"
 
     total_dia = sum(p["total"] for p in pedidos)
 
     return HTMLResponse(f"""<!DOCTYPE html>
 <html lang="es"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Admin — {NOMBRE_NEGOCIO}</title>
+<title>Admin -- {NOMBRE_NEGOCIO}</title>
 <style>
   body{{font-family:sans-serif;background:{BRAND_COLOR};min-height:100vh;margin:0}}
   .checker{{height:18px;background:repeating-conic-gradient(#111 0% 25%,{BRAND_COLOR} 0% 50%) 0 0/18px 18px}}
   .header{{padding:16px;text-align:center;font-size:28px;font-weight:900;letter-spacing:2px}}
-  .container{{max-width:600px;margin:0 auto;padding:12px}}
+  .container{{max-width:640px;margin:0 auto;padding:12px}}
   .total-bar{{background:#111;color:#fff;border-radius:12px;padding:14px 20px;margin-bottom:16px;font-size:18px;font-weight:700;display:flex;justify-content:space-between}}
   form{{text-align:center;margin-bottom:12px}}
   input[type=date]{{padding:8px 12px;border-radius:8px;border:2px solid #111;font-size:15px;margin-right:8px}}
@@ -491,7 +553,7 @@ def admin_page(clave: str = "", fecha: str = ""):
 </style></head>
 <body>
 <div class="checker"></div>
-<div class="header">🍽️ {NOMBRE_NEGOCIO} — Pedidos del día</div>
+<div class="header">{NOMBRE_NEGOCIO} -- Pedidos del dia</div>
 <div class="container">
   <form method="get">
     <input type="hidden" name="clave" value="{clave}">
@@ -499,8 +561,8 @@ def admin_page(clave: str = "", fecha: str = ""):
     <button type="submit">Ver</button>
   </form>
   <div class="total-bar">
-    <span>Total del día</span>
-    <span>{total_dia:.2f}€ ({len(pedidos)} pedidos)</span>
+    <span>Total del dia</span>
+    <span>{total_dia:.2f}EUR ({len(pedidos)} pedidos)</span>
   </div>
   {filas}
 </div>
@@ -510,7 +572,7 @@ def admin_page(clave: str = "", fecha: str = ""):
 </html>""")
 
 
-# ── Static ────────────────────────────────────────────────────
+# -- Static --------------------------------------------------------
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
