@@ -42,6 +42,7 @@ services:
     env_file: ./delivery/.env
     volumes:
       - ./data/pedidos.db:/app/pedidos.db
+      - ./delivery/static:/app/static
     restart: unless-stopped
     networks: [restaurante, easypanel]
     labels:
