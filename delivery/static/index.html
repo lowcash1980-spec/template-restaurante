@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>[NOMBRE_NEGOCIO] — Haz tu pedido</title>
+  <title>[NOMBRE_NEGOCIO] â€” Haz tu pedido</title>
 
   <!-- PWA -->
   <link rel="manifest" href="/static/manifest.json">
@@ -18,7 +18,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
   <style>
     :root {
-      --brand: #FF6B35;   /* COLOR CORPORATIVO — reemplazar */
+      --brand: #FF6B35;   /* COLOR CORPORATIVO â€” reemplazar */
       --black: #111111;
       --white: #ffffff;
       --gray: #f0f0f0;
@@ -37,7 +37,7 @@
       overflow-x: hidden;
     }
 
-    /* ── Wrapper ── */
+    /* -- Wrapper -- */
     .app-wrap {
       background: var(--brand);
       max-width: 900px;
@@ -46,13 +46,13 @@
       position: relative;
     }
 
-    /* ── Checker ── */
+    /* -- Checker -- */
     .checker {
       height: 18px;
       background: repeating-conic-gradient(var(--black) 0% 25%, var(--brand) 0% 50%) 0 0 / 18px 18px;
     }
 
-    /* ── Header ── */
+    /* -- Header -- */
     .app-header {
       background: var(--brand);
       padding: 18px 16px 12px;
@@ -74,7 +74,7 @@
       margin-top: 2px;
     }
 
-    /* ── Timer banner ── */
+    /* -- Timer banner -- */
     .timer-banner {
       display: none;
       background: var(--black);
@@ -90,7 +90,7 @@
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.75} }
     #timer-count { font-size: 18px; font-weight: 900; }
 
-    /* ── Step dots ── */
+    /* -- Step dots -- */
     .step-nav {
       display: flex;
       justify-content: center;
@@ -101,13 +101,13 @@
     .step-dot.active { background: var(--black); }
     .step-dot.done { background: rgba(0,0,0,.4); }
 
-    /* ── Steps ── */
+    /* -- Steps -- */
     .step { display: none; padding: 0 0 100px; }
     .step.active { display: block; }
     .step-title { font-size: 26px; font-weight: 900; letter-spacing: -.5px; padding: 20px 16px 4px; }
     .step-subtitle { font-size: 14px; color: rgba(0,0,0,.55); padding: 0 16px 16px; }
 
-    /* ── Cards ── */
+    /* -- Cards -- */
     .card {
       background: var(--white);
       border-radius: var(--radius);
@@ -116,7 +116,7 @@
       box-shadow: 0 2px 12px rgba(0,0,0,.08);
     }
 
-    /* ── Step 1: Tipo ── */
+    /* -- Step 1: Tipo -- */
     .tipo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 16px; margin-top: 8px; }
     .tipo-btn {
       background: var(--white);
@@ -133,7 +133,7 @@
     .tipo-btn .tipo-icon { font-size: 42px; margin-bottom: 10px; }
     .tipo-btn .tipo-label { font-size: 17px; font-weight: 800; }
 
-    /* ── Step 2: Datos ── */
+    /* -- Step 2: Datos -- */
     .form-group { margin-bottom: 14px; }
     .form-label { display: block; font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; color: rgba(0,0,0,.6); }
     .form-input {
@@ -148,7 +148,7 @@
     }
     .form-input:focus { border-color: var(--black); }
 
-    /* ── Botones ── */
+    /* -- Botones -- */
     .btn-primary {
       width: 100%; padding: 16px;
       background: var(--black);
@@ -185,7 +185,7 @@
     }
     .btn-row { padding: 0 12px; margin-top: 8px; }
 
-    /* ── Step 3: Selector de fechas ── */
+    /* -- Step 3: Selector de fechas -- */
     .fechas-scroll {
       display: flex; gap: 8px; overflow-x: auto; padding: 0 12px 12px;
       scrollbar-width: none;
@@ -208,7 +208,7 @@
     .fecha-btn.selected .fecha-btn-mes,
     .fecha-btn.selected .fecha-btn-num { opacity: 1; }
 
-    /* ── Step 3: Slots ── */
+    /* -- Step 3: Slots -- */
     .fecha-label { font-size: 14px; font-weight: 600; color: rgba(0,0,0,.55); padding: 0 16px 10px; }
     .slots-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 0 12px; }
     .slot-btn {
@@ -225,19 +225,16 @@
     .slot-btn.lleno { background: var(--gray); color: var(--gray-mid); cursor: not-allowed; text-decoration: line-through; }
     .slot-disponibles { font-size: 10px; font-weight: 500; opacity: .6; margin-top: 2px; }
 
-    /* ── Step 4: Tabs ── */
+    /* -- Step 4: Tabs -- */
     .tabs-bar {
-      display: flex; overflow-x: auto; gap: 0;
-      padding: 12px 12px 0;
-      scrollbar-width: none;
-      position: sticky; top: 0;
+      display: flex; flex-wrap: wrap; justify-content: center; gap: 4px;
+      padding: 12px 12px 8px;
       background: var(--brand); z-index: 10;
     }
     .tabs-bar::-webkit-scrollbar { display: none; }
     .tab-btn {
-      flex-shrink: 0;
       padding: 10px 16px;
-      border-radius: 10px 10px 0 0;
+      border-radius: 8px;
       border: none;
       background: rgba(0,0,0,.12);
       font-size: 13px; font-weight: 700;
@@ -248,7 +245,7 @@
     .tab-panel { display: none; padding: 0 0 8px; }
     .tab-panel.active { display: block; }
 
-    /* ── Menu items ── */
+    /* -- Menu items -- */
     .menu-item {
       display: flex; align-items: flex-start;
       justify-content: space-between;
@@ -283,7 +280,7 @@
     .detroit-opt:active { background: var(--black); color: var(--white); }
     .seccion-label { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: rgba(0,0,0,.4); padding: 14px 14px 4px; }
 
-    /* ── Cart bar ── */
+    /* -- Cart bar -- */
     .cart-bar {
       position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
       width: 100%; max-width: 900px;
@@ -305,7 +302,7 @@
       font-size: 13px; font-weight: 900;
     }
 
-    /* ── Step 5: Resumen editable ── */
+    /* -- Step 5: Resumen editable -- */
     .resumen-row {
       display: flex; align-items: center;
       padding: 10px 0; border-bottom: 1px solid #f0f0f0; gap: 8px;
@@ -333,7 +330,7 @@
     .info-row { display: flex; align-items: center; gap: 8px; font-size: 14px; padding: 5px 0; }
     .nota-caja { font-size: 11px; color: rgba(0,0,0,.4); text-align: center; padding: 4px 16px 0; }
 
-    /* ── Modal: Confirmación final ── */
+    /* -- Modal: ConfirmaciÃ³n final -- */
     .modal-overlay {
       position: fixed; inset: 0;
       background: rgba(0,0,0,.6);
@@ -353,7 +350,7 @@
     .modal-title { font-size: 20px; font-weight: 900; }
     .modal-close { background: none; border: none; font-size: 24px; cursor: pointer; color: #888; }
 
-    /* Confirmación final content */
+    /* ConfirmaciÃ³n final content */
     .confirm-summary { padding: 16px; }
     .confirm-item { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid #f5f5f5; font-size: 14px; }
     .confirm-item:last-child { border-bottom: none; }
@@ -363,7 +360,7 @@
     .modal-footer { padding: 12px 16px; border-top: 1px solid #eee; }
     .btn-row-two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
-    /* ── Modal: Pizza al gusto ── */
+    /* -- Modal: Pizza al gusto -- */
     .chips-section { padding: 14px 14px 4px; }
     .chips-section-title { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: rgba(0,0,0,.45); margin-bottom: 10px; }
     .chips-wrap { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -378,13 +375,13 @@
     .chip.base-chip.selected { background: var(--brand); color: var(--black); border-color: var(--black); }
     .modal-footer-sticky { position: sticky; bottom: 0; background: var(--white); border-top: 1px solid #eee; padding: 14px 16px; }
 
-    /* ── Modal: Tiempo agotado ── */
+    /* -- Modal: Tiempo agotado -- */
     #modal-timeout .modal-sheet { text-align: center; padding: 32px 24px 40px; border-radius: 20px 20px 0 0; }
     .timeout-icon { font-size: 56px; margin-bottom: 12px; }
     .timeout-title { font-size: 22px; font-weight: 900; margin-bottom: 8px; }
     .timeout-text { font-size: 14px; color: #666; margin-bottom: 24px; line-height: 1.5; }
 
-    /* ── Step 6: Confirmación ── */
+    /* -- Step 6: ConfirmaciÃ³n -- */
     .confirm-screen { text-align: center; padding: 40px 24px; }
     .confirm-icon { font-size: 72px; margin-bottom: 20px; }
     .confirm-title { font-size: 32px; font-weight: 900; margin-bottom: 8px; }
@@ -396,7 +393,7 @@
     .confirm-info { background: var(--white); border-radius: var(--radius); padding: 18px; text-align: left; margin-bottom: 16px; box-shadow: 0 2px 12px rgba(0,0,0,.08); }
     .confirm-info p { padding: 5px 0; font-size: 15px; }
 
-    /* ── Misc ── */
+    /* -- Misc -- */
     .error-msg {
       background: #fff0f0; color: var(--danger);
       border-radius: 10px; padding: 12px 14px;
@@ -412,9 +409,9 @@
     @keyframes spin { to { transform: rotate(360deg); } }
     .divider { height: 1px; background: rgba(0,0,0,.08); margin: 8px 12px; }
 
-    /* ══════════════════════════════
-       DESKTOP ≥640px
-    ══════════════════════════════ */
+    /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+       DESKTOP â‰¥640px
+    â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
     @media (min-width: 640px) {
       .logo { font-size: 96px; }
       .logo-sub { font-size: 13px; letter-spacing: 6px; }
@@ -432,7 +429,7 @@
       .tabs-bar { padding: 16px 20px 0; gap: 6px; }
       .tab-btn { padding: 12px 22px; font-size: 14px; }
 
-      /* Dos columnas en menú */
+      /* Dos columnas en menÃº */
       .menu-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -464,33 +461,33 @@
 
 <!-- Timer banner -->
 <div class="timer-banner" id="timer-banner">
-  ⏱️ Tu hora está reservada — <span id="timer-count">1:30</span>
+  â±ï¸ Tu hora estÃ¡ reservada â€” <span id="timer-count">1:30</span>
 </div>
 
 <!-- Step dots -->
 <div class="step-nav" id="stepNav"></div>
 
-<!-- ════ STEP 1: TIPO ════ -->
+<!-- â•â•â•â• STEP 1: TIPO â•â•â•â• -->
 <div class="step active" id="step-1">
-  <div class="step-title">¿Cómo lo quieres?</div>
+  <div class="step-title">Â¿CÃ³mo lo quieres?</div>
   <div class="tipo-grid">
     <div class="tipo-btn" id="btn-domicilio" onclick="selectTipo('domicilio')">
-      <div class="tipo-icon">🛵</div>
+      <div class="tipo-icon">ðŸ›µ</div>
       <div class="tipo-label">A domicilio</div>
     </div>
     <div class="tipo-btn" id="btn-recogida" onclick="selectTipo('recogida')">
-      <div class="tipo-icon">🛍️</div>
+      <div class="tipo-icon">ðŸ›ï¸</div>
       <div class="tipo-label">Para recoger</div>
     </div>
   </div>
   <div class="btn-row" style="margin-top:16px">
-    <button class="btn-primary" id="btn-c1" onclick="goToStep(2)" disabled>Continuar →</button>
+    <button class="btn-primary" id="btn-c1" onclick="goToStep(2)" disabled>Continuar â†’</button>
   </div>
 </div>
 
-<!-- ════ STEP 2: DATOS ════ -->
+<!-- â•â•â•â• STEP 2: DATOS â•â•â•â• -->
 <div class="step" id="step-2">
-  <button class="btn-back" style="margin:12px 16px 0" onclick="goToStep(1)">← Volver</button>
+  <button class="btn-back" style="margin:12px 16px 0" onclick="goToStep(1)">â† Volver</button>
   <div class="step-title">Tus datos</div>
   <div class="card">
     <div class="form-group">
@@ -498,12 +495,12 @@
       <input class="form-input" id="inp-nombre" type="text" placeholder="Tu nombre" autocomplete="name">
     </div>
     <div class="form-group">
-      <label class="form-label">Teléfono</label>
+      <label class="form-label">TelÃ©fono</label>
       <input class="form-input" id="inp-telefono" type="tel" placeholder="666 000 000" autocomplete="tel">
     </div>
     <div id="campo-direccion" class="form-group" style="display:none">
-      <label class="form-label">Dirección de entrega</label>
-      <input class="form-input" id="inp-direccion" type="text" placeholder="Calle, número, piso..." autocomplete="street-address">
+      <label class="form-label">DirecciÃ³n de entrega</label>
+      <input class="form-input" id="inp-direccion" type="text" placeholder="Calle, nÃºmero, piso..." autocomplete="street-address">
     </div>
     <div class="form-group">
       <label class="form-label">Notas (opcional)</label>
@@ -514,37 +511,37 @@
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
         <button type="button" id="pago-efectivo" class="tipo-btn selected"
           onclick="selectPago('efectivo')" style="padding:14px 8px;box-shadow:none">
-          <div class="tipo-icon" style="font-size:28px">💵</div>
+          <div class="tipo-icon" style="font-size:28px">ðŸ’µ</div>
           <div class="tipo-label" style="font-size:14px">Efectivo</div>
         </button>
         <button type="button" id="pago-tarjeta" class="tipo-btn"
           onclick="selectPago('tarjeta')" style="padding:14px 8px;box-shadow:none">
-          <div class="tipo-icon" style="font-size:28px">💳</div>
+          <div class="tipo-icon" style="font-size:28px">ðŸ’³</div>
           <div class="tipo-label" style="font-size:14px">Tarjeta</div>
         </button>
       </div>
     </div>
   </div>
   <div class="btn-row">
-    <button class="btn-primary" onclick="validarDatos()">Elegir horario →</button>
+    <button class="btn-primary" onclick="validarDatos()">Elegir horario â†’</button>
   </div>
   <div class="error-msg" id="err-datos">Por favor rellena todos los campos obligatorios.</div>
 </div>
 
-<!-- ════ STEP 3: FECHA Y HORA ════ -->
+<!-- â•â•â•â• STEP 3: FECHA Y HORA â•â•â•â• -->
 <div class="step" id="step-3">
-  <button class="btn-back" style="margin:12px 16px 0" onclick="goToStep(2)">← Volver</button>
-  <div class="step-title">¿Cuándo y a qué hora?</div>
+  <button class="btn-back" style="margin:12px 16px 0" onclick="goToStep(2)">â† Volver</button>
+  <div class="step-title">Â¿CuÃ¡ndo y a quÃ© hora?</div>
   <div class="fechas-scroll" id="fechas-container"></div>
   <div class="fecha-label" id="fecha-label"></div>
   <div id="slots-container" class="slots-grid"></div>
   <div class="btn-row" style="margin-top:16px">
-    <button class="btn-primary" id="btn-c3" onclick="iniciarCarta()" disabled>Ver la carta →</button>
+    <button class="btn-primary" id="btn-c3" onclick="iniciarCarta()" disabled>Ver la carta â†’</button>
   </div>
-  <div class="error-msg" id="err-slots">No hay huecos disponibles. Prueba mañana o llámanos al <span class="tel-negocio"></span>.</div>
+  <div class="error-msg" id="err-slots">No hay huecos disponibles. Prueba maÃ±ana o llÃ¡manos al <span class="tel-negocio"></span>.</div>
 </div>
 
-<!-- ════ STEP 4: CARTA ════ -->
+<!-- â•â•â•â• STEP 4: CARTA â•â•â•â• -->
 <div class="step" id="step-4">
   <div class="tabs-bar" id="tabs-bar"></div>
   <div id="tabs-panels"></div>
@@ -554,7 +551,7 @@
     <div class="menu-item" style="flex-direction:column;cursor:pointer;margin:8px 12px" onclick="abrirPizzaGusto()">
       <div style="display:flex;justify-content:space-between;align-items:center;width:100%">
         <div>
-          <div class="menu-item-name">🍕 A tu gusto</div>
+          <div class="menu-item-name">ðŸ• A tu gusto</div>
           <div class="menu-item-desc" id="gusto-desc">Elige tu base e ingredientes.</div>
         </div>
         <button class="btn-add" onclick="event.stopPropagation();abrirPizzaGusto()">+</button>
@@ -566,15 +563,15 @@
   <!-- Cart bar -->
   <div class="cart-bar" id="cart-bar">
     <button class="cart-bar-btn" onclick="goToStep(5)">
-      <span>🛒 Ver pedido</span>
+      <span>ðŸ›’ Ver pedido</span>
       <span class="cart-badge" id="cart-badge">0 items</span>
     </button>
   </div>
 </div>
 
-<!-- ════ STEP 5: RESUMEN EDITABLE ════ -->
+<!-- â•â•â•â• STEP 5: RESUMEN EDITABLE â•â•â•â• -->
 <div class="step" id="step-5">
-  <button class="btn-back" style="margin:12px 16px 0" onclick="goToStep(4)">← Seguir pidiendo</button>
+  <button class="btn-back" style="margin:12px 16px 0" onclick="goToStep(4)">â† Seguir pidiendo</button>
   <div class="step-title">Tu pedido</div>
 
   <div class="card" id="resumen-items"></div>
@@ -584,19 +581,19 @@
 
   <div class="error-msg" id="err-pedido"></div>
   <div class="btn-row" style="margin-top:8px">
-    <button class="btn-primary" id="btn-confirmar" onclick="abrirConfirmacion()">Confirmar pedido →</button>
+    <button class="btn-primary" id="btn-confirmar" onclick="abrirConfirmacion()">Confirmar pedido â†’</button>
   </div>
 </div>
 
-<!-- ════ STEP 6: ÉXITO ════ -->
+<!-- â•â•â•â• STEP 6: Ã‰XITO â•â•â•â• -->
 <div class="step" id="step-6">
   <div class="confirm-screen">
-    <div class="confirm-icon">✅</div>
-    <div class="confirm-title">¡Pedido enviado!</div>
-    <div class="confirm-num" id="confirm-num">Nº —</div>
+    <div class="confirm-icon">âœ…</div>
+    <div class="confirm-title">Â¡Pedido enviado!</div>
+    <div class="confirm-num" id="confirm-num">NÂº â€”</div>
     <div class="confirm-info" id="confirm-info"></div>
     <p style="color:rgba(0,0,0,.5);font-size:13px;margin-bottom:24px">
-      Si necesitas algo llámanos:<br>
+      Si necesitas algo llÃ¡manos:<br>
       <strong style="color:var(--black);font-size:17px" class="tel-negocio"></strong>
     </p>
     <button class="btn-primary" onclick="reiniciar()">Hacer otro pedido</button>
@@ -606,36 +603,36 @@
 <div class="checker"></div>
 </div><!-- /app-wrap -->
 
-<!-- ════ MODAL: Confirmación final ════ -->
+<!-- â•â•â•â• MODAL: ConfirmaciÃ³n final â•â•â•â• -->
 <div class="modal-overlay" id="modal-confirm">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
     <div class="modal-header">
-      <div class="modal-title">¿Confirmamos el pedido?</div>
-      <button class="modal-close" onclick="cerrarModal('modal-confirm')">✕</button>
+      <div class="modal-title">Â¿Confirmamos el pedido?</div>
+      <button class="modal-close" onclick="cerrarModal('modal-confirm')">âœ•</button>
     </div>
     <div class="confirm-summary" id="confirm-summary-content"></div>
     <div class="modal-footer">
       <div class="btn-row-two">
-        <button class="btn-secondary" style="margin-top:0;width:100%" onclick="cerrarModal('modal-confirm')">✏️ Editar</button>
-        <button class="btn-primary" id="btn-enviar" onclick="enviarPedido()">🚀 Enviar pedido</button>
+        <button class="btn-secondary" style="margin-top:0;width:100%" onclick="cerrarModal('modal-confirm')">âœï¸ Editar</button>
+        <button class="btn-primary" id="btn-enviar" onclick="enviarPedido()">ðŸš€ Enviar pedido</button>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ════ MODAL: Pizza al gusto ════ -->
+<!-- â•â•â•â• MODAL: Pizza al gusto â•â•â•â• -->
 <div class="modal-overlay" id="modal-gusto">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
     <div class="modal-header">
       <div>
-        <div class="modal-title">🍕 Pizza a tu gusto</div>
+        <div class="modal-title">ðŸ• Pizza a tu gusto</div>
         <div style="font-size:12px;color:#888;margin-top:2px">Base incluida en el precio</div>
       </div>
       <div style="display:flex;align-items:center;gap:10px">
-        <span style="font-size:20px;font-weight:900" id="gusto-precio">9,00€</span>
-        <button class="modal-close" onclick="cerrarModal('modal-gusto')">✕</button>
+        <span style="font-size:20px;font-weight:900" id="gusto-precio">9,00â‚¬</span>
+        <button class="modal-close" onclick="cerrarModal('modal-gusto')">âœ•</button>
       </div>
     </div>
     <div class="chips-section">
@@ -643,28 +640,28 @@
       <div class="chips-wrap" id="chips-bases"></div>
     </div>
     <div class="chips-section">
-      <div class="chips-section-title">Ingredientes — +1,50€ cada uno</div>
+      <div class="chips-section-title">Ingredientes â€” +1,50â‚¬ cada uno</div>
       <div class="chips-wrap" id="chips-150"></div>
     </div>
     <div class="chips-section">
-      <div class="chips-section-title">Ingrediente premium — +2,00€</div>
+      <div class="chips-section-title">Ingrediente premium â€” +2,00â‚¬</div>
       <div class="chips-wrap" id="chips-200"></div>
     </div>
     <div class="chips-section">
-      <div class="chips-section-title">Ingredientes especiales — +3,00€ cada uno</div>
+      <div class="chips-section-title">Ingredientes especiales â€” +3,00â‚¬ cada uno</div>
       <div class="chips-wrap" id="chips-300"></div>
     </div>
     <div class="modal-footer-sticky">
-      <button class="btn-primary" id="btn-add-gusto" onclick="addPizzaGusto()">Añadir al pedido — 9,00€</button>
-      <div style="font-size:11px;color:#aaa;text-align:center;margin-top:6px">+0,50€ por caja (Ley 7/2022)</div>
+      <button class="btn-primary" id="btn-add-gusto" onclick="addPizzaGusto()">AÃ±adir al pedido â€” 9,00â‚¬</button>
+      <div style="font-size:11px;color:#aaa;text-align:center;margin-top:6px">+0,50â‚¬ por caja (Ley 7/2022)</div>
     </div>
   </div>
 </div>
 
-<!-- ════ MODAL: Tiempo agotado ════ -->
+<!-- â•â•â•â• MODAL: Tiempo agotado â•â•â•â• -->
 <div class="modal-overlay" id="modal-timeout">
   <div class="modal-sheet" style="border-radius:20px 20px 0 0;padding:32px 24px 40px;text-align:center">
-    <div class="timeout-icon">⏰</div>
+    <div class="timeout-icon">â°</div>
     <div class="timeout-title">Tiempo agotado</div>
     <div class="timeout-text">
       El tiempo de reserva de tu hora ha expirado.<br>
@@ -675,28 +672,28 @@
 </div>
 
 <script>
-// ═══════════════════════════════════════════════════
-// MENÚ
-// ═══════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// MENÃš
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
-// ═══════════════════════════════════════════════════
-// CONFIGURAR MENÚ — Rellenar con los productos del cliente
-// Categorías libres: añade, elimina o renombra las que necesites.
-// es_pizza:true → suma cargo de caja (0.50€) al confirmar pedido.
-// Para productos con precio por ración/entera (ej: pizzas detroit),
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// CONFIGURAR MENÃš â€” Rellenar con los productos del cliente
+// CategorÃ­as libres: aÃ±ade, elimina o renombra las que necesites.
+// es_pizza:true â†’ suma cargo de caja (0.50â‚¬) al confirmar pedido.
+// Para productos con precio por raciÃ³n/entera (ej: pizzas detroit),
 //   usa precio_entera y precio_porcion en lugar de precio.
-// ═══════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
-// Carta cargada dinámicamente desde /api/carta (Restaurante Core)
+// Carta cargada dinÃ¡micamente desde /api/carta (Restaurante Core)
 // Formato: [{id, nombre, icono, platos:[{id, nombre, descripcion, precio, disponible, foto_url}]}]
 let MENU = [];
 
-// ═══════════════════════════════════════════════════
-// PIZZA/PRODUCTO PERSONALIZABLE — Solo si el negocio
-// ofrece opción "crear tu propio producto".
-// Si no se usa, dejar precio_base:0 y arrays vacíos.
-// ing150 / ing200 / ing300 = precio del ingrediente en céntimos extra
-// ═══════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// PIZZA/PRODUCTO PERSONALIZABLE â€” Solo si el negocio
+// ofrece opciÃ³n "crear tu propio producto".
+// Si no se usa, dejar precio_base:0 y arrays vacÃ­os.
+// ing150 / ing200 / ing300 = precio del ingrediente en cÃ©ntimos extra
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 const PERSONALIZABLE = {
   precio_base: 0.00,               // Precio base del producto personalizable
@@ -704,22 +701,22 @@ const PERSONALIZABLE = {
     '[Base / salsa 1]',
     '[Base / salsa 2]',
   ],
-  ing150: [                         // Ingredientes con suplemento +1.50€
+  ing150: [                         // Ingredientes con suplemento +1.50â‚¬
     '[Ingrediente A]',
     '[Ingrediente B]',
     '[Ingrediente C]',
   ],
-  ing200: [                         // Ingredientes con suplemento +2.00€
+  ing200: [                         // Ingredientes con suplemento +2.00â‚¬
     '[Ingrediente premium 1]',
   ],
-  ing300: [                         // Ingredientes con suplemento +3.00€
+  ing300: [                         // Ingredientes con suplemento +3.00â‚¬
     '[Ingrediente premium 2]',
   ],
 };
 
-// ═══════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // ESTADO
-// ═══════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 const state = {
   step: 1,
@@ -737,9 +734,9 @@ const state = {
   gusto_ing: new Set(),
 };
 
-// ═══════════════════════════════════════════════════
-// NAVEGACIÓN
-// ═══════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// NAVEGACIÃ“N
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 function goToStep(n) {
   document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
@@ -761,9 +758,9 @@ function renderStepDots() {
   }).join('');
 }
 
-// ═══════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // STEP 1
-// ═══════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 function selectTipo(tipo) {
   state.tipo = tipo;
@@ -773,9 +770,9 @@ function selectTipo(tipo) {
   document.getElementById('campo-direccion').style.display = tipo === 'domicilio' ? 'block' : 'none';
 }
 
-// ═══════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // STEP 2
-// ═══════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 function validarDatos() {
   const nombre    = document.getElementById('inp-nombre').value.trim();
@@ -796,14 +793,14 @@ function selectPago(pago) {
   document.getElementById('pago-tarjeta').classList.toggle('selected', pago === 'tarjeta');
 }
 
-// ═══════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // STEP 3: FECHA Y SLOTS
-// DIAS_CERRADOS: días de la semana en que el negocio cierra.
-// 0=domingo, 1=lunes, …, 6=sábado (getDay() de JS)
-// Ajustar según el horario real del negocio.
-// ═══════════════════════════════════════════════════
+// DIAS_CERRADOS: dÃ­as de la semana en que el negocio cierra.
+// 0=domingo, 1=lunes, â€¦, 6=sÃ¡bado (getDay() de JS)
+// Ajustar segÃºn el horario real del negocio.
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
-const DIAS_CERRADOS = new Set([]);   // Por defecto ningún día cerrado
+const DIAS_CERRADOS = new Set([]);   // Por defecto ningÃºn dÃ­a cerrado
 
 function toLocalISO(d) {
   const y = d.getFullYear();
@@ -833,17 +830,17 @@ function getFechaInicial() {
 
 function formatFecha(iso) {
   const d = new Date(iso + 'T12:00:00');
-  const dias   = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+  const dias   = ['domingo','lunes','martes','miÃ©rcoles','jueves','viernes','sÃ¡bado'];
   const meses  = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
   const hoy    = toLocalISO(new Date());
   const manana = (() => { const t = new Date(); t.setDate(t.getDate() + 1); return toLocalISO(t); })();
-  const prefix = iso === hoy ? 'Hoy, ' : iso === manana ? 'Mañana, ' : '';
+  const prefix = iso === hoy ? 'Hoy, ' : iso === manana ? 'MaÃ±ana, ' : '';
   return `${prefix}${dias[d.getDay()]} ${d.getDate()} de ${meses[d.getMonth()]}`;
 }
 
 function renderFechas() {
   const fechas = getFechasDisponibles();
-  const dias   = ['dom','lun','mar','mié','jue','vie','sáb'];
+  const dias   = ['dom','lun','mar','miÃ©','jue','vie','sÃ¡b'];
   const meses  = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
   document.getElementById('fechas-container').innerHTML = fechas.map(iso => {
     const d = new Date(iso + 'T12:00:00');
@@ -887,7 +884,7 @@ async function cargarSlotsParaFecha(fecha) {
         <div class="slot-disponibles">${s.lleno ? 'Lleno' : s.disponibles + ' libre'+(s.disponibles>1?'s':'')}</div>
       </button>`).join('');
   } catch(e) {
-    cont.innerHTML = '<div class="loading">Error cargando horarios. Recarga la página.</div>';
+    cont.innerHTML = '<div class="loading">Error cargando horarios. Recarga la pÃ¡gina.</div>';
   }
 }
 
@@ -904,9 +901,9 @@ function selectSlot(hora, el) {
   document.getElementById('btn-c3').disabled = false;
 }
 
-// ═══════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // TEMPORIZADOR
-// ═══════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 function iniciarTimer(segundos) {
   pararTimer();
@@ -952,9 +949,9 @@ function reiniciarPorTimeout() {
   goToStep(3);
 }
 
-// ═══════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // INICIAR CARTA (reservar slot + timer)
-// ═══════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 async function iniciarCarta() {
   const btn = document.getElementById('btn-c3');
@@ -971,7 +968,7 @@ async function iniciarCarta() {
 
     if (!data.ok) {
       btn.disabled = false;
-      btn.textContent = 'Ver la carta →';
+      btn.textContent = 'Ver la carta â†’';
       mostrarErr('err-slots', data.error || 'No se pudo reservar esa hora.');
       cargarSlots();
       return;
@@ -982,14 +979,14 @@ async function iniciarCarta() {
     goToStep(4);
   } catch(e) {
     btn.disabled = false;
-    btn.textContent = 'Ver la carta →';
-    mostrarErr('err-slots', 'Error de conexión. Inténtalo de nuevo.');
+    btn.textContent = 'Ver la carta â†’';
+    mostrarErr('err-slots', 'Error de conexiÃ³n. IntÃ©ntalo de nuevo.');
   }
 }
 
-// ═══════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // STEP 4: CARTA
-// ═══════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 function switchTab(tab, btn) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -1015,7 +1012,7 @@ function renderCarta() {
 
   if (!MENU.length) {
     tabsBar.innerHTML = '';
-    tabsPanels.innerHTML = '<p style="padding:32px;text-align:center;color:#aaa">La carta no está disponible en este momento.</p>';
+    tabsPanels.innerHTML = '<p style="padding:32px;text-align:center;color:#aaa">La carta no estÃ¡ disponible en este momento.</p>';
     return;
   }
 
@@ -1029,14 +1026,14 @@ function renderCarta() {
   });
 
   if (PERSONALIZABLE.precio_base > 0) {
-    btns += `<button class="tab-btn" onclick="switchTab('gusto',this)">🍕 A tu gusto</button>`;
+    btns += `<button class="tab-btn" onclick="switchTab('gusto',this)">ðŸ• A tu gusto</button>`;
     const base = fmt(PERSONALIZABLE.precio_base);
     document.getElementById('gusto-desc').textContent = `Elige tu base e ingredientes. Desde ${base}`;
     document.getElementById('gusto-detalle').innerHTML =
-      `<strong style="color:var(--black)">Bases:</strong> ${PERSONALIZABLE.bases.join(' · ')}<br>` +
-      (PERSONALIZABLE.ing150.length ? `<strong style="color:var(--black)">+1,50€:</strong> ${PERSONALIZABLE.ing150.join(', ')}<br>` : '') +
-      (PERSONALIZABLE.ing200.length ? `<strong style="color:var(--black)">+2,00€:</strong> ${PERSONALIZABLE.ing200.join(', ')}<br>` : '') +
-      (PERSONALIZABLE.ing300.length ? `<strong style="color:var(--black)">+3,00€:</strong> ${PERSONALIZABLE.ing300.join(', ')}<br>` : '');
+      `<strong style="color:var(--black)">Bases:</strong> ${PERSONALIZABLE.bases.join(' Â· ')}<br>` +
+      (PERSONALIZABLE.ing150.length ? `<strong style="color:var(--black)">+1,50â‚¬:</strong> ${PERSONALIZABLE.ing150.join(', ')}<br>` : '') +
+      (PERSONALIZABLE.ing200.length ? `<strong style="color:var(--black)">+2,00â‚¬:</strong> ${PERSONALIZABLE.ing200.join(', ')}<br>` : '') +
+      (PERSONALIZABLE.ing300.length ? `<strong style="color:var(--black)">+3,00â‚¬:</strong> ${PERSONALIZABLE.ing300.join(', ')}<br>` : '');
     document.getElementById('tab-gusto').style.display = '';
   }
 
@@ -1076,9 +1073,9 @@ function addItem(id) {
   updateCartBar();
 }
 
-// ═══════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // PIZZA AL GUSTO
-// ═══════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 function renderGustoChips() {
   document.getElementById('chips-bases').innerHTML =
@@ -1118,7 +1115,7 @@ function actualizarPrecioGusto() {
   state.gusto_ing.forEach(k => { total += parseFloat(k.split('|')[1]); });
   const s = fmt(total);
   document.getElementById('gusto-precio').textContent = s;
-  document.getElementById('btn-add-gusto').textContent = `Añadir al pedido — ${s}`;
+  document.getElementById('btn-add-gusto').textContent = `AÃ±adir al pedido â€” ${s}`;
 }
 
 function addPizzaGusto() {
@@ -1130,15 +1127,15 @@ function addPizzaGusto() {
     total += parseFloat(p);
     ings.push(n);
   });
-  const desc = `Base: ${state.gusto_base}${ings.length ? ' · ' + ings.join(', ') : ''}`;
+  const desc = `Base: ${state.gusto_base}${ings.length ? ' Â· ' + ings.join(', ') : ''}`;
   state.cart.push({ id:'gusto-'+Date.now(), nombre:'Pizza a tu gusto', descripcion:desc, precio:total, cantidad:1, es_pizza:true });
   cerrarModal('modal-gusto');
   updateCartBar();
 }
 
-// ═══════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // CART
-// ═══════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 function calcCart() {
   const subtotal = state.cart.reduce((s, i) => s + i.precio * i.cantidad, 0);
@@ -1153,12 +1150,12 @@ function updateCartBar() {
   if (n === 0) { bar.classList.remove('visible'); return; }
   bar.classList.add('visible');
   const { total } = calcCart();
-  document.getElementById('cart-badge').textContent = `${n} item${n>1?'s':''} · ${fmt(total)}`;
+  document.getElementById('cart-badge').textContent = `${n} item${n>1?'s':''} Â· ${fmt(total)}`;
 }
 
-// ═══════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // STEP 5: RESUMEN EDITABLE
-// ═══════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 function cambiarCantidad(id, delta) {
   const item = state.cart.find(i => i.id === id);
@@ -1178,7 +1175,7 @@ function eliminarItem(id) {
 function renderResumen() {
   if (state.cart.length === 0) {
     document.getElementById('resumen-items').innerHTML =
-      '<p style="text-align:center;color:#aaa;padding:20px">No has añadido ningún producto.</p>';
+      '<p style="text-align:center;color:#aaa;padding:20px">No has aÃ±adido ningÃºn producto.</p>';
     document.getElementById('btn-confirmar').disabled = true;
     return;
   }
@@ -1192,12 +1189,12 @@ function renderResumen() {
         ${item.descripcion ? `<div class="resumen-row-desc">${item.descripcion}</div>` : ''}
       </div>
       <div class="qty-control">
-        <button class="qty-btn" onclick="cambiarCantidad('${item.id}',-1)">−</button>
+        <button class="qty-btn" onclick="cambiarCantidad('${item.id}',-1)">âˆ’</button>
         <span class="qty-num">${item.cantidad}</span>
         <button class="qty-btn" onclick="cambiarCantidad('${item.id}',1)">+</button>
       </div>
       <div class="resumen-row-price">${fmt(item.precio * item.cantidad)}</div>
-      <button class="btn-del" onclick="eliminarItem('${item.id}')">✕</button>
+      <button class="btn-del" onclick="eliminarItem('${item.id}')">âœ•</button>
     </div>`).join('');
 
   html += `<div class="total-row" style="margin-top:8px"><span style="color:#888">Subtotal</span><span>${fmt(subtotal)}</span></div>`;
@@ -1209,25 +1206,25 @@ function renderResumen() {
   html += `<div class="total-row grand"><span>TOTAL</span><span>${fmt(total)}</span></div>`;
   document.getElementById('resumen-items').innerHTML = html;
   document.getElementById('nota-caja').textContent =
-    num_pizzas > 0 ? '*0,50€ por caja — Ley 7/2022' : '';
+    num_pizzas > 0 ? '*0,50â‚¬ por caja â€” Ley 7/2022' : '';
 
   const c = state.cliente;
-  const emoji = state.tipo === 'domicilio' ? '🛵' : '🛍️';
+  const emoji = state.tipo === 'domicilio' ? 'ðŸ›µ' : 'ðŸ›ï¸';
   document.getElementById('resumen-cliente').innerHTML = `
     <div class="info-row"><span>${emoji}</span><strong>${state.tipo === 'domicilio' ? 'A domicilio' : 'Para recoger'}</strong></div>
-    <div class="info-row"><span>👤</span><span>${c.nombre}</span></div>
-    <div class="info-row"><span>📞</span><span>${c.telefono}</span></div>
-    ${c.direccion ? `<div class="info-row"><span>📍</span><span>${c.direccion}</span></div>` : ''}
-    <div class="info-row"><span>🕐</span><span>${formatFecha(state.fecha)} a las <strong>${state.hora}</strong></span></div>
-    ${c.notas ? `<div class="info-row"><span>📝</span><span>${c.notas}</span></div>` : ''}
-    <div class="info-row"><span>${state.metodo_pago === 'tarjeta' ? '💳' : '💵'}</span><span>Pago: <strong>${state.metodo_pago === 'tarjeta' ? 'Tarjeta' : 'Efectivo'}</strong></span></div>`;
+    <div class="info-row"><span>ðŸ‘¤</span><span>${c.nombre}</span></div>
+    <div class="info-row"><span>ðŸ“ž</span><span>${c.telefono}</span></div>
+    ${c.direccion ? `<div class="info-row"><span>ðŸ“</span><span>${c.direccion}</span></div>` : ''}
+    <div class="info-row"><span>ðŸ•</span><span>${formatFecha(state.fecha)} a las <strong>${state.hora}</strong></span></div>
+    ${c.notas ? `<div class="info-row"><span>ðŸ“</span><span>${c.notas}</span></div>` : ''}
+    <div class="info-row"><span>${state.metodo_pago === 'tarjeta' ? 'ðŸ’³' : 'ðŸ’µ'}</span><span>Pago: <strong>${state.metodo_pago === 'tarjeta' ? 'Tarjeta' : 'Efectivo'}</strong></span></div>`;
 
-  document.getElementById('btn-confirmar').textContent = `Confirmar pedido — ${fmt(total)}`;
+  document.getElementById('btn-confirmar').textContent = `Confirmar pedido â€” ${fmt(total)}`;
 }
 
-// ═══════════════════════════════════════════════════
-// MODAL CONFIRMACIÓN FINAL
-// ═══════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// MODAL CONFIRMACIÃ“N FINAL
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 function abrirConfirmacion() {
   if (state.cart.length === 0) return;
@@ -1236,7 +1233,7 @@ function abrirConfirmacion() {
 
   let itemsHtml = state.cart.map(item => `
     <div class="confirm-item">
-      <span class="confirm-item-name">${item.cantidad > 1 ? item.cantidad+'× ' : ''}${item.nombre}</span>
+      <span class="confirm-item-name">${item.cantidad > 1 ? item.cantidad+'Ã— ' : ''}${item.nombre}</span>
       <span style="font-weight:700">${fmt(item.precio * item.cantidad)}</span>
     </div>`).join('');
 
@@ -1247,24 +1244,24 @@ function abrirConfirmacion() {
   itemsHtml += `<div class="confirm-item" style="font-size:17px;font-weight:900;border-top:2px solid #111;margin-top:4px;padding-top:10px">
     <span>TOTAL</span><span>${fmt(total)}</span></div>`;
 
-  const emoji = state.tipo === 'domicilio' ? '🛵' : '🛍️';
+  const emoji = state.tipo === 'domicilio' ? 'ðŸ›µ' : 'ðŸ›ï¸';
   document.getElementById('confirm-summary-content').innerHTML = `
     <div style="margin-bottom:12px">${itemsHtml}</div>
     <div class="confirm-meta">
       <p>${emoji} <strong>${state.tipo === 'domicilio' ? 'A domicilio' : 'Para recoger'}</strong></p>
-      <p>👤 ${c.nombre} · 📞 ${c.telefono}</p>
-      ${c.direccion ? `<p>📍 ${c.direccion}</p>` : ''}
-      <p>🕐 ${formatFecha(state.fecha)} a las <strong>${state.hora}</strong></p>
-      ${c.notas ? `<p>📝 ${c.notas}</p>` : ''}
-      <p>${state.metodo_pago === 'tarjeta' ? '💳' : '💵'} Pago: <strong>${state.metodo_pago === 'tarjeta' ? 'Tarjeta' : 'Efectivo'}</strong></p>
+      <p>ðŸ‘¤ ${c.nombre} Â· ðŸ“ž ${c.telefono}</p>
+      ${c.direccion ? `<p>ðŸ“ ${c.direccion}</p>` : ''}
+      <p>ðŸ• ${formatFecha(state.fecha)} a las <strong>${state.hora}</strong></p>
+      ${c.notas ? `<p>ðŸ“ ${c.notas}</p>` : ''}
+      <p>${state.metodo_pago === 'tarjeta' ? 'ðŸ’³' : 'ðŸ’µ'} Pago: <strong>${state.metodo_pago === 'tarjeta' ? 'Tarjeta' : 'Efectivo'}</strong></p>
     </div>`;
 
   document.getElementById('modal-confirm').classList.add('open');
 }
 
-// ═══════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // ENVIAR PEDIDO
-// ═══════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 async function enviarPedido() {
   const btn = document.getElementById('btn-enviar');
@@ -1299,7 +1296,7 @@ async function enviarPedido() {
       cerrarModal('modal-confirm');
       mostrarErr('err-pedido', data.error || 'Error al enviar el pedido.');
       btn.disabled = false;
-      btn.textContent = '🚀 Enviar pedido';
+      btn.textContent = 'ðŸš€ Enviar pedido';
       return;
     }
 
@@ -1307,26 +1304,26 @@ async function enviarPedido() {
     state.pedidoId = data.id;
     cerrarModal('modal-confirm');
 
-    // Pantalla éxito
+    // Pantalla Ã©xito
     document.getElementById('confirm-num').textContent = `Pedido #${data.id}`;
     const { total: tot } = calcCart();
     document.getElementById('confirm-info').innerHTML = `
-      <p>${state.tipo === 'domicilio' ? '🛵' : '🛍️'} <strong>${state.tipo === 'domicilio' ? 'Te lo llevamos a casa' : 'Puedes venir a recogerlo'}</strong></p>
-      <p>⏰ <strong>${state.hora}</strong> — ${formatFecha(state.fecha)}</p>
-      <p>💶 <strong>${fmt(tot)}</strong></p>
-      <p>${state.metodo_pago === 'tarjeta' ? '💳' : '💵'} Pago: <strong>${state.metodo_pago === 'tarjeta' ? 'Tarjeta' : 'Efectivo'}</strong></p>`;
+      <p>${state.tipo === 'domicilio' ? 'ðŸ›µ' : 'ðŸ›ï¸'} <strong>${state.tipo === 'domicilio' ? 'Te lo llevamos a casa' : 'Puedes venir a recogerlo'}</strong></p>
+      <p>â° <strong>${state.hora}</strong> â€” ${formatFecha(state.fecha)}</p>
+      <p>ðŸ’¶ <strong>${fmt(tot)}</strong></p>
+      <p>${state.metodo_pago === 'tarjeta' ? 'ðŸ’³' : 'ðŸ’µ'} Pago: <strong>${state.metodo_pago === 'tarjeta' ? 'Tarjeta' : 'Efectivo'}</strong></p>`;
     goToStep(6);
   } catch(e) {
     cerrarModal('modal-confirm');
-    mostrarErr('err-pedido', 'Error de conexión. Inténtalo de nuevo.');
+    mostrarErr('err-pedido', 'Error de conexiÃ³n. IntÃ©ntalo de nuevo.');
     btn.disabled = false;
-    btn.textContent = '🚀 Enviar pedido';
+    btn.textContent = 'ðŸš€ Enviar pedido';
   }
 }
 
-// ═══════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // REINICIO
-// ═══════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 function reiniciar() {
   pararTimer();
@@ -1341,11 +1338,11 @@ function reiniciar() {
   goToStep(1);
 }
 
-// ═══════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // UTILS
-// ═══════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
-function fmt(n) { return n.toFixed(2).replace('.',',') + '€'; }
+function fmt(n) { return n.toFixed(2).replace('.',',') + 'â‚¬'; }
 
 function mostrarErr(id, msg) {
   const el = document.getElementById(id);
@@ -1359,9 +1356,9 @@ document.querySelectorAll('.modal-overlay').forEach(el => {
   el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
 });
 
-// ═══════════════════════════════════════════════════
-// RESTAURANTE INFO (carga nombre, color, teléfono, días cerrados)
-// ═══════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// RESTAURANTE INFO (carga nombre, color, telÃ©fono, dÃ­as cerrados)
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 async function cargarRestauranteInfo() {
   try {
@@ -1374,7 +1371,7 @@ async function cargarRestauranteInfo() {
 
     if (info.nombre) {
       document.querySelector('.logo').textContent = info.nombre;
-      document.title = `${info.nombre} — Haz tu pedido`;
+      document.title = `${info.nombre} â€” Haz tu pedido`;
       const appleTitle = document.querySelector('meta[name="apple-mobile-web-app-title"]');
       if (appleTitle) appleTitle.setAttribute('content', info.nombre);
     }
@@ -1389,17 +1386,17 @@ async function cargarRestauranteInfo() {
       document.querySelectorAll('.tel-negocio').forEach(el => { el.textContent = info.telefono; });
     }
     if (config.dias_cerrado && config.dias_cerrado.length) {
-      // Python isoweekday (1=lun…7=dom) → JS getDay (0=dom, 1=lun…6=sáb)
+      // Python isoweekday (1=lunâ€¦7=dom) â†’ JS getDay (0=dom, 1=lunâ€¦6=sÃ¡b)
       config.dias_cerrado.forEach(d => DIAS_CERRADOS.add(d % 7));
     }
   } catch(e) {
-    // Silently fail — los placeholders del HTML son el fallback
+    // Silently fail â€” los placeholders del HTML son el fallback
   }
 }
 
-// ═══════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // INIT
-// ═══════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 renderStepDots();
 cargarMenu().then(renderCarta);
