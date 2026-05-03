@@ -159,6 +159,7 @@
         <div class="form-group"><label>Ancho</label><input type="number" min="40" step="20" id="sel-w" onchange="updateSelected('w',+this.value)"></div>
         <div class="form-group"><label>Alto</label><input type="number" min="40" step="20" id="sel-h" onchange="updateSelected('h',+this.value)"></div>
       </div>
+      <button class="btn btn-sec" style="width:100%;margin-top:8px" onclick="rotarSeleccionada()">🔄 Rotar 45° <span id="sel-rot" style="opacity:.6;font-size:11px"></span></button>
       <button class="btn btn-danger" style="width:100%;margin-top:8px" onclick="eliminarSeleccionada()">🗑️ Eliminar mesa</button>
     </div>
   </div>
@@ -176,6 +177,13 @@
         <div class="forma-opt active" data-f="cuadrada" onclick="seleccionarFormaModal('cuadrada')"><span class="forma-icon">⬛</span>Cuadrada</div>
         <div class="forma-opt" data-f="redonda" onclick="seleccionarFormaModal('redonda')"><span class="forma-icon">⚫</span>Redonda</div>
         <div class="forma-opt" data-f="rectangular" onclick="seleccionarFormaModal('rectangular')"><span class="forma-icon">▬</span>Rectangular</div>
+      </div>
+    </div>
+    <div class="form-group" id="orientacion-group" style="display:none">
+      <label>Orientación</label>
+      <div class="formas-pick">
+        <div class="forma-opt active" data-o="horizontal" onclick="seleccionarOrientacionModal('horizontal')"><span class="forma-icon">▬</span>Horizontal</div>
+        <div class="forma-opt" data-o="vertical" onclick="seleccionarOrientacionModal('vertical')"><span class="forma-icon">▮</span>Vertical</div>
       </div>
     </div>
     <div class="modal-actions">
@@ -211,6 +219,7 @@ let mesas = [];
 let zonas = [];
 let zonaActual = null;
 let nuevaForma = 'cuadrada';
+let nuevaOrientacion = 'horizontal';   // horizontal | vertical (solo aplica si rectangular)
 let mesaSeleccionada = null;
 let adminPass = sessionStorage.getItem('admin_pass') || '';
 let modoZona = 'crear'; // crear | renombrar
@@ -348,6 +357,7 @@ function renderCanvas() {
     el.style.width = m.w + 'px';
     el.style.height = m.h + 'px';
     el.style.borderColor = colorPorCapacidad(m.capacidad);
+    if (m.rotacion) el.style.transform = `rotate(${m.rotacion}deg)`;
     el.dataset.id = m.id;
     el.innerHTML = `<div class="mesa-num">${m.numero}</div><div class="mesa-cap">${m.capacidad} pers</div>`;
     hacerArrastrable(el, m);
@@ -419,9 +429,20 @@ function renderSidebar() {
   document.getElementById('sel-cap').value = m.capacidad;
   document.getElementById('sel-w').value = m.w;
   document.getElementById('sel-h').value = m.h;
+  document.getElementById('sel-rot').textContent = m.rotacion ? `(${m.rotacion}°)` : '';
   document.querySelectorAll('#selected-info .forma-opt').forEach(el => {
     el.classList.toggle('active', el.dataset.f === m.forma);
   });
+}
+
+function rotarSeleccionada() {
+  if (mesaSeleccionada === null) return;
+  const m = mesas.find(x => x.id === mesaSeleccionada);
+  if (!m) return;
+  m.rotacion = ((m.rotacion || 0) + 45) % 360;
+  renderCanvas();
+  renderSidebar();
+  debouncedGuardar(m);
 }
 
 function updateSelected(campo, valor) {
@@ -493,8 +514,12 @@ function abrirModalNuevaMesa() {
   document.getElementById('new-num').value = siguiente;
   document.getElementById('new-cap').value = 4;
   nuevaForma = 'cuadrada';
-  document.querySelectorAll('#modal-nueva .forma-opt').forEach(el =>
+  nuevaOrientacion = 'horizontal';
+  document.querySelectorAll('#modal-nueva .forma-opt[data-f]').forEach(el =>
     el.classList.toggle('active', el.dataset.f === 'cuadrada'));
+  document.querySelectorAll('#modal-nueva .forma-opt[data-o]').forEach(el =>
+    el.classList.toggle('active', el.dataset.o === 'horizontal'));
+  document.getElementById('orientacion-group').style.display = 'none';
   document.getElementById('modal-nueva').classList.add('show');
 }
 
@@ -504,8 +529,17 @@ function cerrarModalNueva() {
 
 function seleccionarFormaModal(f) {
   nuevaForma = f;
-  document.querySelectorAll('#modal-nueva .forma-opt').forEach(el =>
+  document.querySelectorAll('#modal-nueva .forma-opt[data-f]').forEach(el =>
     el.classList.toggle('active', el.dataset.f === f));
+  // Mostrar/ocultar selector de orientación
+  document.getElementById('orientacion-group').style.display =
+    (f === 'rectangular') ? 'block' : 'none';
+}
+
+function seleccionarOrientacionModal(o) {
+  nuevaOrientacion = o;
+  document.querySelectorAll('#modal-nueva .forma-opt[data-o]').forEach(el =>
+    el.classList.toggle('active', el.dataset.o === o));
 }
 
 async function crearMesa() {
@@ -513,8 +547,11 @@ async function crearMesa() {
   const capacidad = parseInt(document.getElementById('new-cap').value);
   if (!numero || numero < 1) { toast('Número inválido','error'); return; }
   if (!capacidad || capacidad < 2) { toast('Capacidad mínima 2','error'); return; }
-  const w = nuevaForma === 'rectangular' ? 160 : 80;
-  const h = 80;
+  let w = 80, h = 80;
+  if (nuevaForma === 'rectangular') {
+    if (nuevaOrientacion === 'vertical') { w = 80; h = 160; }
+    else { w = 160; h = 80; }
+  }
   const body = {numero, capacidad, forma: nuevaForma, x: 40, y: 40, w, h, zona: zonaActual, rotacion: 0};
   const r = await fetch('/api/mesas', {
     method:'POST', headers:{'Content-Type':'application/json','x-admin-pass':adminPass},
