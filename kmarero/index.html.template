@@ -1174,8 +1174,13 @@ body{font-family:'DM Sans',sans-serif;background:#1a1008;min-height:100vh;}
 // ── CONFIG ──
 const APP_KEY = 'kmarero_v1';
 const ADMIN_PIN = '${PIN_ADMIN}';
+const BACKEND_URL = '${BACKEND_URL}';   // backend de pedidos (alma-delivery)
+const CORE_URL = '${CORE_URL}';          // backend de mesas (alma-core)
 const NUM_TABLES = 30;
 const TABLES = Array.from({length:NUM_TABLES}, (_,i) => i+1);
+const POLL_MS = 5000;                    // ms entre consultas estado backend
+let _pollHandle = null;                  // setInterval handle
+let _mesaValida = null;                  // null=desconocido, true=ok, false=no existe
 
 // ── URL PARAMS ──
 const urlParams = new URLSearchParams(location.search);
@@ -1217,7 +1222,54 @@ function getTable(num) {
   applyStockState();
   renderKDS('k');
   renderKDS('b');
+
+  // Si hay pedidos activos enviados al backend, arrancar polling al cargar
+  try {
+    const {tbl} = getTable(TABLE_NUM);
+    const tieneActivos = (tbl.orders || []).some(o => o.backendId &&
+      !['terminado','cancelado'].includes(o.estado));
+    if (tieneActivos) startStatusPolling();
+  } catch(e) {}
+
+  // Validar mesa contra el plano (alma-core)
+  validarMesaContraPlano();
 })();
+
+async function validarMesaContraPlano() {
+  if (!CORE_URL || CORE_URL.includes('${'+'CORE_URL}')) return;
+  try {
+    const r = await fetch(`${CORE_URL}/api/mesas`, {cache:'no-store'});
+    if (!r.ok) return;
+    const lista = await r.json();
+    const num = parseInt(TABLE_NUM);
+    const mesa = lista.find(m => m.numero === num);
+    _mesaValida = !!mesa;
+    if (mesa) {
+      // Actualizar pill de mesa con datos reales (capacidad + zona)
+      document.querySelectorAll('.table-pill').forEach(el =>
+        el.textContent = `Mesa ${mesa.numero} · ${mesa.zona} · ${mesa.capacidad} personas`);
+    } else if (!IS_ADMIN) {
+      mostrarOverlayMesaInvalida();
+    }
+  } catch(e) {
+    console.warn('No se pudo validar mesa:', e);
+  }
+}
+
+function mostrarOverlayMesaInvalida() {
+  if (document.getElementById('mesa-invalida-overlay')) return;
+  const div = document.createElement('div');
+  div.id = 'mesa-invalida-overlay';
+  div.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(8px)';
+  div.innerHTML = `
+    <div style="background:linear-gradient(135deg,#dc2626,#7f1d1d);color:#fff;padding:40px 32px;border-radius:20px;max-width:420px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.5)">
+      <div style="font-size:64px;margin-bottom:14px">⚠️</div>
+      <h2 style="font-size:22px;margin-bottom:10px">Mesa no encontrada</h2>
+      <p style="font-size:15px;line-height:1.5;opacity:.95">La <strong>mesa ${TABLE_NUM}</strong> no está dada de alta.<br>Por favor avisa a un camarero para que te confirme el número correcto de tu mesa.</p>
+      <button onclick="this.parentElement.parentElement.remove()" style="margin-top:20px;padding:10px 22px;background:#fff;color:#7f1d1d;border:none;border-radius:8px;font-weight:700;cursor:pointer">Entendido</button>
+    </div>`;
+  document.body.appendChild(div);
+}
 
 function saveName(val) {
   const name = val.trim();
@@ -1357,15 +1409,44 @@ function sendOrder() {
   cart.forEach(function(item, idx) { if (!item.turno) item.turno = idx + 1; });
   const food = cart.filter(i => i.type==='food');
   const drink = cart.filter(i => i.type==='drink');
+  const allItems = [...food, ...drink];
+  const total = allItems.reduce((s,i) => s+i.price*i.qty, 0);
+  const notas = allItems.filter(i => i.notes).map(i => `${i.name}: ${i.notes}`).join(' | ');
 
   if (food.length) { kOrders.push({id, table:tableLabel, time:t, ts:Date.now(), items:food}); renderKDS('k'); }
   if (drink.length) { bOrders.push({id, table:tableLabel, time:t, ts:Date.now(), items:drink}); renderKDS('b'); }
 
-  // Accumulate in localStorage
+  // Accumulate in localStorage (placeholder con backendId pendiente)
   const {state, tbl} = getTable(TABLE_NUM);
-  tbl.orders.push({id, time:t, ts:Date.now(), items:[...food,...drink], turnosMap: {}});
+  const localOrder = {id, time:t, ts:Date.now(), items:allItems, turnosMap:{}, backendId:null, estado:'pendiente'};
+  tbl.orders.push(localOrder);
   setState(state);
   renderSeguimientoActivo();
+
+  // Enviar al backend (no bloquear UI - continua aunque falle)
+  if (BACKEND_URL && !BACKEND_URL.includes('${'+'BACKEND_URL}')) {
+    fetch(`${BACKEND_URL}/api/pedido-mesa`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        mesa: parseInt(TABLE_NUM),
+        items: allItems.map(i => ({nombre:i.name, descripcion:'', precio:i.price, cantidad:i.qty})),
+        total: total,
+        notas: notas,
+        nombre: name || ''
+      })
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.ok && data.id) {
+        // Guardar el ID del backend en el order local
+        const {state, tbl} = getTable(TABLE_NUM);
+        const ord = tbl.orders.find(o => o.id === id);
+        if (ord) { ord.backendId = data.id; setState(state); }
+        startStatusPolling();
+      }
+    })
+    .catch(err => console.warn('Backend no disponible, pedido solo local:', err));
+  }
 
   const fc = food.reduce((s,i) => s+i.qty, 0);
   const dc = drink.reduce((s,i) => s+i.qty, 0);
@@ -1378,6 +1459,54 @@ function sendOrder() {
   flash('🔔 Nuevo pedido — '+tableLabel);
   playOrderSound();
 }
+
+// ── BACKEND POLLING (estado de pedidos) ──
+function startStatusPolling() {
+  if (_pollHandle) return;
+  if (!BACKEND_URL || BACKEND_URL.includes('${'+'BACKEND_URL}')) return;
+  pollOrderStatuses();
+  _pollHandle = setInterval(pollOrderStatuses, POLL_MS);
+}
+
+async function pollOrderStatuses() {
+  const {state, tbl} = getTable(TABLE_NUM);
+  const activos = (tbl.orders || []).filter(o => o.backendId &&
+    !['terminado','cancelado'].includes(o.estado));
+  if (!activos.length) { stopPollingIfIdle(); return; }
+  let changed = false;
+  for (const ord of activos) {
+    try {
+      const r = await fetch(`${BACKEND_URL}/api/pedido/${ord.backendId}/publico`);
+      const d = await r.json();
+      if (d.ok) {
+        const nuevoEstado = d.estado;
+        const nuevaCancel = d.solicita_cancelacion || false;
+        if (ord.estado !== nuevoEstado || ord.solicita_cancelacion !== nuevaCancel) {
+          ord.estado = nuevoEstado;
+          ord.solicita_cancelacion = nuevaCancel;
+          ord.puede_cancelar = d.puede_solicitar_cancelacion;
+          changed = true;
+          if (nuevoEstado === 'en_preparacion') flash('🔥 Tu pedido #'+ord.backendId+' está en preparación');
+          if (nuevoEstado === 'terminado') flash('✅ Tu pedido #'+ord.backendId+' está listo');
+          if (nuevoEstado === 'cancelado') flash('❌ Tu pedido #'+ord.backendId+' fue cancelado');
+        }
+      }
+    } catch(e) {}
+  }
+  if (changed) {
+    setState(state);
+    renderSeguimientoActivo();
+    if (typeof renderSummary === 'function' &&
+        document.getElementById('screen-summary')?.classList.contains('active')) {
+      renderSummary();
+    }
+  }
+}
+
+function stopPollingIfIdle() {
+  if (_pollHandle) { clearInterval(_pollHandle); _pollHandle = null; }
+}
+
 
 // ── KDS ──
 function renderKDS(s) {
@@ -1578,6 +1707,45 @@ function renderSummary() {
     billBtn.style.display = 'none';
     billBox.style.display = 'none';
   }
+
+  // Estado de pedidos enviados al backend (cocina)
+  renderEstadoBackend(tbl);
+}
+
+function renderEstadoBackend(tbl) {
+  let box = document.getElementById('estado-backend-box');
+  if (!box) {
+    // Crear el bloque al final de container si no existe
+    const container = document.getElementById('sum-items')?.parentNode;
+    if (!container) return;
+    box = document.createElement('div');
+    box.id = 'estado-backend-box';
+    box.style.cssText = 'margin-top:18px;display:none;';
+    container.appendChild(box);
+  }
+  const conBackend = (tbl.orders || []).filter(o => o.backendId);
+  if (!conBackend.length) { box.style.display='none'; return; }
+  const colorEstado = {
+    'pendiente':       {bg:'#fee2e2', fg:'#991b1b', label:'⏳ Pendiente'},
+    'en_preparacion':  {bg:'#fef3c7', fg:'#92400e', label:'🔥 En preparación'},
+    'terminado':       {bg:'#d1fae5', fg:'#065f46', label:'✅ Terminado'},
+    'cancelado':       {bg:'#e5e7eb', fg:'#374151', label:'❌ Cancelado'}
+  };
+  const filas = conBackend.map(o => {
+    const c = colorEstado[o.estado] || colorEstado['pendiente'];
+    const aviso = o.estado === 'pendiente'
+      ? '<div style="margin-top:6px;font-size:12px;color:#991b1b">Si necesitas modificar o cancelar, avisa a un camarero</div>'
+      : '';
+    return `<div style="background:${c.bg};border-radius:10px;padding:12px;margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <strong style="color:${c.fg};font-size:14px">Pedido #${o.backendId}</strong>
+        <span style="color:${c.fg};font-weight:700">${c.label}</span>
+      </div>
+      ${aviso}
+    </div>`;
+  }).join('');
+  box.innerHTML = `<div style="font-size:13px;font-weight:700;margin-bottom:10px;color:rgba(255,255,255,.85);text-transform:uppercase;letter-spacing:1px">Estado en cocina</div>${filas}`;
+  box.style.display = 'block';
 }
 
 function requestBill() {

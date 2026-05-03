@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cocina — Pedidos</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0f1419;color:#e8eef5;overflow-x:hidden}
+
+  /* HEADER */
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;background:#1a2230;border-bottom:1px solid #2a3441;position:sticky;top:0;z-index:10}
+  .titulo{font-size:18px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#e8eef5}
+  .titulo span{color:#fbbf24}
+  .stats{display:flex;gap:14px;font-size:13px;color:#8895a8}
+  .stat-num{font-weight:700;color:#e8eef5;font-size:18px;margin-left:4px}
+  .reloj{font-size:18px;font-weight:700;color:#fbbf24;font-variant-numeric:tabular-nums}
+  .audio-btn{padding:6px 12px;background:#fbbf24;color:#0f1419;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-size:12px;text-transform:uppercase;letter-spacing:1px}
+  .audio-btn.activo{background:#10b981;color:#fff}
+
+  /* GRID */
+  .grid{padding:18px;display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:16px}
+  .empty{padding:80px 20px;text-align:center;color:#5a6b80;font-size:18px;grid-column:1/-1}
+
+  /* TARJETAS */
+  .card{background:#1a2230;border-radius:14px;padding:16px;border-left:6px solid #6b7280;box-shadow:0 4px 16px rgba(0,0,0,.3);transition:all .25s ease;display:flex;flex-direction:column}
+  .card.pendiente{border-left-color:#ef4444;background:linear-gradient(135deg,#2a1a1f 0%,#1a2230 60%)}
+  .card.en_preparacion{border-left-color:#fbbf24;background:linear-gradient(135deg,#2a241a 0%,#1a2230 60%)}
+  .card.terminado{border-left-color:#10b981;background:linear-gradient(135deg,#1a2a23 0%,#1a2230 60%);opacity:.85}
+  .card.cancelado{border-left-color:#6b7280;background:#1a1a1a;opacity:.5;text-decoration:line-through}
+  .card.cancel-flag{animation:flagblink 1s infinite;border-left-color:#dc2626!important;border:2px solid #dc2626}
+  @keyframes flagblink{0%,49%{box-shadow:0 0 24px rgba(220,38,38,.6)}50%,100%{box-shadow:0 0 12px rgba(220,38,38,.2)}}
+
+  .card-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;gap:8px}
+  .card-tipo{display:inline-block;padding:3px 10px;border-radius:10px;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase}
+  .tipo-mesa{background:#3b82f6;color:#fff}
+  .tipo-domicilio{background:#a855f7;color:#fff}
+  .tipo-recogida{background:#06b6d4;color:#fff}
+  .card-id{font-size:11px;color:#8895a8;margin-top:2px}
+  .card-hora{font-size:13px;color:#fbbf24;font-weight:700;font-variant-numeric:tabular-nums}
+
+  .card-mesa{font-size:24px;font-weight:900;color:#fff;margin-bottom:4px}
+  .card-cliente{font-size:14px;color:#cbd5e1;margin-bottom:10px}
+  .card-cliente small{color:#8895a8}
+
+  .items{margin:10px 0;padding:10px 12px;background:rgba(255,255,255,.04);border-radius:8px}
+  .item{display:flex;justify-content:space-between;padding:5px 0;font-size:14px;border-bottom:1px solid rgba(255,255,255,.05)}
+  .item:last-child{border:none}
+  .item-q{color:#fbbf24;font-weight:700;margin-right:8px}
+  .item-n{flex:1}
+  .item-p{color:#8895a8;font-size:12px;margin-left:8px}
+
+  .notas{margin-top:8px;padding:8px 12px;background:rgba(251,191,36,.1);border-left:3px solid #fbbf24;border-radius:6px;font-size:12px;color:#fde68a}
+
+  .total{display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid #2a3441;font-size:16px;font-weight:700}
+  .total-label{color:#8895a8;font-size:11px;text-transform:uppercase;letter-spacing:1px}
+  .total-num{color:#fff;font-size:20px}
+
+  .actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+  .btn{padding:10px 14px;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px;letter-spacing:.5px;flex:1;min-width:120px;transition:transform .1s}
+  .btn:active{transform:scale(.96)}
+  .btn-prep{background:#fbbf24;color:#0f1419}
+  .btn-fin{background:#10b981;color:#fff}
+  .btn-edit{background:#374151;color:#e8eef5;flex:0 0 auto;min-width:auto;padding:10px 12px}
+  .btn-cancel{background:#dc2626;color:#fff;flex:0 0 auto;min-width:auto;padding:10px 12px}
+  .btn-aprobar{background:#10b981;color:#fff}
+  .btn-rechazar{background:#6b7280;color:#fff}
+
+  .cancel-banner{margin-top:10px;padding:8px 12px;background:#dc2626;color:#fff;border-radius:8px;font-size:12px;text-align:center;font-weight:700}
+
+  /* POPUP nuevo pedido */
+  .popup-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(8px);animation:fadein .2s}
+  .popup-overlay.show{display:flex}
+  .popup{background:linear-gradient(135deg,#dc2626,#7f1d1d);border-radius:24px;padding:50px 60px;text-align:center;color:#fff;box-shadow:0 30px 80px rgba(220,38,38,.6);max-width:520px;animation:popin .3s}
+  @keyframes fadein{from{opacity:0}to{opacity:1}}
+  @keyframes popin{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
+  .popup-icon{font-size:80px;margin-bottom:14px;animation:shake .5s infinite}
+  @keyframes shake{0%,100%{transform:rotate(-12deg)}50%{transform:rotate(12deg)}}
+  .popup-title{font-size:38px;font-weight:900;letter-spacing:2px;margin-bottom:8px}
+  .popup-sub{font-size:18px;opacity:.9;margin-bottom:20px}
+  .popup-info{font-size:24px;font-weight:700;background:rgba(255,255,255,.15);padding:14px 24px;border-radius:12px;margin-top:20px}
+  .popup-counter{margin-top:20px;font-size:13px;opacity:.7}
+
+  /* MODAL editar */
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);display:none;align-items:center;justify-content:center;z-index:99;padding:20px}
+  .modal-overlay.show{display:flex}
+  .modal{background:#1a2230;border-radius:16px;padding:24px;max-width:520px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+  .modal h3{margin-bottom:16px;font-size:20px;color:#fbbf24}
+  .modal-item{display:flex;align-items:center;gap:10px;padding:10px;background:rgba(255,255,255,.04);border-radius:8px;margin-bottom:8px}
+  .modal-item-name{flex:1;font-size:14px}
+  .modal-item-price{font-size:12px;color:#8895a8}
+  .qty-ctrl{display:flex;align-items:center;gap:6px}
+  .qty-btn{width:32px;height:32px;border:none;background:#374151;color:#fff;border-radius:6px;font-size:18px;font-weight:700;cursor:pointer}
+  .qty-num{min-width:30px;text-align:center;font-weight:700}
+  .modal-rm{background:#dc2626;color:#fff;border:none;border-radius:6px;padding:6px 10px;font-size:11px;cursor:pointer}
+  .modal-actions{display:flex;gap:10px;margin-top:18px;padding-top:18px;border-top:1px solid #2a3441}
+  .modal-total{flex:1;font-size:16px;font-weight:700;color:#fbbf24;align-self:center}
+  .modal-cerrar{background:#374151;color:#fff;border:none;border-radius:8px;padding:10px 16px;cursor:pointer;font-weight:700}
+  .modal-guardar{background:#10b981;color:#fff;border:none;border-radius:8px;padding:10px 20px;cursor:pointer;font-weight:700}
+
+  .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:#1a2230;color:#fff;padding:12px 20px;border-radius:10px;border-left:4px solid #10b981;font-size:14px;z-index:200;display:none;animation:slideup .25s}
+  @keyframes slideup{from{transform:translate(-50%,30px);opacity:0}to{transform:translate(-50%,0);opacity:1}}
+  .toast.show{display:block}
+  .toast.error{border-left-color:#ef4444}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div>
+    <div class="titulo">🍳 Cocina <span>· Pedidos del día</span></div>
+  </div>
+  <div class="stats">
+    <span>Pendientes: <span class="stat-num" id="n-pendiente">0</span></span>
+    <span>En preparación: <span class="stat-num" id="n-preparacion">0</span></span>
+    <span class="reloj" id="reloj">--:--</span>
+  </div>
+  <button class="audio-btn" id="audio-btn" onclick="activarAudio()">🔇 Activar sonido</button>
+</div>
+
+<div class="grid" id="grid">
+  <div class="empty">Cargando pedidos…</div>
+</div>
+
+<!-- POPUP nuevo pedido (5s) -->
+<div class="popup-overlay" id="popup">
+  <div class="popup">
+    <div class="popup-icon">🔔</div>
+    <div class="popup-title">¡PEDIDO NUEVO!</div>
+    <div class="popup-sub" id="popup-sub">Mesa 5</div>
+    <div class="popup-info" id="popup-info"></div>
+    <div class="popup-counter" id="popup-counter">5</div>
+  </div>
+</div>
+
+<!-- MODAL editar items -->
+<div class="modal-overlay" id="modal-edit">
+  <div class="modal">
+    <h3>Editar pedido <span id="edit-pid"></span></h3>
+    <div id="edit-items"></div>
+    <div class="modal-actions">
+      <div class="modal-total">Total: <span id="edit-total">0,00 €</span></div>
+      <button class="modal-cerrar" onclick="cerrarEditor()">Cancelar</button>
+      <button class="modal-guardar" onclick="guardarEditor()">Guardar cambios</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── CONFIG ──
+const BACKEND_URL = window.location.protocol + '//pedidos.' + window.location.hostname.replace(/^admin\./,'');
+const POLL_MS = 5000;
+const POPUP_DURACION_S = 5;
+
+// ── STATE ──
+let pedidos = [];
+let idsConocidos = new Set();
+let audioActivo = false;
+let editandoPedido = null;
+
+// ── AUDIO ──
+function activarAudio() {
+  audioActivo = true;
+  const btn = document.getElementById('audio-btn');
+  btn.textContent = '🔊 Sonido activo';
+  btn.classList.add('activo');
+  beep();
+}
+function beep() {
+  if (!audioActivo) return;
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    [[0,880],[180,660],[360,880]].forEach(([d,f]) => {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.type='sine'; o.frequency.value=f;
+      const t = ctx.currentTime + d/1000;
+      g.gain.setValueAtTime(0.4, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t+0.3);
+      o.start(t); o.stop(t+0.3);
+    });
+  } catch(e) {}
+}
+
+// ── POPUP nuevo pedido ──
+let popupTimer = null;
+function mostrarPopup(p) {
+  const popup = document.getElementById('popup');
+  const sub = document.getElementById('popup-sub');
+  const info = document.getElementById('popup-info');
+  const counter = document.getElementById('popup-counter');
+  if (p.tipo === 'mesa') sub.textContent = `Mesa ${p.mesa}`;
+  else if (p.tipo === 'domicilio') sub.textContent = `Domicilio · ${p.nombre}`;
+  else sub.textContent = `Recogida · ${p.nombre}`;
+  const nItems = (p.items || []).reduce((s,i) => s+i.cantidad, 0);
+  info.textContent = `${nItems} ${nItems===1?'artículo':'artículos'} · ${p.total.toFixed(2)} €`;
+  popup.classList.add('show');
+  beep();
+
+  let segs = POPUP_DURACION_S;
+  counter.textContent = segs;
+  if (popupTimer) clearInterval(popupTimer);
+  popupTimer = setInterval(() => {
+    segs--;
+    counter.textContent = segs;
+    if (segs <= 0) {
+      clearInterval(popupTimer);
+      popup.classList.remove('show');
+    }
+  }, 1000);
+}
+
+// ── TOAST ──
+function toast(msg, tipo='ok') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + (tipo==='error'?'error':'');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ── RENDER ──
+function tipoBadge(tipo) {
+  if (tipo === 'mesa') return '<span class="card-tipo tipo-mesa">🪑 Mesa</span>';
+  if (tipo === 'domicilio') return '<span class="card-tipo tipo-domicilio">🛵 Domicilio</span>';
+  return '<span class="card-tipo tipo-recogida">📦 Recogida</span>';
+}
+
+function renderTarjeta(p) {
+  const items = (p.items || []).map(i =>
+    `<div class="item"><span class="item-q">${i.cantidad}×</span><span class="item-n">${escapeHtml(i.nombre)}</span><span class="item-p">${(i.precio*i.cantidad).toFixed(2)} €</span></div>`
+  ).join('');
+
+  let mesaCliente = '';
+  if (p.tipo === 'mesa') {
+    mesaCliente = `<div class="card-mesa">Mesa ${p.mesa}</div>${p.nombre && p.nombre !== 'Mesa '+p.mesa ? `<div class="card-cliente">${escapeHtml(p.nombre)}</div>` : ''}`;
+  } else {
+    mesaCliente = `<div class="card-mesa" style="font-size:18px">${escapeHtml(p.nombre)}</div>${p.telefono ? `<div class="card-cliente"><small>📞</small> ${escapeHtml(p.telefono)}</div>` : ''}${p.direccion ? `<div class="card-cliente"><small>📍</small> ${escapeHtml(p.direccion)}</div>` : ''}`;
+  }
+
+  const notas = p.notas ? `<div class="notas">⚠️ ${escapeHtml(p.notas)}</div>` : '';
+
+  let acciones = '';
+  if (p.solicita_cancelacion) {
+    acciones = `<div class="cancel-banner">⚠️ El cliente solicita cancelar</div>
+      <div class="actions">
+        <button class="btn btn-aprobar" onclick="cambiarEstado(${p.id},'aprobar-cancelacion')">✓ Aprobar cancelación</button>
+        <button class="btn btn-rechazar" onclick="cambiarEstado(${p.id},'rechazar-cancelacion')">✗ Rechazar</button>
+      </div>`;
+  } else if (p.estado === 'pendiente') {
+    acciones = `<div class="actions">
+      <button class="btn btn-prep" onclick="cambiarEstado(${p.id},'en-preparacion')">▶ EN PREPARACIÓN</button>
+      <button class="btn btn-edit" onclick="abrirEditor(${p.id})" title="Editar items">✏️</button>
+      <button class="btn btn-cancel" onclick="cancelarPedido(${p.id})" title="Cancelar pedido">🗑️</button>
+    </div>`;
+  } else if (p.estado === 'en_preparacion') {
+    acciones = `<div class="actions">
+      <button class="btn btn-fin" onclick="cambiarEstado(${p.id},'terminado')">${p.tipo==='mesa'?'✓ TERMINADO':p.tipo==='domicilio'?'✓ EN CAMINO':'✓ LISTO PARA RECOGER'}</button>
+      <button class="btn btn-edit" onclick="abrirEditor(${p.id})" title="Editar items">✏️</button>
+      <button class="btn btn-cancel" onclick="cancelarPedido(${p.id})" title="Cancelar pedido">🗑️</button>
+    </div>`;
+  } else if (p.estado === 'terminado') {
+    acciones = `<div class="actions"><div class="btn btn-fin" style="cursor:default">✓ Terminado</div></div>`;
+  } else if (p.estado === 'cancelado') {
+    acciones = `<div class="actions"><div class="btn btn-rechazar" style="cursor:default">❌ Cancelado</div></div>`;
+  }
+
+  const cls = `card ${p.estado}` + (p.solicita_cancelacion ? ' cancel-flag' : '');
+
+  return `<div class="${cls}" data-pid="${p.id}">
+    <div class="card-head">
+      <div>${tipoBadge(p.tipo)}<div class="card-id">#${p.id}</div></div>
+      <div class="card-hora">${p.hora}</div>
+    </div>
+    ${mesaCliente}
+    <div class="items">${items}</div>
+    ${notas}
+    <div class="total">
+      <span class="total-label">Total</span>
+      <span class="total-num">${p.total.toFixed(2)} €</span>
+    </div>
+    ${acciones}
+  </div>`;
+}
+
+function render() {
+  const grid = document.getElementById('grid');
+  if (!pedidos.length) {
+    grid.innerHTML = '<div class="empty">✨ No hay pedidos pendientes ahora mismo</div>';
+  } else {
+    grid.innerHTML = pedidos.map(renderTarjeta).join('');
+  }
+  document.getElementById('n-pendiente').textContent = pedidos.filter(p => p.estado==='pendiente').length;
+  document.getElementById('n-preparacion').textContent = pedidos.filter(p => p.estado==='en_preparacion').length;
+}
+
+// ── POLLING ──
+async function fetchPedidos() {
+  try {
+    const r = await fetch(`${BACKEND_URL}/api/pedidos/cocina`, {cache:'no-store'});
+    const data = await r.json();
+    pedidos = data;
+    // Detectar pedidos nuevos
+    const nuevos = data.filter(p => !idsConocidos.has(p.id));
+    if (idsConocidos.size > 0 && nuevos.length > 0) {
+      // Solo mostrar popup del primero (si llegan varios a la vez)
+      mostrarPopup(nuevos[0]);
+    }
+    data.forEach(p => idsConocidos.add(p.id));
+    render();
+  } catch(e) {
+    console.warn('Error fetching pedidos:', e);
+  }
+}
+
+// ── ACCIONES ──
+async function cambiarEstado(pid, accion) {
+  try {
+    const r = await fetch(`${BACKEND_URL}/api/pedido/${pid}/${accion}`, {method:'POST'});
+    const d = await r.json();
+    if (d.ok) {
+      const labels = {
+        'en-preparacion': 'En preparación',
+        'terminado': d.notificado ? 'Terminado y notificado al cliente' : 'Terminado',
+        'aprobar-cancelacion': 'Cancelación aprobada',
+        'rechazar-cancelacion': 'Cancelación rechazada'
+      };
+      toast('✓ ' + (labels[accion] || 'OK'));
+      fetchPedidos();
+    } else {
+      toast('⚠️ ' + (d.error || 'Error'), 'error');
+    }
+  } catch(e) {
+    toast('⚠️ Sin conexión', 'error');
+  }
+}
+
+async function cancelarPedido(pid) {
+  if (!confirm('¿Cancelar este pedido completamente?\nSe avisará al cliente si es delivery.')) return;
+  try {
+    const r = await fetch(`${BACKEND_URL}/api/pedido/${pid}/cancelar`, {method:'POST'});
+    const d = await r.json();
+    if (d.ok) {
+      toast('✓ Pedido cancelado' + (d.notificado ? ' y notificado al cliente' : ''));
+      fetchPedidos();
+    } else {
+      toast('⚠️ ' + (d.error || 'Error'), 'error');
+    }
+  } catch(e) {
+    toast('⚠️ Sin conexión', 'error');
+  }
+}
+
+// ── EDITOR ──
+function abrirEditor(pid) {
+  const p = pedidos.find(x => x.id === pid);
+  if (!p) return;
+  editandoPedido = JSON.parse(JSON.stringify(p));   // copia profunda
+  document.getElementById('edit-pid').textContent = '#' + pid;
+  renderEditor();
+  document.getElementById('modal-edit').classList.add('show');
+}
+
+function renderEditor() {
+  const cont = document.getElementById('edit-items');
+  const items = editandoPedido.items || [];
+  if (!items.length) {
+    cont.innerHTML = '<div style="color:#ef4444;padding:20px;text-align:center">No quedan items. Para vaciar el pedido, cancélalo desde la tarjeta.</div>';
+  } else {
+    cont.innerHTML = items.map((it,idx) => `
+      <div class="modal-item">
+        <div class="modal-item-name">${escapeHtml(it.nombre)}<div class="modal-item-price">${it.precio.toFixed(2)} € c/u</div></div>
+        <div class="qty-ctrl">
+          <button class="qty-btn" onclick="editorChangeQty(${idx},-1)">−</button>
+          <div class="qty-num">${it.cantidad}</div>
+          <button class="qty-btn" onclick="editorChangeQty(${idx},1)">+</button>
+        </div>
+        <button class="modal-rm" onclick="editorRemove(${idx})">Quitar</button>
+      </div>
+    `).join('');
+  }
+  const total = items.reduce((s,i) => s+i.precio*i.cantidad, 0);
+  editandoPedido.total = total;
+  document.getElementById('edit-total').textContent = total.toFixed(2).replace('.',',') + ' €';
+}
+
+function editorChangeQty(idx, delta) {
+  const items = editandoPedido.items;
+  items[idx].cantidad = Math.max(0, items[idx].cantidad + delta);
+  if (items[idx].cantidad === 0) items.splice(idx, 1);
+  renderEditor();
+}
+
+function editorRemove(idx) {
+  editandoPedido.items.splice(idx, 1);
+  renderEditor();
+}
+
+function cerrarEditor() {
+  document.getElementById('modal-edit').classList.remove('show');
+  editandoPedido = null;
+}
+
+async function guardarEditor() {
+  if (!editandoPedido) return;
+  if (!editandoPedido.items.length) {
+    toast('⚠️ No puedes dejar el pedido vacío. Cancélalo desde la tarjeta.', 'error');
+    return;
+  }
+  try {
+    const r = await fetch(`${BACKEND_URL}/api/pedido/${editandoPedido.id}/items`, {
+      method:'PATCH', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        items: editandoPedido.items.map(i => ({nombre:i.nombre, descripcion:i.descripcion||'', precio:i.precio, cantidad:i.cantidad})),
+        total: editandoPedido.total
+      })
+    });
+    const d = await r.json();
+    if (d.ok) {
+      toast('✓ Pedido modificado');
+      cerrarEditor();
+      fetchPedidos();
+    } else {
+      toast('⚠️ ' + (d.error || 'Error'), 'error');
+    }
+  } catch(e) {
+    toast('⚠️ Sin conexión', 'error');
+  }
+}
+
+// ── UTIL ──
+function escapeHtml(s) {
+  return String(s||'').replace(/[&<>"']/g, c =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+}
+
+function tickReloj() {
+  const d = new Date();
+  document.getElementById('reloj').textContent =
+    String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+}
+
+// ── INIT ──
+fetchPedidos();
+setInterval(fetchPedidos, POLL_MS);
+tickReloj();
+setInterval(tickReloj, 30000);
+</script>
+</body>
+</html>

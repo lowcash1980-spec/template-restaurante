@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Distribución del local</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f4f6f8;color:#1f2937}
+
+  /* HEADER */
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;background:#fff;border-bottom:1px solid #e5e7eb;position:sticky;top:0;z-index:20;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+  .titulo{font-size:18px;font-weight:700;letter-spacing:.5px;color:#111827}
+  .titulo span{color:#9ca3af;font-weight:400}
+  .stats{display:flex;gap:18px;font-size:13px}
+  .stat{padding:6px 14px;background:#f3f4f6;border-radius:8px}
+  .stat-num{font-weight:700;color:#111827;font-size:16px;margin-left:4px}
+  .stat-cap{color:#10b981}
+  .actions-top{display:flex;gap:8px}
+  .btn{padding:8px 14px;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:13px;transition:transform .1s}
+  .btn:active{transform:scale(.97)}
+  .btn-pri{background:#3b82f6;color:#fff}
+  .btn-pri:hover{background:#2563eb}
+  .btn-sec{background:#fff;color:#374151;border:1px solid #d1d5db}
+  .btn-sec:hover{background:#f9fafb}
+  .btn-danger{background:#dc2626;color:#fff}
+  .btn-success{background:#10b981;color:#fff}
+  .btn-warn{background:#f59e0b;color:#fff}
+
+  /* TABS ZONAS */
+  .tabs{display:flex;gap:4px;padding:0 24px;background:#fff;border-bottom:1px solid #e5e7eb;overflow-x:auto;align-items:center}
+  .tab{padding:12px 18px;cursor:pointer;font-size:13px;font-weight:600;color:#6b7280;border-bottom:3px solid transparent;white-space:nowrap}
+  .tab.active{color:#3b82f6;border-bottom-color:#3b82f6}
+  .tab:hover{color:#1f2937;background:#f9fafb}
+  .tab-add{padding:8px 14px;color:#9ca3af;font-size:18px;cursor:pointer;border:1px dashed #d1d5db;border-radius:6px;margin-left:8px}
+  .tab-add:hover{color:#3b82f6;border-color:#3b82f6}
+  .tab-info{margin-left:auto;font-size:12px;color:#6b7280;padding-right:12px}
+
+  /* CANVAS */
+  .canvas-wrap{padding:18px;display:flex;gap:18px;height:calc(100vh - 110px)}
+  .canvas-area{flex:1;background:#fff;border-radius:12px;overflow:hidden;position:relative;box-shadow:0 2px 8px rgba(0,0,0,.04);display:flex;flex-direction:column}
+  .canvas-toolbar{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:#f9fafb;border-bottom:1px solid #e5e7eb;font-size:12px;color:#6b7280}
+  .canvas-toolbar .zona-current{font-weight:700;color:#111827;font-size:14px;text-transform:uppercase;letter-spacing:1px}
+  .canvas{flex:1;position:relative;overflow:auto;background-image:linear-gradient(#f3f4f6 1px,transparent 1px),linear-gradient(90deg,#f3f4f6 1px,transparent 1px);background-size:20px 20px}
+
+  .mesa{position:absolute;background:#fff;border:2px solid #3b82f6;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:move;user-select:none;transition:box-shadow .15s,transform .1s;box-shadow:0 2px 6px rgba(0,0,0,.08);font-weight:700}
+  .mesa.cuadrada{border-radius:6px}
+  .mesa.redonda{border-radius:50%}
+  .mesa.rectangular{border-radius:8px}
+  /* Estado pedido (tiempo real) */
+  .mesa.estado-pendiente{background:#fee2e2;border-color:#dc2626;animation:pulserojo 1.4s infinite}
+  .mesa.estado-en_preparacion{background:#fef3c7;border-color:#f59e0b}
+  .mesa.estado-terminado{background:#d1fae5;border-color:#10b981}
+  @keyframes pulserojo{0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,.5)}50%{box-shadow:0 0 0 12px rgba(220,38,38,0)}}
+  .pedido-badge{position:absolute;top:-8px;right:-8px;background:#dc2626;color:#fff;font-size:10px;font-weight:900;padding:2px 6px;border-radius:10px;border:2px solid #fff}
+  .mesa:hover{box-shadow:0 6px 18px rgba(59,130,246,.3);z-index:5}
+  .mesa.dragging{opacity:.7;cursor:grabbing;z-index:10}
+  .mesa.selected{border-color:#fbbf24;box-shadow:0 0 0 3px rgba(251,191,36,.3)}
+  .mesa-num{font-size:18px;color:#111827;line-height:1}
+  .mesa-cap{font-size:11px;color:#6b7280;margin-top:2px}
+
+  /* SIDEBAR */
+  .sidebar{width:280px;background:#fff;border-radius:12px;padding:18px;box-shadow:0 2px 8px rgba(0,0,0,.04);overflow-y:auto}
+  .sidebar h3{font-size:13px;text-transform:uppercase;letter-spacing:1px;color:#6b7280;margin-bottom:10px}
+  .form-group{margin-bottom:12px}
+  .form-group label{display:block;font-size:11px;color:#6b7280;margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+  .form-group input,.form-group select{width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;background:#fff}
+  .form-group input:focus,.form-group select:focus{outline:none;border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.1)}
+
+  .formas-pick{display:flex;gap:6px}
+  .forma-opt{flex:1;padding:10px;border:2px solid #e5e7eb;border-radius:8px;text-align:center;cursor:pointer;font-size:11px;color:#6b7280;font-weight:600}
+  .forma-opt.active{border-color:#3b82f6;color:#3b82f6;background:#eff6ff}
+  .forma-icon{display:block;font-size:22px;margin-bottom:4px}
+
+  .aforo-card{padding:14px;background:linear-gradient(135deg,#10b981,#059669);color:#fff;border-radius:10px;margin-bottom:14px;text-align:center}
+  .aforo-num{font-size:36px;font-weight:900;line-height:1}
+  .aforo-label{font-size:11px;text-transform:uppercase;letter-spacing:1px;opacity:.85;margin-top:4px}
+
+  .zona-stats{display:flex;justify-content:space-between;padding:10px 14px;background:#f9fafb;border-radius:8px;margin-bottom:8px;font-size:13px}
+  .zona-stats strong{color:#111827}
+
+  .selected-info{padding:14px;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;margin-top:14px}
+  .selected-info h4{color:#92400e;font-size:12px;text-transform:uppercase;margin-bottom:8px}
+  .row-2{display:flex;gap:8px}
+  .row-2>*{flex:1}
+
+  /* MODAL */
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+  .modal-overlay.show{display:flex}
+  .modal{background:#fff;border-radius:14px;padding:24px;max-width:420px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+  .modal h3{margin-bottom:14px;font-size:18px;color:#111827}
+  .modal-actions{display:flex;gap:10px;margin-top:18px;justify-content:flex-end}
+
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#111827;color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;z-index:200;display:none;animation:fadein .2s}
+  .toast.show{display:block}
+  .toast.error{background:#dc2626}
+  .toast.success{background:#10b981}
+  @keyframes fadein{from{opacity:0;transform:translate(-50%,10px)}to{opacity:1;transform:translate(-50%,0)}}
+
+  .empty-zona{padding:80px 20px;text-align:center;color:#9ca3af;font-size:15px}
+
+  .auth-bar{background:#fef3c7;border-bottom:1px solid #fde68a;padding:8px 24px;font-size:12px;color:#92400e;display:flex;align-items:center;gap:10px}
+  .auth-bar input{padding:5px 10px;border:1px solid #fde68a;border-radius:5px;font-size:12px}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="titulo">🗺️ Distribución <span>· Plano del local</span></div>
+  <div class="stats">
+    <div class="stat">Aforo total: <span class="stat-num stat-cap" id="aforo-total">0</span> personas</div>
+    <div class="stat">Mesas: <span class="stat-num" id="aforo-mesas">0</span></div>
+  </div>
+  <div class="actions-top">
+    <button class="btn btn-pri" onclick="abrirModalNuevaMesa()">+ Añadir mesa</button>
+  </div>
+</div>
+
+<div class="auth-bar" id="auth-bar" style="display:none">
+  🔒 Para guardar cambios introduce la clave admin:
+  <input id="admin-pass-input" type="password" placeholder="Clave admin" oninput="setAdminPass(this.value)">
+  <span id="auth-status"></span>
+</div>
+
+<div class="tabs" id="tabs"></div>
+
+<div class="canvas-wrap">
+  <div class="canvas-area">
+    <div class="canvas-toolbar">
+      <div class="zona-current" id="zona-actual">Salón</div>
+      <div>
+        <button class="btn btn-sec" onclick="renombrarZonaActual()">✏️ Renombrar zona</button>
+        <button class="btn btn-sec" onclick="eliminarZonaActual()">🗑️ Eliminar zona</button>
+      </div>
+    </div>
+    <div class="canvas" id="canvas"></div>
+  </div>
+  <div class="sidebar">
+    <div class="aforo-card">
+      <div class="aforo-num" id="zona-cap">0</div>
+      <div class="aforo-label" id="zona-cap-label">aforo en esta zona</div>
+    </div>
+    <h3>Por zona</h3>
+    <div id="zonas-stats"></div>
+
+    <div class="selected-info" id="selected-info" style="display:none">
+      <h4>Mesa seleccionada</h4>
+      <div class="form-group"><label>Número</label><input type="number" min="1" id="sel-num" onchange="updateSelected('numero',+this.value)"></div>
+      <div class="form-group"><label>Capacidad</label><input type="number" min="2" id="sel-cap" onchange="updateSelected('capacidad',+this.value)"></div>
+      <div class="form-group">
+        <label>Forma</label>
+        <div class="formas-pick">
+          <div class="forma-opt" data-f="cuadrada" onclick="updateSelected('forma','cuadrada')"><span class="forma-icon">⬛</span>Cuadrada</div>
+          <div class="forma-opt" data-f="redonda" onclick="updateSelected('forma','redonda')"><span class="forma-icon">⚫</span>Redonda</div>
+          <div class="forma-opt" data-f="rectangular" onclick="updateSelected('forma','rectangular')"><span class="forma-icon">▬</span>Rectangular</div>
+        </div>
+      </div>
+      <div class="row-2">
+        <div class="form-group"><label>Ancho</label><input type="number" min="40" step="20" id="sel-w" onchange="updateSelected('w',+this.value)"></div>
+        <div class="form-group"><label>Alto</label><input type="number" min="40" step="20" id="sel-h" onchange="updateSelected('h',+this.value)"></div>
+      </div>
+      <button class="btn btn-danger" style="width:100%;margin-top:8px" onclick="eliminarSeleccionada()">🗑️ Eliminar mesa</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL nueva mesa -->
+<div class="modal-overlay" id="modal-nueva">
+  <div class="modal">
+    <h3>Añadir mesa nueva</h3>
+    <div class="form-group"><label>Número de mesa</label><input type="number" min="1" id="new-num" placeholder="ej: 5"></div>
+    <div class="form-group"><label>Capacidad (personas)</label><input type="number" min="2" id="new-cap" value="4"></div>
+    <div class="form-group">
+      <label>Forma</label>
+      <div class="formas-pick">
+        <div class="forma-opt active" data-f="cuadrada" onclick="seleccionarFormaModal('cuadrada')"><span class="forma-icon">⬛</span>Cuadrada</div>
+        <div class="forma-opt" data-f="redonda" onclick="seleccionarFormaModal('redonda')"><span class="forma-icon">⚫</span>Redonda</div>
+        <div class="forma-opt" data-f="rectangular" onclick="seleccionarFormaModal('rectangular')"><span class="forma-icon">▬</span>Rectangular</div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-sec" onclick="cerrarModalNueva()">Cancelar</button>
+      <button class="btn btn-success" onclick="crearMesa()">Crear mesa</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL renombrar/crear zona -->
+<div class="modal-overlay" id="modal-zona">
+  <div class="modal">
+    <h3 id="modal-zona-title">Crear nueva zona</h3>
+    <div class="form-group"><label>Nombre de la zona</label><input type="text" id="zona-nombre-input" placeholder="ej: Terraza"></div>
+    <div class="modal-actions">
+      <button class="btn btn-sec" onclick="cerrarModalZona()">Cancelar</button>
+      <button class="btn btn-success" id="modal-zona-ok" onclick="confirmarZona()">Aceptar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── CONFIG ──
+const POLL_INTERVAL = 30000;
+const PEDIDOS_POLL = 5000;
+const SAVE_DEBOUNCE = 600;
+const PEDIDOS_URL = window.location.protocol + '//pedidos.' + window.location.hostname.replace(/^admin\./,'');
+
+// ── STATE ──
+let mesas = [];
+let zonas = [];
+let zonaActual = null;
+let nuevaForma = 'cuadrada';
+let mesaSeleccionada = null;
+let adminPass = sessionStorage.getItem('admin_pass') || '';
+let modoZona = 'crear'; // crear | renombrar
+let pedidosPorMesa = {};  // {numero: {estado, count}}
+
+// ── AUTH ──
+function setAdminPass(v) {
+  adminPass = v;
+  sessionStorage.setItem('admin_pass', v);
+  document.getElementById('auth-status').textContent = v ? '✓' : '';
+}
+
+// ── INIT ──
+async function init() {
+  if (!adminPass) {
+    document.getElementById('auth-bar').style.display = 'flex';
+  } else {
+    document.getElementById('admin-pass-input').value = adminPass;
+    document.getElementById('auth-status').textContent = '✓';
+    document.getElementById('auth-bar').style.display = 'flex';
+  }
+  await cargarTodo();
+  await cargarPedidosActivos();
+  setInterval(cargarTodo, POLL_INTERVAL);
+  setInterval(cargarPedidosActivos, PEDIDOS_POLL);
+}
+
+async function cargarPedidosActivos() {
+  try {
+    const r = await fetch(`${PEDIDOS_URL}/api/pedidos/cocina`, {cache:'no-store'});
+    if (!r.ok) return;
+    const lista = await r.json();
+    const map = {};
+    lista.forEach(p => {
+      if (p.tipo !== 'mesa' || !p.mesa) return;
+      if (!['pendiente','en_preparacion'].includes(p.estado)) return;
+      const cur = map[p.mesa] || {estado:'pendiente', count:0};
+      // Pendiente tiene prioridad sobre en_preparacion
+      if (p.estado === 'pendiente') cur.estado = 'pendiente';
+      else if (cur.estado !== 'pendiente') cur.estado = 'en_preparacion';
+      cur.count++;
+      map[p.mesa] = cur;
+    });
+    pedidosPorMesa = map;
+    actualizarEstadosCanvas();
+  } catch(e) {}
+}
+
+function actualizarEstadosCanvas() {
+  document.querySelectorAll('.mesa').forEach(el => {
+    const id = parseInt(el.dataset.id);
+    const m = mesas.find(x => x.id === id);
+    if (!m) return;
+    const p = pedidosPorMesa[m.numero];
+    el.classList.remove('estado-pendiente','estado-en_preparacion','estado-terminado');
+    el.querySelectorAll('.pedido-badge').forEach(b => b.remove());
+    if (p) {
+      el.classList.add('estado-' + p.estado);
+      const badge = document.createElement('div');
+      badge.className = 'pedido-badge';
+      badge.textContent = p.count;
+      el.appendChild(badge);
+    }
+  });
+}
+
+async function cargarTodo() {
+  await Promise.all([cargarMesas(), cargarAforo()]);
+  computarZonas();
+  renderTabs();
+  renderCanvas();
+  renderSidebar();
+}
+
+async function cargarMesas() {
+  const r = await fetch('/api/mesas');
+  mesas = await r.json();
+}
+
+async function cargarAforo() {
+  const r = await fetch('/api/aforo');
+  const d = await r.json();
+  document.getElementById('aforo-total').textContent = d.total_capacidad;
+  document.getElementById('aforo-mesas').textContent = d.total_mesas;
+  const zs = document.getElementById('zonas-stats');
+  zs.innerHTML = (d.por_zona || []).map(z =>
+    `<div class="zona-stats"><strong>${escapeHtml(z.zona)}</strong><span>${z.mesas} mesas · <strong>${z.capacidad}</strong> pers</span></div>`
+  ).join('') || '<div style="color:#9ca3af;font-size:12px">Sin mesas todavía</div>';
+}
+
+function computarZonas() {
+  const set = new Set(mesas.map(m => m.zona));
+  if (set.size === 0) set.add('Salón');
+  zonas = [...set].sort();
+  if (!zonaActual || !zonas.includes(zonaActual)) zonaActual = zonas[0];
+}
+
+// ── RENDER TABS ──
+function renderTabs() {
+  const tabs = document.getElementById('tabs');
+  tabs.innerHTML = zonas.map(z =>
+    `<div class="tab ${z===zonaActual?'active':''}" onclick="cambiarZona('${escapeAttr(z)}')">${escapeHtml(z)}</div>`
+  ).join('') +
+  `<div class="tab-add" onclick="abrirModalNuevaZona()" title="Añadir nueva zona">+</div>` +
+  `<div class="tab-info">Arrastra las mesas para colocarlas. Click en una mesa para editarla.</div>`;
+  document.getElementById('zona-actual').textContent = zonaActual;
+}
+
+function cambiarZona(z) {
+  zonaActual = z;
+  mesaSeleccionada = null;
+  renderTabs();
+  renderCanvas();
+  renderSidebar();
+}
+
+// ── RENDER CANVAS ──
+function renderCanvas() {
+  const canvas = document.getElementById('canvas');
+  const mesasZona = mesas.filter(m => m.zona === zonaActual);
+  const capZona = mesasZona.reduce((s,m) => s+m.capacidad, 0);
+  document.getElementById('zona-cap').textContent = capZona;
+  document.getElementById('zona-cap-label').textContent = `aforo en ${zonaActual} (${mesasZona.length} mesas)`;
+
+  if (!mesasZona.length) {
+    canvas.innerHTML = '<div class="empty-zona">Esta zona no tiene mesas todavía.<br>Añade una mesa con el botón superior.</div>';
+    return;
+  }
+  canvas.innerHTML = '';
+  mesasZona.forEach(m => {
+    const el = document.createElement('div');
+    el.className = `mesa ${m.forma}` + (mesaSeleccionada === m.id ? ' selected' : '');
+    el.style.left = m.x + 'px';
+    el.style.top = m.y + 'px';
+    el.style.width = m.w + 'px';
+    el.style.height = m.h + 'px';
+    el.style.borderColor = colorPorCapacidad(m.capacidad);
+    el.dataset.id = m.id;
+    el.innerHTML = `<div class="mesa-num">${m.numero}</div><div class="mesa-cap">${m.capacidad} pers</div>`;
+    hacerArrastrable(el, m);
+    el.addEventListener('click', e => { e.stopPropagation(); seleccionarMesa(m.id); });
+    canvas.appendChild(el);
+  });
+  canvas.addEventListener('click', () => { if (mesaSeleccionada !== null) { mesaSeleccionada = null; renderCanvas(); renderSidebar(); } }, {once:true});
+  actualizarEstadosCanvas();
+}
+
+function colorPorCapacidad(cap) {
+  if (cap <= 2) return '#a78bfa';
+  if (cap <= 4) return '#3b82f6';
+  if (cap <= 6) return '#10b981';
+  if (cap <= 10) return '#f59e0b';
+  return '#dc2626';
+}
+
+// ── DRAG-AND-DROP ──
+function hacerArrastrable(el, mesa) {
+  let startX, startY, origX, origY, dragging = false;
+
+  el.addEventListener('mousedown', e => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    dragging = true;
+    startX = e.clientX; startY = e.clientY;
+    origX = mesa.x; origY = mesa.y;
+    el.classList.add('dragging');
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  });
+
+  function onMove(e) {
+    if (!dragging) return;
+    let nx = origX + (e.clientX - startX);
+    let ny = origY + (e.clientY - startY);
+    // Snap to grid 20px
+    nx = Math.max(0, Math.round(nx / 20) * 20);
+    ny = Math.max(0, Math.round(ny / 20) * 20);
+    mesa.x = nx; mesa.y = ny;
+    el.style.left = nx + 'px'; el.style.top = ny + 'px';
+  }
+
+  function onUp() {
+    if (!dragging) return;
+    dragging = false;
+    el.classList.remove('dragging');
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+    debouncedGuardar(mesa);
+  }
+}
+
+// ── SIDEBAR (mesa seleccionada) ──
+function seleccionarMesa(id) {
+  mesaSeleccionada = id;
+  renderCanvas();
+  renderSidebar();
+}
+
+function renderSidebar() {
+  const info = document.getElementById('selected-info');
+  if (mesaSeleccionada === null) { info.style.display = 'none'; return; }
+  const m = mesas.find(x => x.id === mesaSeleccionada);
+  if (!m) { info.style.display = 'none'; return; }
+  info.style.display = 'block';
+  document.getElementById('sel-num').value = m.numero;
+  document.getElementById('sel-cap').value = m.capacidad;
+  document.getElementById('sel-w').value = m.w;
+  document.getElementById('sel-h').value = m.h;
+  document.querySelectorAll('#selected-info .forma-opt').forEach(el => {
+    el.classList.toggle('active', el.dataset.f === m.forma);
+  });
+}
+
+function updateSelected(campo, valor) {
+  if (mesaSeleccionada === null) return;
+  const m = mesas.find(x => x.id === mesaSeleccionada);
+  if (!m) return;
+  m[campo] = valor;
+  // Si cambia forma, ajustar dimensiones por defecto
+  if (campo === 'forma') {
+    if (valor === 'rectangular' && m.w === m.h) m.w = m.h * 2;
+    if ((valor === 'cuadrada' || valor === 'redonda') && m.w !== m.h) m.w = m.h = Math.min(m.w, m.h);
+  }
+  renderCanvas();
+  renderSidebar();
+  debouncedGuardar(m);
+}
+
+async function eliminarSeleccionada() {
+  if (mesaSeleccionada === null) return;
+  const m = mesas.find(x => x.id === mesaSeleccionada);
+  if (!confirm(`¿Eliminar mesa #${m.numero}?`)) return;
+  const r = await fetch('/api/mesas/' + m.id, {method:'DELETE', headers:{'x-admin-pass':adminPass}});
+  if (r.ok) {
+    toast('Mesa eliminada','success');
+    mesaSeleccionada = null;
+    cargarTodo();
+  } else {
+    const d = await r.json().catch(()=>({}));
+    toast('Error: ' + (d.detail || r.status), 'error');
+  }
+}
+
+// ── GUARDAR (debounce) ──
+const _saveTimers = new Map();
+function debouncedGuardar(mesa) {
+  if (_saveTimers.has(mesa.id)) clearTimeout(_saveTimers.get(mesa.id));
+  _saveTimers.set(mesa.id, setTimeout(() => guardarMesa(mesa), SAVE_DEBOUNCE));
+}
+
+async function guardarMesa(mesa) {
+  const body = {
+    numero: mesa.numero, capacidad: mesa.capacidad, forma: mesa.forma,
+    x: mesa.x, y: mesa.y, w: mesa.w, h: mesa.h,
+    zona: mesa.zona, rotacion: mesa.rotacion || 0
+  };
+  try {
+    const r = await fetch('/api/mesas/' + mesa.id, {
+      method:'PUT', headers:{'Content-Type':'application/json','x-admin-pass':adminPass},
+      body: JSON.stringify(body)
+    });
+    if (!r.ok) {
+      const d = await r.json().catch(()=>({}));
+      toast('Error guardando: ' + (d.detail || r.status), 'error');
+    } else {
+      toast('Guardado','success');
+      cargarAforo();
+    }
+  } catch(e) {
+    toast('Sin conexión', 'error');
+  }
+}
+
+// ── MODAL NUEVA MESA ──
+function abrirModalNuevaMesa() {
+  // Sugerir siguiente número libre
+  const usados = new Set(mesas.map(m => m.numero));
+  let siguiente = 1;
+  while (usados.has(siguiente)) siguiente++;
+  document.getElementById('new-num').value = siguiente;
+  document.getElementById('new-cap').value = 4;
+  nuevaForma = 'cuadrada';
+  document.querySelectorAll('#modal-nueva .forma-opt').forEach(el =>
+    el.classList.toggle('active', el.dataset.f === 'cuadrada'));
+  document.getElementById('modal-nueva').classList.add('show');
+}
+
+function cerrarModalNueva() {
+  document.getElementById('modal-nueva').classList.remove('show');
+}
+
+function seleccionarFormaModal(f) {
+  nuevaForma = f;
+  document.querySelectorAll('#modal-nueva .forma-opt').forEach(el =>
+    el.classList.toggle('active', el.dataset.f === f));
+}
+
+async function crearMesa() {
+  const numero = parseInt(document.getElementById('new-num').value);
+  const capacidad = parseInt(document.getElementById('new-cap').value);
+  if (!numero || numero < 1) { toast('Número inválido','error'); return; }
+  if (!capacidad || capacidad < 2) { toast('Capacidad mínima 2','error'); return; }
+  const w = nuevaForma === 'rectangular' ? 160 : 80;
+  const h = 80;
+  const body = {numero, capacidad, forma: nuevaForma, x: 40, y: 40, w, h, zona: zonaActual, rotacion: 0};
+  const r = await fetch('/api/mesas', {
+    method:'POST', headers:{'Content-Type':'application/json','x-admin-pass':adminPass},
+    body: JSON.stringify(body)
+  });
+  if (r.ok) {
+    toast('Mesa creada','success');
+    cerrarModalNueva();
+    cargarTodo();
+  } else {
+    const d = await r.json().catch(()=>({}));
+    toast('Error: ' + (d.detail || r.status), 'error');
+  }
+}
+
+// ── ZONAS (crear / renombrar / eliminar) ──
+function abrirModalNuevaZona() {
+  modoZona = 'crear';
+  document.getElementById('modal-zona-title').textContent = 'Crear nueva zona';
+  document.getElementById('zona-nombre-input').value = '';
+  document.getElementById('modal-zona').classList.add('show');
+  setTimeout(() => document.getElementById('zona-nombre-input').focus(), 50);
+}
+
+function renombrarZonaActual() {
+  modoZona = 'renombrar';
+  document.getElementById('modal-zona-title').textContent = 'Renombrar zona "'+zonaActual+'"';
+  document.getElementById('zona-nombre-input').value = zonaActual;
+  document.getElementById('modal-zona').classList.add('show');
+  setTimeout(() => document.getElementById('zona-nombre-input').focus(), 50);
+}
+
+function cerrarModalZona() {
+  document.getElementById('modal-zona').classList.remove('show');
+}
+
+async function confirmarZona() {
+  const nombre = document.getElementById('zona-nombre-input').value.trim();
+  if (!nombre) { toast('Nombre vacío','error'); return; }
+  if (modoZona === 'crear') {
+    if (zonas.includes(nombre)) { toast('Esa zona ya existe','error'); return; }
+    // Solo cambiar la zona actual; se "creará" cuando añadas la primera mesa
+    zonas.push(nombre);
+    zonas.sort();
+    zonaActual = nombre;
+    cerrarModalZona();
+    renderTabs(); renderCanvas(); renderSidebar();
+    toast('Zona creada. Añade tu primera mesa con el botón "+ Añadir mesa".','success');
+  } else {
+    // Renombrar: actualizar todas las mesas de esa zona
+    const mesasARenombrar = mesas.filter(m => m.zona === zonaActual);
+    let errores = 0;
+    for (const m of mesasARenombrar) {
+      const r = await fetch('/api/mesas/' + m.id, {
+        method:'PUT', headers:{'Content-Type':'application/json','x-admin-pass':adminPass},
+        body: JSON.stringify({zona: nombre})
+      });
+      if (!r.ok) errores++;
+    }
+    cerrarModalZona();
+    if (errores) toast(`${errores} mesas no se renombraron`,'error');
+    else toast('Zona renombrada','success');
+    zonaActual = nombre;
+    cargarTodo();
+  }
+}
+
+async function eliminarZonaActual() {
+  const mesasZona = mesas.filter(m => m.zona === zonaActual);
+  if (mesasZona.length) {
+    if (!confirm(`La zona "${zonaActual}" tiene ${mesasZona.length} mesas. ¿Eliminar la zona y TODAS sus mesas?`)) return;
+    for (const m of mesasZona) {
+      await fetch('/api/mesas/'+m.id, {method:'DELETE', headers:{'x-admin-pass':adminPass}});
+    }
+  } else {
+    if (!confirm(`¿Eliminar la zona "${zonaActual}" (vacía)?`)) return;
+  }
+  toast('Zona eliminada','success');
+  zonaActual = null;
+  cargarTodo();
+}
+
+// ── UTIL ──
+function escapeHtml(s) {
+  return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+}
+function escapeAttr(s) {
+  return String(s||'').replace(/'/g,'&#39;').replace(/"/g,'&quot;');
+}
+function toast(msg, tipo='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + tipo;
+  setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+init();
+</script>
+</body>
+</html>

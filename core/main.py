@@ -131,6 +131,20 @@ def init_db():
                 unidades    INTEGER DEFAULT 0,
                 activo      INTEGER DEFAULT 1
             );
+            CREATE TABLE IF NOT EXISTS mesas (
+                id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                numero     INTEGER NOT NULL UNIQUE,
+                capacidad  INTEGER NOT NULL CHECK(capacidad >= 2),
+                forma      TEXT    NOT NULL DEFAULT 'cuadrada',
+                x          INTEGER NOT NULL DEFAULT 40,
+                y          INTEGER NOT NULL DEFAULT 40,
+                w          INTEGER NOT NULL DEFAULT 80,
+                h          INTEGER NOT NULL DEFAULT 80,
+                zona       TEXT    NOT NULL DEFAULT 'Salón',
+                rotacion   INTEGER NOT NULL DEFAULT 0,
+                activa     INTEGER NOT NULL DEFAULT 1,
+                created_at TEXT    DEFAULT (datetime('now'))
+            );
         """)
         defaults = {
             "nombre": "[NOMBRE_RESTAURANTE]",
@@ -422,10 +436,159 @@ async def upload_foto(file: UploadFile = File(...)):
     return {"url": f"/uploads/{filename}"}
 
 
+# ── Distribución del local (mesas) ────────────────────────────
+
+class MesaIn(BaseModel):
+    numero: int
+    capacidad: int
+    forma: Optional[str] = "cuadrada"      # cuadrada | redonda | rectangular
+    x: Optional[int] = 40
+    y: Optional[int] = 40
+    w: Optional[int] = 80
+    h: Optional[int] = 80
+    zona: Optional[str] = "Salón"
+    rotacion: Optional[int] = 0
+
+class MesaUpdate(BaseModel):
+    numero: Optional[int] = None
+    capacidad: Optional[int] = None
+    forma: Optional[str] = None
+    x: Optional[int] = None
+    y: Optional[int] = None
+    w: Optional[int] = None
+    h: Optional[int] = None
+    zona: Optional[str] = None
+    rotacion: Optional[int] = None
+    activa: Optional[int] = None
+
+def _row_to_mesa(r):
+    return {
+        "id": r["id"], "numero": r["numero"], "capacidad": r["capacidad"],
+        "forma": r["forma"], "x": r["x"], "y": r["y"],
+        "w": r["w"], "h": r["h"], "zona": r["zona"],
+        "rotacion": r["rotacion"], "activa": bool(r["activa"]),
+    }
+
+@app.get("/api/mesas")
+def api_mesas_list(zona: Optional[str] = None, incluir_inactivas: bool = False):
+    """Lista todas las mesas activas. Opcional filtrar por zona."""
+    with db() as conn:
+        sql = "SELECT * FROM mesas WHERE 1=1"
+        params = []
+        if not incluir_inactivas:
+            sql += " AND activa=1"
+        if zona:
+            sql += " AND zona=?"
+            params.append(zona)
+        sql += " ORDER BY zona, numero"
+        rows = conn.execute(sql, params).fetchall()
+    return [_row_to_mesa(r) for r in rows]
+
+@app.get("/api/mesas/{mesa_id}")
+def api_mesa_get(mesa_id: int):
+    with db() as conn:
+        r = conn.execute("SELECT * FROM mesas WHERE id=?", (mesa_id,)).fetchone()
+    if not r:
+        raise HTTPException(status_code=404, detail="Mesa no encontrada")
+    return _row_to_mesa(r)
+
+@app.get("/api/aforo")
+def api_aforo():
+    """Aforo total y por zona (suma de capacidades)."""
+    with db() as conn:
+        rows = conn.execute(
+            "SELECT zona, SUM(capacidad) AS cap, COUNT(*) AS n "
+            "FROM mesas WHERE activa=1 GROUP BY zona"
+        ).fetchall()
+    por_zona = [{"zona": r["zona"], "capacidad": r["cap"] or 0, "mesas": r["n"]} for r in rows]
+    total_cap = sum(z["capacidad"] for z in por_zona)
+    total_mesas = sum(z["mesas"] for z in por_zona)
+    return {"total_capacidad": total_cap, "total_mesas": total_mesas, "por_zona": por_zona}
+
+@app.get("/api/zonas")
+def api_zonas():
+    """Lista distinta de zonas usadas."""
+    with db() as conn:
+        rows = conn.execute(
+            "SELECT DISTINCT zona FROM mesas WHERE activa=1 ORDER BY zona"
+        ).fetchall()
+    zonas = [r["zona"] for r in rows]
+    if not zonas:
+        zonas = ["Salón"]
+    return zonas
+
+@app.post("/api/mesas", dependencies=[Depends(auth)])
+async def api_mesa_crear(m: MesaIn):
+    if m.capacidad < 2:
+        raise HTTPException(status_code=400, detail="La capacidad mínima es 2 personas")
+    if m.forma not in ("cuadrada", "redonda", "rectangular"):
+        raise HTTPException(status_code=400, detail="Forma debe ser: cuadrada, redonda o rectangular")
+    with db() as conn:
+        existe = conn.execute("SELECT 1 FROM mesas WHERE numero=? AND activa=1", (m.numero,)).fetchone()
+        if existe:
+            raise HTTPException(status_code=409, detail=f"Ya existe una mesa #{m.numero} activa")
+        cursor = conn.execute(
+            """INSERT INTO mesas (numero, capacidad, forma, x, y, w, h, zona, rotacion)
+               VALUES (?,?,?,?,?,?,?,?,?)""",
+            (m.numero, m.capacidad, m.forma, m.x, m.y, m.w, m.h, m.zona, m.rotacion)
+        )
+        conn.commit()
+        new_id = cursor.lastrowid
+    await _broadcast("mesa_creada", {"id": new_id})
+    return {"ok": True, "id": new_id}
+
+@app.put("/api/mesas/{mesa_id}", dependencies=[Depends(auth)])
+async def api_mesa_actualizar(mesa_id: int, m: MesaUpdate):
+    fields, values = [], []
+    for k in ("numero","capacidad","forma","x","y","w","h","zona","rotacion","activa"):
+        v = getattr(m, k)
+        if v is not None:
+            if k == "capacidad" and v < 2:
+                raise HTTPException(status_code=400, detail="Capacidad mínima 2")
+            if k == "forma" and v not in ("cuadrada","redonda","rectangular"):
+                raise HTTPException(status_code=400, detail="Forma inválida")
+            fields.append(f"{k}=?")
+            values.append(v)
+    if not fields:
+        return {"ok": True, "noop": True}
+    values.append(mesa_id)
+    with db() as conn:
+        c = conn.execute(f"UPDATE mesas SET {', '.join(fields)} WHERE id=?", values)
+        conn.commit()
+        if c.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Mesa no encontrada")
+    await _broadcast("mesa_actualizada", {"id": mesa_id})
+    return {"ok": True}
+
+@app.delete("/api/mesas/{mesa_id}", dependencies=[Depends(auth)])
+async def api_mesa_eliminar(mesa_id: int, hard: bool = False):
+    """Por defecto soft delete (activa=0). Pasar ?hard=true para borrar permanente."""
+    with db() as conn:
+        if hard:
+            c = conn.execute("DELETE FROM mesas WHERE id=?", (mesa_id,))
+        else:
+            c = conn.execute("UPDATE mesas SET activa=0 WHERE id=?", (mesa_id,))
+        conn.commit()
+        if c.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Mesa no encontrada")
+    await _broadcast("mesa_eliminada", {"id": mesa_id})
+    return {"ok": True}
+
+
 # ── Admin UI & Static ─────────────────────────────────────────
 @app.get("/admin")
 def admin_ui():
     return FileResponse("static/admin.html")
+
+@app.get("/admin/cocina")
+def admin_cocina():
+    """Panel cocina: vista en tiempo real de pedidos pendientes/en preparacion/terminados."""
+    return FileResponse("static/cocina.html")
+
+@app.get("/admin/distribucion")
+def admin_distribucion():
+    """Editor del plano del local: añadir/mover/eliminar mesas, organizar por zonas."""
+    return FileResponse("static/distribucion.html")
 
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 app.mount("/static", StaticFiles(directory="static"), name="static")

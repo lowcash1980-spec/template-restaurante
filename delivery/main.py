@@ -76,6 +76,9 @@ def init_db():
         conn.commit()
         for col_sql in [
             "ALTER TABLE pedidos ADD COLUMN metodo_pago TEXT DEFAULT 'efectivo'",
+            "ALTER TABLE pedidos ADD COLUMN mesa INTEGER",
+            "ALTER TABLE pedidos ADD COLUMN estado_changed_at TEXT",
+            "ALTER TABLE pedidos ADD COLUMN solicita_cancelacion INTEGER DEFAULT 0",
         ]:
             try:
                 conn.execute(col_sql)
@@ -374,6 +377,329 @@ def api_pedido_en_camino(pedido_id: int):
     except Exception as e:
         logger.error(f"Error notificando via SARA: {e}")
         return {"ok": False, "error": str(e)}
+
+
+# -- Pedidos de mesa (kmarero) -------------------------------------
+
+class ItemMesaIn(BaseModel):
+    nombre: str
+    descripcion: Optional[str] = ""
+    precio: float
+    cantidad: int
+
+
+class PedidoMesaIn(BaseModel):
+    mesa: int
+    items: List[ItemMesaIn]
+    total: float
+    notas: Optional[str] = ""
+    nombre: Optional[str] = ""        # opcional, para identificar al cliente
+    telefono: Optional[str] = ""      # opcional
+
+
+@app.post("/api/pedido-mesa")
+def api_crear_pedido_mesa(p: PedidoMesaIn):
+    """Pedido desde kmarero (mesa fisica). Sin slot, sin direccion. Notifica al CRM si hay telefono."""
+    if not p.items:
+        return {"ok": False, "error": "El pedido esta vacio"}
+    if p.mesa < 1:
+        return {"ok": False, "error": "Numero de mesa invalido"}
+
+    fecha_hoy = date.today().isoformat()
+    hora_ahora = datetime.now().strftime("%H:%M")
+
+    with sqlite3.connect(DB_PATH) as conn:
+        cursor = conn.execute(
+            """INSERT INTO pedidos
+               (tipo,nombre,telefono,direccion,fecha,hora,items,subtotal,cargo_cajas,total,
+                notas,metodo_pago,mesa,estado,estado_changed_at)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+            ("mesa", p.nombre or f"Mesa {p.mesa}", p.telefono or "", None,
+             fecha_hoy, hora_ahora,
+             json.dumps([i.model_dump() for i in p.items], ensure_ascii=False),
+             p.total, 0, p.total, p.notas or "",
+             "pendiente", p.mesa, "pendiente", datetime.utcnow().isoformat())
+        )
+        pedido_id = cursor.lastrowid
+        conn.commit()
+
+    logger.info(f"Pedido mesa #{pedido_id} | Mesa {p.mesa} | {p.total:.2f}EUR")
+
+    # Notifica CRM solo si hay telefono (cliente identificado)
+    if p.telefono:
+        try:
+            httpx.post(
+                f"{CRM_URL}/api/interaccion",
+                json={
+                    "telefono": p.telefono, "tipo": "pedido", "nombre": p.nombre or f"Mesa {p.mesa}",
+                    "direccion": "",
+                    "resumen": f"Pedido mesa {p.mesa} -- {p.total:.2f}EUR", "importe": p.total,
+                },
+                timeout=5,
+            )
+        except Exception:
+            pass
+
+    return {"ok": True, "id": pedido_id, "mesa": p.mesa}
+
+
+# -- Cocina (panel admin) ------------------------------------------
+
+@app.get("/api/pedidos/cocina")
+def api_pedidos_cocina():
+    """Lista pedidos activos para el panel de cocina.
+    Devuelve: pendientes + en_preparacion del dia + terminados/cancelados de los ultimos 30s.
+    """
+    fecha_hoy = date.today().isoformat()
+    cutoff = (datetime.utcnow() - timedelta(seconds=30)).isoformat()
+
+    with sqlite3.connect(DB_PATH) as conn:
+        rows = conn.execute(
+            """SELECT id, tipo, nombre, telefono, direccion, fecha, hora, items,
+                      total, estado, COALESCE(notas,'') AS notas,
+                      COALESCE(metodo_pago,'efectivo') AS metodo_pago,
+                      mesa, COALESCE(estado_changed_at, created_at) AS estado_changed_at,
+                      COALESCE(solicita_cancelacion, 0) AS solicita_cancelacion,
+                      created_at
+               FROM pedidos
+               WHERE fecha = ?
+                 AND ( estado IN ('pendiente','en_preparacion')
+                       OR (estado IN ('terminado','cancelado') AND COALESCE(estado_changed_at, created_at) >= ?) )
+               ORDER BY solicita_cancelacion DESC, created_at DESC""",
+            (fecha_hoy, cutoff)
+        ).fetchall()
+
+    cols = ["id","tipo","nombre","telefono","direccion","fecha","hora","items",
+            "total","estado","notas","metodo_pago","mesa","estado_changed_at",
+            "solicita_cancelacion","created_at"]
+    pedidos = []
+    for row in rows:
+        d = dict(zip(cols, row))
+        try:
+            d["items"] = json.loads(d["items"])
+        except Exception:
+            d["items"] = []
+        d["solicita_cancelacion"] = bool(d["solicita_cancelacion"])
+        pedidos.append(d)
+    return pedidos
+
+
+# -- Vista publica del cliente (solo lectura + cancelacion) --------
+
+@app.get("/api/pedido/{pedido_id}/publico")
+def api_pedido_publico(pedido_id: int):
+    """Vista publica del pedido para el cliente (sin auth, solo lectura)."""
+    with sqlite3.connect(DB_PATH) as conn:
+        row = conn.execute(
+            """SELECT id, tipo, hora, fecha, items, total, estado,
+                      COALESCE(notas,'') AS notas, mesa,
+                      COALESCE(solicita_cancelacion, 0) AS solicita_cancelacion
+               FROM pedidos WHERE id=?""",
+            (pedido_id,)
+        ).fetchone()
+    if not row:
+        return {"ok": False, "error": "Pedido no encontrado"}
+    cols = ["id","tipo","hora","fecha","items","total","estado","notas","mesa",
+            "solicita_cancelacion"]
+    d = dict(zip(cols, row))
+    try:
+        d["items"] = json.loads(d["items"])
+    except Exception:
+        d["items"] = []
+    d["solicita_cancelacion"] = bool(d["solicita_cancelacion"])
+    d["puede_solicitar_cancelacion"] = (d["estado"] == "pendiente"
+                                         and not d["solicita_cancelacion"])
+    return {"ok": True, **d}
+
+
+@app.post("/api/pedido/{pedido_id}/solicitar-cancelacion")
+def api_pedido_solicitar_cancelacion(pedido_id: int):
+    """Cliente pide cancelar. Solo permitido si esta en estado 'pendiente'."""
+    with sqlite3.connect(DB_PATH) as conn:
+        row = conn.execute(
+            "SELECT estado, COALESCE(solicita_cancelacion,0) FROM pedidos WHERE id=?",
+            (pedido_id,)
+        ).fetchone()
+        if not row:
+            return {"ok": False, "error": "Pedido no encontrado"}
+        estado, ya_solicitado = row
+        if estado != "pendiente":
+            return {"ok": False, "error": "Ya no se puede cancelar (el pedido esta en preparacion o terminado)"}
+        if ya_solicitado:
+            return {"ok": True, "info": "Cancelacion ya solicitada, esperando confirmacion"}
+        conn.execute("UPDATE pedidos SET solicita_cancelacion=1 WHERE id=?", (pedido_id,))
+        conn.commit()
+    logger.info(f"Pedido #{pedido_id}: CLIENTE solicita cancelacion")
+    return {"ok": True}
+
+
+# -- Aprobar/rechazar cancelacion (admin) --------------------------
+
+@app.post("/api/pedido/{pedido_id}/aprobar-cancelacion")
+def api_pedido_aprobar_cancelacion(pedido_id: int):
+    """Admin acepta la cancelacion del cliente. Marca el pedido como cancelado y notifica via SARA."""
+    data = _cambiar_estado(pedido_id, "cancelado")
+    if not data:
+        return {"ok": False, "error": "Pedido no encontrado"}
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.execute("UPDATE pedidos SET solicita_cancelacion=0 WHERE id=?", (pedido_id,))
+        conn.commit()
+    logger.info(f"Pedido #{pedido_id}: ADMIN aprueba cancelacion")
+
+    if data["tipo"] == "mesa" or not SARA_URL or not data["telefono"]:
+        return {"ok": True, "id": pedido_id, "estado": "cancelado", "notificado": False}
+
+    nombre_corto = (data["nombre"] or "Cliente").split()[0]
+    mensaje = (f"Hola {nombre_corto}! Tu pedido #{pedido_id} ha sido cancelado. "
+               f"Si fue un error, vuelve a hacer el pedido. Gracias por avisar!")
+    try:
+        r = httpx.post(f"{SARA_URL}/api/notificar",
+                       json={"telefono": data["telefono"], "mensaje": mensaje}, timeout=5)
+        return {"ok": True, "id": pedido_id, "estado": "cancelado",
+                "notificado": r.status_code == 200}
+    except Exception as e:
+        return {"ok": True, "id": pedido_id, "estado": "cancelado",
+                "notificado": False, "error": str(e)}
+
+
+@app.post("/api/pedido/{pedido_id}/rechazar-cancelacion")
+def api_pedido_rechazar_cancelacion(pedido_id: int):
+    """Admin rechaza la cancelacion. Pedido sigue su curso normal."""
+    with sqlite3.connect(DB_PATH) as conn:
+        c = conn.execute("UPDATE pedidos SET solicita_cancelacion=0 WHERE id=?", (pedido_id,))
+        conn.commit()
+        if c.rowcount == 0:
+            return {"ok": False, "error": "Pedido no encontrado"}
+    logger.info(f"Pedido #{pedido_id}: ADMIN rechaza cancelacion")
+    return {"ok": True}
+
+
+@app.post("/api/pedido/{pedido_id}/cancelar")
+def api_pedido_cancelar(pedido_id: int):
+    """Admin cancela el pedido directamente (sin solicitud previa).
+    Notifica al cliente via SARA si es delivery con telefono."""
+    data = _cambiar_estado(pedido_id, "cancelado")
+    if not data:
+        return {"ok": False, "error": "Pedido no encontrado"}
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.execute("UPDATE pedidos SET solicita_cancelacion=0 WHERE id=?", (pedido_id,))
+        conn.commit()
+    logger.info(f"Pedido #{pedido_id}: ADMIN cancela directamente ({data['tipo']})")
+
+    if data["tipo"] == "mesa" or not SARA_URL or not data["telefono"]:
+        return {"ok": True, "id": pedido_id, "estado": "cancelado", "notificado": False}
+
+    nombre_corto = (data["nombre"] or "Cliente").split()[0]
+    mensaje = (f"Hola {nombre_corto}! Tu pedido #{pedido_id} ha sido cancelado por el restaurante. "
+               f"Disculpa las molestias. Para mas informacion, contacta con nosotros.")
+    try:
+        r = httpx.post(f"{SARA_URL}/api/notificar",
+                       json={"telefono": data["telefono"], "mensaje": mensaje}, timeout=5)
+        return {"ok": True, "id": pedido_id, "estado": "cancelado",
+                "notificado": r.status_code == 200}
+    except Exception as e:
+        return {"ok": True, "id": pedido_id, "estado": "cancelado",
+                "notificado": False, "error": str(e)}
+
+
+# -- Modificar items del pedido (admin) ----------------------------
+
+class EditItemsIn(BaseModel):
+    items: List[ItemMesaIn]   # mismos campos: nombre, descripcion, precio, cantidad
+    total: float
+    subtotal: Optional[float] = None
+    cargo_cajas: Optional[float] = 0
+
+
+@app.patch("/api/pedido/{pedido_id}/items")
+def api_pedido_editar_items(pedido_id: int, p: EditItemsIn):
+    """Admin edita items de un pedido (cambiar cantidad o quitar items)."""
+    if not p.items:
+        return {"ok": False, "error": "El pedido no puede quedar vacio. Para vaciarlo, cancelalo entero."}
+    subtotal = p.subtotal if p.subtotal is not None else p.total
+    cargo = p.cargo_cajas or 0
+    with sqlite3.connect(DB_PATH) as conn:
+        row = conn.execute("SELECT estado FROM pedidos WHERE id=?", (pedido_id,)).fetchone()
+        if not row:
+            return {"ok": False, "error": "Pedido no encontrado"}
+        if row[0] in ("terminado", "cancelado"):
+            return {"ok": False, "error": f"No se puede editar un pedido {row[0]}"}
+        conn.execute(
+            "UPDATE pedidos SET items=?, subtotal=?, cargo_cajas=?, total=? WHERE id=?",
+            (json.dumps([i.model_dump() for i in p.items], ensure_ascii=False),
+             subtotal, cargo, p.total, pedido_id)
+        )
+        conn.commit()
+    logger.info(f"Pedido #{pedido_id}: ADMIN edita items, nuevo total {p.total:.2f}EUR")
+    return {"ok": True, "id": pedido_id, "total": p.total, "items": len(p.items)}
+
+
+def _cambiar_estado(pedido_id: int, nuevo_estado: str):
+    """Helper interno: cambia el estado de un pedido y devuelve datos basicos."""
+    with sqlite3.connect(DB_PATH) as conn:
+        row = conn.execute(
+            """SELECT nombre, telefono, tipo, COALESCE(metodo_pago,'efectivo'), mesa, total
+               FROM pedidos WHERE id=?""",
+            (pedido_id,)
+        ).fetchone()
+        if not row:
+            return None
+        conn.execute(
+            "UPDATE pedidos SET estado=?, estado_changed_at=? WHERE id=?",
+            (nuevo_estado, datetime.utcnow().isoformat(), pedido_id)
+        )
+        conn.commit()
+    nombre, telefono, tipo, metodo_pago, mesa, total = row
+    return {"nombre": nombre, "telefono": telefono, "tipo": tipo,
+            "metodo_pago": metodo_pago, "mesa": mesa, "total": total}
+
+
+@app.post("/api/pedido/{pedido_id}/en-preparacion")
+def api_pedido_en_preparacion(pedido_id: int):
+    data = _cambiar_estado(pedido_id, "en_preparacion")
+    if not data:
+        return {"ok": False, "error": "Pedido no encontrado"}
+    logger.info(f"Pedido #{pedido_id} -> en preparacion")
+    return {"ok": True, "id": pedido_id, "estado": "en_preparacion"}
+
+
+@app.post("/api/pedido/{pedido_id}/terminado")
+def api_pedido_terminado(pedido_id: int):
+    """Cambia estado a terminado.
+    Si tipo es 'domicilio' o 'recogida', notifica al cliente via SARA con el importe.
+    Si tipo es 'mesa', solo cambia el estado (cliente esta en el local).
+    """
+    data = _cambiar_estado(pedido_id, "terminado")
+    if not data:
+        return {"ok": False, "error": "Pedido no encontrado"}
+
+    logger.info(f"Pedido #{pedido_id} -> terminado ({data['tipo']})")
+
+    # Mesa: no notifica
+    if data["tipo"] == "mesa":
+        return {"ok": True, "id": pedido_id, "estado": "terminado", "notificado": False}
+
+    if not SARA_URL or not data["telefono"]:
+        return {"ok": True, "id": pedido_id, "estado": "terminado", "notificado": False}
+
+    nombre_corto = (data["nombre"] or "Cliente").split()[0]
+    pago_label = "Tarjeta" if data["metodo_pago"] == "tarjeta" else "Efectivo"
+    if data["tipo"] == "domicilio":
+        mensaje = (f"Hola {nombre_corto}! Tu pedido #{pedido_id} ya esta en camino. "
+                   f"Total: {data['total']:.2f}EUR ({pago_label}). Que aproveche!")
+    else:
+        mensaje = (f"Hola {nombre_corto}! Tu pedido #{pedido_id} esta listo para recoger. "
+                   f"Total: {data['total']:.2f}EUR ({pago_label}). Te esperamos!")
+
+    try:
+        r = httpx.post(f"{SARA_URL}/api/notificar",
+                       json={"telefono": data["telefono"], "mensaje": mensaje}, timeout=5)
+        return {"ok": True, "id": pedido_id, "estado": "terminado",
+                "notificado": r.status_code == 200}
+    except Exception as e:
+        logger.error(f"Error notificando via SARA: {e}")
+        return {"ok": True, "id": pedido_id, "estado": "terminado",
+                "notificado": False, "error": str(e)}
 
 
 # -- Admin ---------------------------------------------------------
