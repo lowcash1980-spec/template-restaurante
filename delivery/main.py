@@ -486,6 +486,48 @@ def api_pedidos_cocina():
 
 # -- Vista publica del cliente (solo lectura + cancelacion) --------
 
+@app.get("/api/pedidos/cliente")
+def api_pedidos_cliente(telefono: Optional[str] = None, pedido_id: Optional[int] = None):
+    """Consulta pedidos del cliente (SARA usa esto).
+    - Por telefono: devuelve pedidos del dia con ese telefono.
+    - Por pedido_id: devuelve ese pedido concreto si existe.
+    Si ambos: filtra por ambos.
+    Devuelve solo pedidos NO terminados ni cancelados (los activos), salvo que se pase pedido_id.
+    """
+    if not telefono and not pedido_id:
+        return {"ok": False, "error": "Especifica telefono o pedido_id"}
+    fecha_hoy = date.today().isoformat()
+    sql = """SELECT id, tipo, hora, fecha, items, total, estado,
+                    COALESCE(notas,'') AS notas, mesa, COALESCE(telefono,'') AS telefono,
+                    COALESCE(estado_changed_at, created_at) AS estado_changed_at
+             FROM pedidos WHERE 1=1"""
+    params = []
+    if pedido_id:
+        sql += " AND id=?"; params.append(pedido_id)
+    if telefono:
+        sql += " AND telefono=?"; params.append(telefono)
+        if not pedido_id:
+            sql += " AND fecha=?"; params.append(fecha_hoy)
+            sql += " AND estado IN ('pendiente','en_preparacion','terminado')"
+    sql += " ORDER BY id DESC LIMIT 5"
+    with sqlite3.connect(DB_PATH) as conn:
+        rows = conn.execute(sql, params).fetchall()
+    cols = ["id","tipo","hora","fecha","items","total","estado","notas","mesa","telefono","estado_changed_at"]
+    pedidos = []
+    for row in rows:
+        d = dict(zip(cols, row))
+        try: d["items"] = json.loads(d["items"])
+        except Exception: d["items"] = []
+        # Texto humano del estado para SARA
+        m = {"pendiente":"recibido y pendiente de preparacion",
+             "en_preparacion":"actualmente en preparacion",
+             "terminado": "terminado y " + ("en camino" if d["tipo"]=="domicilio" else "listo para recoger" if d["tipo"]=="recogida" else "servido"),
+             "cancelado":"cancelado"}
+        d["estado_humano"] = m.get(d["estado"], d["estado"])
+        pedidos.append(d)
+    return {"ok": True, "pedidos": pedidos, "count": len(pedidos)}
+
+
 @app.get("/api/pedido/{pedido_id}/publico")
 def api_pedido_publico(pedido_id: int):
     """Vista publica del pedido para el cliente (sin auth, solo lectura)."""

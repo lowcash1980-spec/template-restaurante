@@ -62,6 +62,9 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="SARA — Agente WhatsApp", lifespan=lifespan)
 
+from fastapi.middleware.cors import CORSMiddleware
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+
 
 @app.get("/")
 async def root():
@@ -84,6 +87,35 @@ async def api_notificar(n: NotificarIn, x_internal_key: str = Header(default=Non
     except Exception as e:
         logger.error(f"Error enviando notificación saliente: {e}")
         return {"ok": False, "error": str(e)}
+
+
+# ── Reservas (lista + asignacion de mesa) ────────────────────
+
+@app.get("/api/reservas")
+async def api_reservas_list(fecha: str | None = None):
+    """Lista reservas para una fecha dada (YYYY-MM-DD). Si no se pasa, hoy."""
+    from agent.memory import listar_reservas_dia
+    return await listar_reservas_dia(fecha)
+
+
+class AsignarMesaIn(BaseModel):
+    mesa: int | None = None    # null para desasignar
+
+@app.post("/api/reservas/{reserva_id}/asignar-mesa")
+async def api_reserva_asignar(reserva_id: int, body: AsignarMesaIn):
+    from agent.memory import asignar_mesa_reserva
+    ok = await asignar_mesa_reserva(reserva_id, body.mesa)
+    return {"ok": ok, "id": reserva_id, "mesa": body.mesa}
+
+
+class EstadoReservaIn(BaseModel):
+    estado: str   # pendiente | asignada | atendida | cancelada
+
+@app.post("/api/reservas/{reserva_id}/estado")
+async def api_reserva_estado(reserva_id: int, body: EstadoReservaIn):
+    from agent.memory import cambiar_estado_reserva
+    ok = await cambiar_estado_reserva(reserva_id, body.estado)
+    return {"ok": ok, "id": reserva_id, "estado": body.estado}
 
 
 @app.post("/webhook")

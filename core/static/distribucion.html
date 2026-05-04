@@ -102,6 +102,7 @@
   .auth-bar{background:#fef3c7;border-bottom:1px solid #fde68a;padding:8px 24px;font-size:12px;color:#92400e;display:flex;align-items:center;gap:10px}
   .auth-bar input{padding:5px 10px;border:1px solid #fde68a;border-radius:5px;font-size:12px}
 </style>
+<script src="/static/nav.js" defer></script>
 </head>
 <body>
 
@@ -112,6 +113,8 @@
     <div class="stat">Mesas: <span class="stat-num" id="aforo-mesas">0</span></div>
   </div>
   <div class="actions-top">
+    <button class="btn btn-sec" onclick="abrirModalPlantillas()">📋 Plantillas</button>
+    <button class="btn btn-sec" onclick="abrirModalGenerar()">⚡ Generar plano</button>
     <button class="btn btn-pri" onclick="abrirModalNuevaMesa()">+ Añadir mesa</button>
   </div>
 </div>
@@ -125,6 +128,14 @@
 <div class="tabs" id="tabs"></div>
 
 <div class="canvas-wrap">
+  <div id="reservas-panel" style="width:260px;background:#fff;border-radius:12px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.04);overflow-y:auto;display:flex;flex-direction:column">
+    <h3 style="font-size:13px;text-transform:uppercase;letter-spacing:1px;color:#6b7280;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center">
+      <span>📅 Reservas hoy</span>
+      <span id="reservas-count" style="background:#fbbf24;color:#0f1419;padding:2px 8px;border-radius:10px;font-size:11px">0</span>
+    </h3>
+    <input type="date" id="reservas-fecha" onchange="cargarReservas()" style="width:100%;padding:6px 8px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;margin-bottom:10px">
+    <div id="reservas-list" style="flex:1;overflow-y:auto"></div>
+  </div>
   <div class="canvas-area">
     <div class="canvas-toolbar">
       <div class="zona-current" id="zona-actual">Salón</div>
@@ -205,6 +216,43 @@
   </div>
 </div>
 
+<!-- MODAL plantillas -->
+<div class="modal-overlay" id="modal-plantillas">
+  <div class="modal" style="max-width:520px">
+    <h3>📋 Plantillas de distribución</h3>
+    <p style="font-size:12px;color:#6b7280;margin-bottom:12px">Guarda el plano actual como plantilla y aplícala cuando tengas una reserva similar (ej: cumpleaños 20 personas, comida familia 12 personas).</p>
+    <div id="plantillas-list" style="margin-bottom:14px;max-height:240px;overflow-y:auto"></div>
+    <div style="border-top:1px solid #e5e7eb;padding-top:14px">
+      <h4 style="font-size:12px;color:#6b7280;text-transform:uppercase;margin-bottom:8px">Guardar plano actual como nueva plantilla</h4>
+      <div class="row-2">
+        <input type="text" id="plantilla-nombre" placeholder="Nombre (ej: Cena 20p)" style="padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px">
+        <input type="text" id="plantilla-desc" placeholder="Descripción (opcional)" style="padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px">
+      </div>
+      <button class="btn btn-success" style="width:100%;margin-top:8px" onclick="guardarPlantilla()">💾 Guardar como plantilla</button>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-sec" onclick="cerrarModalPlantillas()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL generar plano -->
+<div class="modal-overlay" id="modal-generar">
+  <div class="modal" style="max-width:560px">
+    <h3>⚡ Generar plano sugerido</h3>
+    <p style="font-size:12px;color:#6b7280;margin-bottom:12px">Indica zonas y cuántas mesas de cada capacidad. El sistema las distribuye automáticamente. <strong>No conoce los obstáculos físicos</strong> — luego ajustas tú arrastrándolas.</p>
+    <div id="generar-zonas" style="margin-bottom:12px"></div>
+    <button class="btn btn-sec" onclick="generarAddZona()" style="width:100%;margin-bottom:14px">+ Añadir zona</button>
+    <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#6b7280;margin-bottom:14px">
+      <input type="checkbox" id="generar-sustituir"> Sustituir mesas actuales (cuidado: borra todas las activas)
+    </label>
+    <div class="modal-actions">
+      <button class="btn btn-sec" onclick="cerrarModalGenerar()">Cancelar</button>
+      <button class="btn btn-success" onclick="generarConfirmar()">Generar</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -243,8 +291,10 @@ async function init() {
   }
   await cargarTodo();
   await cargarPedidosActivos();
+  await cargarReservas();
   setInterval(cargarTodo, POLL_INTERVAL);
   setInterval(cargarPedidosActivos, PEDIDOS_POLL);
+  setInterval(cargarReservas, 30000);
 }
 
 async function cargarPedidosActivos() {
@@ -632,6 +682,168 @@ async function eliminarZonaActual() {
   toast('Zona eliminada','success');
   zonaActual = null;
   cargarTodo();
+}
+
+// ── PLANTILLAS ──
+async function abrirModalPlantillas() {
+  document.getElementById('modal-plantillas').classList.add('show');
+  await renderPlantillas();
+}
+function cerrarModalPlantillas() {
+  document.getElementById('modal-plantillas').classList.remove('show');
+}
+async function renderPlantillas() {
+  const cont = document.getElementById('plantillas-list');
+  try {
+    const r = await fetch('/api/plantillas');
+    const lista = await r.json();
+    if (!lista.length) {
+      cont.innerHTML = '<div style="color:#9ca3af;text-align:center;padding:20px;font-size:13px">Aún no hay plantillas guardadas</div>';
+      return;
+    }
+    cont.innerHTML = lista.map(p => `
+      <div style="padding:10px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <strong style="font-size:13px">${escapeHtml(p.nombre)}</strong>
+          ${p.descripcion ? `<div style="font-size:11px;color:#6b7280">${escapeHtml(p.descripcion)}</div>` : ''}
+          <div style="font-size:10px;color:#9ca3af;margin-top:2px">${p.created_at?.replace('T',' ').split('.')[0] || ''}</div>
+        </div>
+        <div style="display:flex;gap:4px">
+          <button class="btn btn-success" style="padding:5px 10px;font-size:11px" onclick="aplicarPlantilla(${p.id})">▶ Aplicar</button>
+          <button class="btn btn-danger" style="padding:5px 8px;font-size:11px" onclick="eliminarPlantilla(${p.id}, '${escapeAttr(p.nombre)}')">🗑️</button>
+        </div>
+      </div>`).join('');
+  } catch(e) { cont.innerHTML = '<div style="color:#dc2626">Error cargando plantillas</div>'; }
+}
+async function guardarPlantilla() {
+  const nombre = document.getElementById('plantilla-nombre').value.trim();
+  const desc = document.getElementById('plantilla-desc').value.trim();
+  if (!nombre) { toast('Pon un nombre','error'); return; }
+  const r = await fetch('/api/plantillas', {
+    method:'POST', headers:{'Content-Type':'application/json','x-admin-pass':adminPass},
+    body: JSON.stringify({nombre, descripcion:desc})
+  });
+  const d = await r.json().catch(()=>({}));
+  if (r.ok) {
+    toast('Plantilla guardada','success');
+    document.getElementById('plantilla-nombre').value = '';
+    document.getElementById('plantilla-desc').value = '';
+    renderPlantillas();
+  } else toast(d.detail || 'Error','error');
+}
+async function aplicarPlantilla(id) {
+  if (!confirm('Aplicar esta plantilla reemplazará el plano actual. ¿Continuar?')) return;
+  const r = await fetch(`/api/plantillas/${id}/aplicar`, {method:'POST', headers:{'x-admin-pass':adminPass}});
+  if (r.ok) {
+    toast('Plantilla aplicada','success');
+    cerrarModalPlantillas();
+    cargarTodo();
+  } else { const d = await r.json().catch(()=>({})); toast(d.detail || 'Error','error'); }
+}
+async function eliminarPlantilla(id, nombre) {
+  if (!confirm(`¿Eliminar plantilla "${nombre}"?`)) return;
+  const r = await fetch(`/api/plantillas/${id}`, {method:'DELETE', headers:{'x-admin-pass':adminPass}});
+  if (r.ok) { toast('Eliminada','success'); renderPlantillas(); }
+  else toast('Error','error');
+}
+
+// ── GENERAR PLANO ──
+let _generarZonas = [];
+function abrirModalGenerar() {
+  _generarZonas = [
+    {nombre:'Salón', mesas:[{capacidad:2,cantidad:0},{capacidad:4,cantidad:6},{capacidad:6,cantidad:2}]},
+  ];
+  renderGenerarZonas();
+  document.getElementById('modal-generar').classList.add('show');
+}
+function cerrarModalGenerar() { document.getElementById('modal-generar').classList.remove('show'); }
+function renderGenerarZonas() {
+  const cont = document.getElementById('generar-zonas');
+  cont.innerHTML = _generarZonas.map((z, zi) => {
+    const filas = z.mesas.map((m, mi) => `
+      <div style="display:flex;gap:6px;align-items:center;margin-bottom:4px">
+        <input type="number" value="${m.cantidad}" min="0" onchange="_generarZonas[${zi}].mesas[${mi}].cantidad=+this.value" style="width:60px;padding:4px;border:1px solid #d1d5db;border-radius:4px;font-size:12px">
+        <span style="font-size:12px;flex:1">mesas de ${m.capacidad} personas</span>
+      </div>`).join('');
+    return `<div style="padding:10px;background:#f9fafb;border-radius:8px;margin-bottom:8px">
+      <div style="display:flex;gap:6px;margin-bottom:8px">
+        <input type="text" value="${escapeAttr(z.nombre)}" onchange="_generarZonas[${zi}].nombre=this.value" style="flex:1;padding:6px;border:1px solid #d1d5db;border-radius:4px;font-size:13px;font-weight:600">
+        <button class="btn btn-danger" style="padding:4px 8px;font-size:11px" onclick="_generarZonas.splice(${zi},1);renderGenerarZonas()">🗑️</button>
+      </div>
+      ${filas}
+      <button class="btn btn-sec" style="padding:4px 8px;font-size:11px;width:100%;margin-top:4px" onclick="generarAddCapacidad(${zi})">+ Otra capacidad</button>
+    </div>`;
+  }).join('');
+}
+function generarAddZona() { _generarZonas.push({nombre:'Nueva zona', mesas:[{capacidad:4,cantidad:4}]}); renderGenerarZonas(); }
+function generarAddCapacidad(zi) {
+  const c = parseInt(prompt('¿Capacidad de las mesas (personas)?','8'));
+  if (!c || c < 2) return;
+  const n = parseInt(prompt('¿Cuántas mesas?','2'));
+  if (!n || n < 1) return;
+  _generarZonas[zi].mesas.push({capacidad:c, cantidad:n});
+  renderGenerarZonas();
+}
+async function generarConfirmar() {
+  const sustituir = document.getElementById('generar-sustituir').checked;
+  if (sustituir && !confirm('⚠️ ATENCIÓN: esto eliminará TODAS las mesas activas y creará las nuevas. ¿Continuar?')) return;
+  const body = {zonas: _generarZonas.filter(z => z.mesas.some(m => m.cantidad>0)), sustituir};
+  if (!body.zonas.length) { toast('Añade al menos una zona con mesas','error'); return; }
+  const r = await fetch('/api/mesas/generar-plano', {
+    method:'POST', headers:{'Content-Type':'application/json','x-admin-pass':adminPass},
+    body: JSON.stringify(body)
+  });
+  const d = await r.json();
+  if (r.ok) {
+    toast(`✓ ${d.creadas} mesas creadas`,'success');
+    cerrarModalGenerar();
+    cargarTodo();
+  } else toast(d.detail || 'Error','error');
+}
+
+// ── RESERVAS ──
+async function cargarReservas() {
+  const fechaInput = document.getElementById('reservas-fecha');
+  if (!fechaInput.value) {
+    const hoy = new Date(); fechaInput.value = hoy.toISOString().split('T')[0];
+  }
+  const fecha = fechaInput.value;
+  const SARA_URL = window.location.protocol + '//sara.' + window.location.hostname.replace(/^admin\./,'');
+  try {
+    const r = await fetch(`${SARA_URL}/api/reservas?fecha=${fecha}`, {cache:'no-store'});
+    const lista = await r.json();
+    document.getElementById('reservas-count').textContent = lista.length;
+    const cont = document.getElementById('reservas-list');
+    if (!lista.length) {
+      cont.innerHTML = '<div style="color:#9ca3af;font-size:12px;text-align:center;padding:24px">Sin reservas para esta fecha</div>';
+      return;
+    }
+    cont.innerHTML = lista.map(r => {
+      const colorEstado = r.estado === 'asignada' ? '#10b981' : r.estado === 'atendida' ? '#6b7280' : r.estado === 'cancelada' ? '#dc2626' : '#f59e0b';
+      const mesaTxt = r.mesa_asignada ? `Mesa ${r.mesa_asignada}` : 'Sin asignar';
+      return `<div style="padding:10px;background:#f9fafb;border-left:3px solid ${colorEstado};border-radius:6px;margin-bottom:6px;font-size:12px">
+        <div style="display:flex;justify-content:space-between"><strong style="font-size:13px">${escapeHtml(r.nombre || 'Sin nombre')}</strong><span style="color:#6b7280">${r.hora_texto || ''}</span></div>
+        <div style="color:#6b7280">${r.personas} personas · ${escapeHtml(r.telefono || '')}</div>
+        ${r.notas ? `<div style="color:#92400e;font-size:11px;margin-top:4px">📝 ${escapeHtml(r.notas)}</div>` : ''}
+        <div style="margin-top:6px;display:flex;gap:4px;align-items:center">
+          <span style="font-size:11px;color:${colorEstado};font-weight:700">${mesaTxt}</span>
+          <button onclick="asignarMesaReserva(${r.id})" style="margin-left:auto;padding:3px 8px;background:#3b82f6;color:#fff;border:none;border-radius:4px;font-size:11px;cursor:pointer">${r.mesa_asignada ? 'Cambiar' : 'Asignar mesa'}</button>
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e) {}
+}
+async function asignarMesaReserva(reservaId) {
+  const num = prompt('¿Número de mesa? (vacío para desasignar)');
+  if (num === null) return;
+  const mesa = num.trim() ? parseInt(num) : null;
+  const SARA_URL = window.location.protocol + '//sara.' + window.location.hostname.replace(/^admin\./,'');
+  const r = await fetch(`${SARA_URL}/api/reservas/${reservaId}/asignar-mesa`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({mesa})
+  });
+  if (r.ok) { toast(mesa ? `Asignada a mesa ${mesa}` : 'Desasignada','success'); cargarReservas(); }
+  else toast('Error','error');
 }
 
 // ── UTIL ──

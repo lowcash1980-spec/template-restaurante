@@ -37,18 +37,23 @@ class Reserva(Base):
     fecha_datetime = Column(DateTime, nullable=True)
     recordatorio_enviado = Column(Boolean, default=False)
     bienvenida_enviada = Column(Boolean, default=False)
+    mesa_asignada = Column(Integer, nullable=True)
+    estado = Column(String(20), default="pendiente")  # pendiente | asignada | atendida | cancelada
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
 async def init_db():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-        try:
-            await conn.execute(__import__('sqlalchemy').text(
-                "ALTER TABLE reservas ADD COLUMN bienvenida_enviada BOOLEAN DEFAULT 0"
-            ))
-        except Exception:
-            pass
+        for sql in [
+            "ALTER TABLE reservas ADD COLUMN bienvenida_enviada BOOLEAN DEFAULT 0",
+            "ALTER TABLE reservas ADD COLUMN mesa_asignada INTEGER",
+            "ALTER TABLE reservas ADD COLUMN estado VARCHAR(20) DEFAULT 'pendiente'",
+        ]:
+            try:
+                await conn.execute(__import__('sqlalchemy').text(sql))
+            except Exception:
+                pass
 
 
 async def guardar_mensaje(telefono: str, rol: str, contenido: str):
@@ -164,3 +169,62 @@ async def marcar_bienvenida_enviada(reserva_id: int):
         if reserva:
             reserva.bienvenida_enviada = True
             await session.commit()
+
+
+async def listar_reservas_dia(fecha: str | None = None) -> list[dict]:
+    """Lista reservas para una fecha (YYYY-MM-DD). Si fecha=None, hoy."""
+    from sqlalchemy import select
+    from datetime import date as ddate
+    if not fecha:
+        fecha_obj = ddate.today()
+    else:
+        try:
+            fecha_obj = ddate.fromisoformat(fecha)
+        except Exception:
+            fecha_obj = ddate.today()
+    inicio = datetime.combine(fecha_obj, datetime.min.time())
+    fin = inicio + timedelta(days=1)
+    async with AsyncSessionLocal() as session:
+        result = await session.execute(
+            select(Reserva).where(
+                Reserva.fecha_datetime >= inicio,
+                Reserva.fecha_datetime < fin
+            ).order_by(Reserva.fecha_datetime)
+        )
+        rs = result.scalars().all()
+        return [{
+            "id": r.id, "nombre": r.nombre, "telefono": r.telefono,
+            "fecha_texto": r.fecha_texto, "hora_texto": r.hora_texto,
+            "personas": r.personas, "notas": r.notas or "",
+            "fecha_datetime": r.fecha_datetime.isoformat() if r.fecha_datetime else None,
+            "mesa_asignada": getattr(r, 'mesa_asignada', None),
+            "estado": getattr(r, 'estado', None) or 'pendiente',
+        } for r in rs]
+
+
+async def asignar_mesa_reserva(reserva_id: int, mesa: int | None) -> bool:
+    """Asigna (o desasigna si mesa=None) un numero de mesa a una reserva."""
+    from sqlalchemy import select
+    async with AsyncSessionLocal() as session:
+        result = await session.execute(select(Reserva).where(Reserva.id == reserva_id))
+        r = result.scalar_one_or_none()
+        if not r:
+            return False
+        r.mesa_asignada = mesa
+        r.estado = "asignada" if mesa else "pendiente"
+        await session.commit()
+        return True
+
+
+async def cambiar_estado_reserva(reserva_id: int, estado: str) -> bool:
+    from sqlalchemy import select
+    if estado not in ("pendiente", "asignada", "atendida", "cancelada"):
+        return False
+    async with AsyncSessionLocal() as session:
+        result = await session.execute(select(Reserva).where(Reserva.id == reserva_id))
+        r = result.scalar_one_or_none()
+        if not r:
+            return False
+        r.estado = estado
+        await session.commit()
+        return True

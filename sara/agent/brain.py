@@ -14,6 +14,7 @@ DEMO_MODE = os.getenv("DEMO_MODE", "false").lower() == "true"
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
 CORE_URL = os.getenv("CORE_URL", "http://core:8000")
 CRM_URL  = os.getenv("CRM_URL",  "http://crm:8003")
+DELIVERY_URL = os.getenv("DELIVERY_URL", "http://delivery:8000")
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 PROMPTS_PATH = BASE_DIR / "config" / "prompts.yaml"
@@ -116,6 +117,24 @@ TOOLS = [
         },
     },
     {
+        "name": "consultar_estado_pedido",
+        "description": (
+            "Usa esta herramienta cuando el cliente pregunte por el estado de su pedido "
+            "(ej: '¿cómo va mi pedido?', '¿está listo?', '¿cuánto tarda?'). "
+            "Identifica al cliente por su teléfono (siempre disponible en el contexto de la conversación) "
+            "o por el número de pedido si lo proporciona. Si el cliente da un nº de pedido, úsalo. "
+            "Si no, usa solo el teléfono que ya tienes."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "telefono": {"type": "string", "description": "Teléfono del cliente que pregunta (en formato internacional si es posible)"},
+                "pedido_id": {"type": "integer", "description": "Número del pedido si el cliente lo ha mencionado, opcional"},
+            },
+            "required": ["telefono"],
+        },
+    },
+    {
         "name": "solicitar_plato_especial",
         "description": (
             "Usa esta herramienta cuando un cliente quiera reservar un plato fuera de carta "
@@ -204,6 +223,13 @@ async def generar_respuesta(historial: list[dict], mensaje_nuevo: str, proveedor
                 "tool_use_id": tb.id,
                 "content": "Reserva registrada correctamente. Notificación enviada al equipo del restaurante.",
             })
+        elif tb.name == "consultar_estado_pedido":
+            estado_txt = await _consultar_estado_pedido(tb.input)
+            tool_results.append({
+                "type": "tool_result",
+                "tool_use_id": tb.id,
+                "content": estado_txt,
+            })
         elif tb.name == "solicitar_plato_especial":
             if proveedor:
                 await _notificar_plato_especial(tb.input, proveedor)
@@ -267,6 +293,48 @@ async def _guardar_reserva_bd(datos: dict) -> None:
         logger.info(f"Reserva guardada en BD — fecha_datetime={fecha_dt}")
     except Exception as e:
         logger.error(f"Error guardando reserva en BD: {e}")
+
+
+async def _consultar_estado_pedido(datos: dict) -> str:
+    """Consulta al backend de delivery el estado del pedido del cliente.
+    Devuelve un string descriptivo para que el modelo lo use en su respuesta.
+    """
+    import httpx
+    telefono = (datos.get("telefono") or "").strip()
+    pedido_id = datos.get("pedido_id")
+    if not telefono and not pedido_id:
+        return "No se ha podido identificar al cliente. Necesito su telefono o numero de pedido."
+
+    params = {}
+    if telefono: params["telefono"] = telefono
+    if pedido_id: params["pedido_id"] = int(pedido_id)
+
+    try:
+        async with httpx.AsyncClient(timeout=5) as client:
+            r = await client.get(f"{DELIVERY_URL}/api/pedidos/cliente", params=params)
+            data = r.json()
+    except Exception as e:
+        logger.error(f"Error consultando pedidos: {e}")
+        return "No he podido conectar con el sistema de pedidos. Por favor, llama al restaurante."
+
+    if not data.get("ok"):
+        return data.get("error", "No se ha podido consultar el pedido")
+    pedidos = data.get("pedidos", [])
+    if not pedidos:
+        if pedido_id:
+            return f"No se encuentra ningun pedido con ID #{pedido_id}. Verifica el numero."
+        return "No tienes ningun pedido activo hoy con ese telefono."
+
+    # Construir resumen para que el modelo lo lea y conteste al cliente
+    lineas = []
+    for p in pedidos:
+        items_txt = ", ".join(f"{i['cantidad']}x {i['nombre']}" for i in p.get("items", [])[:5])
+        lineas.append(
+            f"Pedido #{p['id']} ({p['tipo']}): {p['estado_humano']}. "
+            f"Total {p['total']:.2f}€. Items: {items_txt}. "
+            f"Hora pedido: {p['hora']}."
+        )
+    return "Pedidos encontrados (devuelve esta informacion al cliente con un mensaje natural):\n" + "\n".join(lineas)
 
 
 async def _notificar_plato_especial(datos: dict, proveedor) -> None:

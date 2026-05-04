@@ -145,6 +145,13 @@ def init_db():
                 activa     INTEGER NOT NULL DEFAULT 1,
                 created_at TEXT    DEFAULT (datetime('now'))
             );
+            CREATE TABLE IF NOT EXISTS plantillas_distribucion (
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                nombre      TEXT NOT NULL UNIQUE,
+                descripcion TEXT DEFAULT '',
+                snapshot    TEXT NOT NULL,
+                created_at  TEXT DEFAULT (datetime('now'))
+            );
         """)
         defaults = {
             "nombre": "[NOMBRE_RESTAURANTE]",
@@ -559,6 +566,160 @@ async def api_mesa_actualizar(mesa_id: int, m: MesaUpdate):
             raise HTTPException(status_code=404, detail="Mesa no encontrada")
     await _broadcast("mesa_actualizada", {"id": mesa_id})
     return {"ok": True}
+
+class GenerarMesaSpec(BaseModel):
+    capacidad: int
+    cantidad: int = 1
+    forma: Optional[str] = None   # auto si None: 2-4 cuadrada, 6-8 redonda, >8 rectangular
+
+class GenerarZonaSpec(BaseModel):
+    nombre: str
+    mesas: list[GenerarMesaSpec]
+
+class GenerarPlanoIn(BaseModel):
+    zonas: list[GenerarZonaSpec]
+    sustituir: bool = False         # si True, borra mesas existentes antes
+    numero_inicial: int = 1
+    ancho_canvas: int = 800
+
+@app.post("/api/mesas/generar-plano", dependencies=[Depends(auth)])
+async def api_generar_plano(p: GenerarPlanoIn):
+    """Genera un plano sugerido distribuyendo mesas por zonas con coordenadas optimas.
+    No conoce los obstaculos del local (paredes, columnas...) - el cliente luego ajusta.
+
+    Algoritmo simple por zona:
+      - Cada mesa se coloca en una rejilla con margen 40px
+      - Tamano: 2pers=60x60, 3-4=80x80, 5-6=100x100, 7-8=120x120, >8=160x80 (rect)
+      - Forma auto segun capacidad si no se especifica
+    """
+    creadas = []
+    with db() as conn:
+        if p.sustituir:
+            conn.execute("UPDATE mesas SET activa=0")
+            conn.commit()
+
+        used = {r["numero"] for r in conn.execute("SELECT numero FROM mesas WHERE activa=1").fetchall()}
+        siguiente = max(p.numero_inicial, (max(used) + 1) if used else 1)
+
+        for zona in p.zonas:
+            # expandir cantidad de mesas
+            mesas_expandidas = []
+            for spec in zona.mesas:
+                for _ in range(spec.cantidad):
+                    mesas_expandidas.append(spec.capacidad)
+
+            # ordenar por capacidad descendente para que las grandes queden primero
+            mesas_expandidas.sort(reverse=True)
+
+            x_cursor = 40
+            y_cursor = 40
+            row_max_h = 0
+            for cap in mesas_expandidas:
+                if cap <= 2:
+                    w, h, forma_auto = 60, 60, "redonda"
+                elif cap <= 4:
+                    w, h, forma_auto = 80, 80, "cuadrada"
+                elif cap <= 6:
+                    w, h, forma_auto = 100, 100, "redonda"
+                elif cap <= 8:
+                    w, h, forma_auto = 120, 120, "cuadrada"
+                else:
+                    # rectangular larga
+                    w, h, forma_auto = 160, 80, "rectangular"
+
+                # salto de fila si no cabe en la actual
+                if x_cursor + w + 40 > p.ancho_canvas:
+                    x_cursor = 40
+                    y_cursor += row_max_h + 40
+                    row_max_h = 0
+
+                while siguiente in used:
+                    siguiente += 1
+
+                conn.execute(
+                    """INSERT INTO mesas (numero, capacidad, forma, x, y, w, h, zona, rotacion)
+                       VALUES (?,?,?,?,?,?,?,?,0)""",
+                    (siguiente, cap, forma_auto, x_cursor, y_cursor, w, h, zona.nombre)
+                )
+                creadas.append({"numero": siguiente, "zona": zona.nombre, "capacidad": cap})
+                used.add(siguiente)
+                siguiente += 1
+
+                x_cursor += w + 30
+                row_max_h = max(row_max_h, h)
+        conn.commit()
+    await _broadcast("plano_generado", {"creadas": len(creadas)})
+    return {"ok": True, "creadas": len(creadas), "mesas": creadas}
+
+
+# ── Plantillas de distribucion (snapshots guardables) ────────
+
+class PlantillaIn(BaseModel):
+    nombre: str
+    descripcion: Optional[str] = ""
+
+@app.get("/api/plantillas")
+def api_plantillas_list():
+    with db() as conn:
+        rows = conn.execute(
+            "SELECT id, nombre, descripcion, created_at FROM plantillas_distribucion ORDER BY created_at DESC"
+        ).fetchall()
+    return [{"id": r["id"], "nombre": r["nombre"], "descripcion": r["descripcion"],
+             "created_at": r["created_at"]} for r in rows]
+
+@app.post("/api/plantillas", dependencies=[Depends(auth)])
+async def api_plantilla_guardar(p: PlantillaIn):
+    """Guarda el estado actual del plano (todas las mesas activas) como plantilla."""
+    if not p.nombre.strip():
+        raise HTTPException(status_code=400, detail="Nombre vacío")
+    with db() as conn:
+        rows = conn.execute("SELECT * FROM mesas WHERE activa=1").fetchall()
+        snapshot = [_row_to_mesa(r) for r in rows]
+        try:
+            conn.execute(
+                "INSERT INTO plantillas_distribucion (nombre, descripcion, snapshot) VALUES (?,?,?)",
+                (p.nombre.strip(), p.descripcion or "",
+                 json.dumps(snapshot, ensure_ascii=False))
+            )
+            conn.commit()
+        except sqlite3.IntegrityError:
+            raise HTTPException(status_code=409, detail=f"Ya existe una plantilla con ese nombre")
+    return {"ok": True, "mesas_guardadas": len(snapshot)}
+
+@app.post("/api/plantillas/{pid}/aplicar", dependencies=[Depends(auth)])
+async def api_plantilla_aplicar(pid: int):
+    """Aplica una plantilla: desactiva todas las mesas actuales y crea las del snapshot."""
+    with db() as conn:
+        r = conn.execute("SELECT snapshot FROM plantillas_distribucion WHERE id=?", (pid,)).fetchone()
+        if not r:
+            raise HTTPException(status_code=404, detail="Plantilla no encontrada")
+        snap = json.loads(r["snapshot"])
+        conn.execute("UPDATE mesas SET activa=0")
+        # restaurar mesas del snapshot
+        for m in snap:
+            conn.execute(
+                """INSERT INTO mesas (numero, capacidad, forma, x, y, w, h, zona, rotacion, activa)
+                   VALUES (?,?,?,?,?,?,?,?,?,1)
+                   ON CONFLICT(numero) DO UPDATE SET
+                     capacidad=excluded.capacidad, forma=excluded.forma,
+                     x=excluded.x, y=excluded.y, w=excluded.w, h=excluded.h,
+                     zona=excluded.zona, rotacion=excluded.rotacion, activa=1""",
+                (m["numero"], m["capacidad"], m["forma"], m["x"], m["y"], m["w"], m["h"],
+                 m["zona"], m.get("rotacion", 0))
+            )
+        conn.commit()
+    await _broadcast("plantilla_aplicada", {"id": pid})
+    return {"ok": True, "mesas": len(snap)}
+
+@app.delete("/api/plantillas/{pid}", dependencies=[Depends(auth)])
+async def api_plantilla_eliminar(pid: int):
+    with db() as conn:
+        c = conn.execute("DELETE FROM plantillas_distribucion WHERE id=?", (pid,))
+        conn.commit()
+        if c.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Plantilla no encontrada")
+    return {"ok": True}
+
 
 @app.delete("/api/mesas/{mesa_id}", dependencies=[Depends(auth)])
 async def api_mesa_eliminar(mesa_id: int, hard: bool = False):
