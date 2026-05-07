@@ -260,7 +260,15 @@
 const POLL_INTERVAL = 30000;
 const PEDIDOS_POLL = 5000;
 const SAVE_DEBOUNCE = 600;
-const PEDIDOS_URL = window.location.protocol + '//pedidos.' + window.location.hostname.replace(/^admin\./,'');
+function _buildServiceUrl(prefix) {
+  // Soporta patrones anidado (admin.X → prefix.X) y plano (admin-X → prefix-X).
+  const proto = window.location.protocol;
+  const host = window.location.hostname;
+  if (host.startsWith('admin.'))  return proto + '//' + prefix + '.' + host.slice(6);
+  if (host.startsWith('admin-'))  return proto + '//' + prefix + '-' + host.slice(6);
+  return proto + '//' + host;
+}
+const PEDIDOS_URL = _buildServiceUrl('pedidos');
 
 // ── STATE ──
 let mesas = [];
@@ -808,7 +816,7 @@ async function cargarReservas() {
     const hoy = new Date(); fechaInput.value = hoy.toISOString().split('T')[0];
   }
   const fecha = fechaInput.value;
-  const SARA_URL = window.location.protocol + '//sara.' + window.location.hostname.replace(/^admin\./,'');
+  const SARA_URL = _buildServiceUrl('sara');
   try {
     const r = await fetch(`${SARA_URL}/api/reservas?fecha=${fecha}`, {cache:'no-store'});
     const lista = await r.json();
@@ -837,7 +845,7 @@ async function asignarMesaReserva(reservaId) {
   const num = prompt('¿Número de mesa? (vacío para desasignar)');
   if (num === null) return;
   const mesa = num.trim() ? parseInt(num) : null;
-  const SARA_URL = window.location.protocol + '//sara.' + window.location.hostname.replace(/^admin\./,'');
+  const SARA_URL = _buildServiceUrl('sara');
   const r = await fetch(`${SARA_URL}/api/reservas/${reservaId}/asignar-mesa`, {
     method:'POST', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({mesa})

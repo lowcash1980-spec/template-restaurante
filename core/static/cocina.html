@@ -151,7 +151,17 @@
 
 <script>
 // ── CONFIG ──
-const BACKEND_URL = window.location.protocol + '//pedidos.' + window.location.hostname.replace(/^admin\./,'');
+function _buildServiceUrl(prefix) {
+  // Soporta dos patrones de subdominio:
+  //   anidado: admin.cliente.dominio    → prefix.cliente.dominio
+  //   plano:   admin-cliente.dominio    → prefix-cliente.dominio
+  const proto = window.location.protocol;
+  const host = window.location.hostname;
+  if (host.startsWith('admin.'))  return proto + '//' + prefix + '.' + host.slice(6);
+  if (host.startsWith('admin-'))  return proto + '//' + prefix + '-' + host.slice(6);
+  return proto + '//' + host;
+}
+const BACKEND_URL = _buildServiceUrl('pedidos');
 const POLL_MS = 5000;
 const POPUP_DURACION_S = 5;
 
