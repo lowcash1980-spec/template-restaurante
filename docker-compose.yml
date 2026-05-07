@@ -13,9 +13,16 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=easypanel"
+      # Router fallback nip.io
       - "traefik.http.routers.${NOMBRE}-core.rule=Host(`admin.${DOMINIO}`)"
       - "traefik.http.routers.${NOMBRE}-core.entrypoints=https"
       - "traefik.http.routers.${NOMBRE}-core.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.${NOMBRE}-core.service=${NOMBRE}-core"
+      # Router dominio bonito atheniadigital.es
+      - "traefik.http.routers.${NOMBRE}-core-ath.rule=Host(`admin-${NOMBRE}.${DOMINIO_PADRE}`)"
+      - "traefik.http.routers.${NOMBRE}-core-ath.entrypoints=https"
+      - "traefik.http.routers.${NOMBRE}-core-ath.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.${NOMBRE}-core-ath.service=${NOMBRE}-core"
       - "traefik.http.services.${NOMBRE}-core.loadbalancer.server.port=8000"
 
   # ── CRM (clientes, campañas WhatsApp) ─────────────────────
@@ -33,6 +40,11 @@ services:
       - "traefik.http.routers.${NOMBRE}-crm.rule=Host(`crm.${DOMINIO}`)"
       - "traefik.http.routers.${NOMBRE}-crm.entrypoints=https"
       - "traefik.http.routers.${NOMBRE}-crm.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.${NOMBRE}-crm.service=${NOMBRE}-crm"
+      - "traefik.http.routers.${NOMBRE}-crm-ath.rule=Host(`crm-${NOMBRE}.${DOMINIO_PADRE}`)"
+      - "traefik.http.routers.${NOMBRE}-crm-ath.entrypoints=https"
+      - "traefik.http.routers.${NOMBRE}-crm-ath.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.${NOMBRE}-crm-ath.service=${NOMBRE}-crm"
       - "traefik.http.services.${NOMBRE}-crm.loadbalancer.server.port=8003"
 
   # ── Delivery (pedidos online) ──────────────────────────────
@@ -51,6 +63,11 @@ services:
       - "traefik.http.routers.${NOMBRE}-delivery.rule=Host(`pedidos.${DOMINIO}`)"
       - "traefik.http.routers.${NOMBRE}-delivery.entrypoints=https"
       - "traefik.http.routers.${NOMBRE}-delivery.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.${NOMBRE}-delivery.service=${NOMBRE}-delivery"
+      - "traefik.http.routers.${NOMBRE}-delivery-ath.rule=Host(`pedidos-${NOMBRE}.${DOMINIO_PADRE}`)"
+      - "traefik.http.routers.${NOMBRE}-delivery-ath.entrypoints=https"
+      - "traefik.http.routers.${NOMBRE}-delivery-ath.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.${NOMBRE}-delivery-ath.service=${NOMBRE}-delivery"
       - "traefik.http.services.${NOMBRE}-delivery.loadbalancer.server.port=8000"
 
   # ── Kmarero (carta digital QR) ─────────────────────────────
@@ -66,6 +83,11 @@ services:
       - "traefik.http.routers.${NOMBRE}-kmarero.rule=Host(`carta.${DOMINIO}`)"
       - "traefik.http.routers.${NOMBRE}-kmarero.entrypoints=https"
       - "traefik.http.routers.${NOMBRE}-kmarero.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.${NOMBRE}-kmarero.service=${NOMBRE}-kmarero"
+      - "traefik.http.routers.${NOMBRE}-kmarero-ath.rule=Host(`carta-${NOMBRE}.${DOMINIO_PADRE}`)"
+      - "traefik.http.routers.${NOMBRE}-kmarero-ath.entrypoints=https"
+      - "traefik.http.routers.${NOMBRE}-kmarero-ath.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.${NOMBRE}-kmarero-ath.service=${NOMBRE}-kmarero"
       - "traefik.http.services.${NOMBRE}-kmarero.loadbalancer.server.port=80"
 
   # ── SARA (chatbot WhatsApp IA) ─────────────────────────────
@@ -85,6 +107,11 @@ services:
       - "traefik.http.routers.${NOMBRE}-sara.rule=Host(`sara.${DOMINIO}`)"
       - "traefik.http.routers.${NOMBRE}-sara.entrypoints=https"
       - "traefik.http.routers.${NOMBRE}-sara.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.${NOMBRE}-sara.service=${NOMBRE}-sara"
+      - "traefik.http.routers.${NOMBRE}-sara-ath.rule=Host(`sara-${NOMBRE}.${DOMINIO_PADRE}`)"
+      - "traefik.http.routers.${NOMBRE}-sara-ath.entrypoints=https"
+      - "traefik.http.routers.${NOMBRE}-sara-ath.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.${NOMBRE}-sara-ath.service=${NOMBRE}-sara"
       - "traefik.http.services.${NOMBRE}-sara.loadbalancer.server.port=8002"
 
   # ── Web (página web del restaurante) ──────────────────────
@@ -100,6 +127,11 @@ services:
       - "traefik.http.routers.${NOMBRE}-web.rule=Host(`${DOMINIO}`) || Host(`www.${DOMINIO}`)"
       - "traefik.http.routers.${NOMBRE}-web.entrypoints=https"
       - "traefik.http.routers.${NOMBRE}-web.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.${NOMBRE}-web.service=${NOMBRE}-web"
+      - "traefik.http.routers.${NOMBRE}-web-ath.rule=Host(`${NOMBRE}.${DOMINIO_PADRE}`)"
+      - "traefik.http.routers.${NOMBRE}-web-ath.entrypoints=https"
+      - "traefik.http.routers.${NOMBRE}-web-ath.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.${NOMBRE}-web-ath.service=${NOMBRE}-web"
       - "traefik.http.services.${NOMBRE}-web.loadbalancer.server.port=3000"
 
 networks:
